@@ -17,6 +17,9 @@ flask-session = "*"
 flask-wtf = "*"
 flask-mongoengine = "*"
 flask-script = "*"
+rednose = "*"
+nose = "*"
+coverage = "*"
 
 [dev-packages]
 
