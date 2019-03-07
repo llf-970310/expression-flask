@@ -8,7 +8,7 @@ from flask_login import login_user, logout_user, login_required, current_user
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField
 from wtforms.validators import DataRequired
-from app.models import User, Role
+from app.models.user import User, Roles
 
 from . import auth
 
@@ -34,7 +34,7 @@ def register():
             user.email = form.email.data
             user.password = current_app.md5_hash(form.password.data)
             user.name = form.name.data
-            default_role = Role.objects(name='default').first()
+            default_role = Roles.Default
             user.role = default_role
             user.save()
             login_user(user)
