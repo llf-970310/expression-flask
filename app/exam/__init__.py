@@ -5,6 +5,6 @@
 
 from flask import Blueprint
 
-api = Blueprint('api', __name__)
+exam = Blueprint('exam', __name__)
 
 from . import views
