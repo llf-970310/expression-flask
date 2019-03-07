@@ -1,0 +1,28 @@
+[uwsgi]
+# http=127.0.0.1:8000
+socket=127.0.0.1:7911
+#socket=/var/run/uwsgi.socket
+#chmod-socket=666
+pidfile=/tmp/uwsgi-flask.pid
+vacuum=true
+#指定运行目录
+home=/home/ise/.local/share/virtualenvs/expression-flask-p9tMTecW
+chdir=/var/www/expression-flask
+wsgi-file=expressiveness_server/wsgi.py
+daemonize=/var/www/expression-flask/log/uwsgi.log
+master=true
+#processes同workers
+processes=4
+#threads=2
+# 并发的socket连接数，需要不大于/etc/sysctl.conf设置的
+# net.core.somaxconn 并sysctl -p加载
+listen=10000
+max-requests=5000
+#stats=127.0.0.1:7902
+stats=/tmp/uwsgistas-flask.socket
+log-maxsize=50000000  # 50M
+#disable regular log(only log error):
+#disable-logging=true
+logfile-chmod=644
+uid=ise
+gid=ise

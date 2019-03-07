@@ -4,7 +4,6 @@
 # Created by dylanchu on 19-2-15
 
 import hashlib
-from redis import Redis
 
 
 class BaseConfig(object):
@@ -13,7 +12,7 @@ class BaseConfig(object):
     # SECRET_KEY = os.urandom(24)  # 设为24位的随机字符,重启服务器则上次session清除
 
     # session
-    SESSION_TYPE = 'redis'  # null/redis/.., null: use (flask default) cookie
+    SESSION_TYPE = 'null'  # null/redis/.., null: use (flask default) cookie
     SESSION_KEY_PREFIX = 'flask'
     SESSION_USE_SIGNER = True  # 是否强制加盐混淆session
     SESSION_PERMANENT = True  # 是否长期有效，false则关闭浏览器失效
@@ -42,4 +41,16 @@ class BaseConfig(object):
 class DevelopmentConfig(BaseConfig):
     WTF_CSRF_ENABLED = False  # 是否开启flask-wtf的csrf保护,默认是True,用postman提交表单测试需要设为False
     SESSION_USE_SIGNER = False
-    SESSION_REDIS = Redis(host='127.0.0.1', port=6379, db=0, password=None)
+    SESSION_TYPE = 'redis'
+    from redis import Redis
+    # SESSION_REDIS = Redis(host='127.0.0.1', port=6379, db=0, password=None)
+    SESSION_REDIS = Redis(host='47.98.174.59', port=6379, db=0, password='ise_expression')
+    MONGODB_SETTINGS = {
+        'db': 'expression_flask',
+        'host': '47.98.174.59',
+        'port': 27017,
+        # if authentication is needed:
+        'username': 'iselab',
+        'password': 'ise###nju.cn',
+        'connect': False  # False: connect when first connect instead of instantiated
+    }
