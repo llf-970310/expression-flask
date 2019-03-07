@@ -13,7 +13,7 @@ class BaseConfig(object):
     # SECRET_KEY = os.urandom(24)  # 设为24位的随机字符,重启服务器则上次session清除
 
     # session
-    SESSION_TYPE = 'redis'
+    SESSION_TYPE = 'redis'  # null/redis/.., null: use (flask default) cookie
     SESSION_KEY_PREFIX = 'flask'
     SESSION_USE_SIGNER = True  # 是否强制加盐混淆session
     SESSION_PERMANENT = True  # 是否长期有效，false则关闭浏览器失效

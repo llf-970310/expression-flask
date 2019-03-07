@@ -7,7 +7,6 @@ from config import DevelopmentConfig
 from flask import Flask
 from flask_login import LoginManager
 from flask_mongoengine import MongoEngine
-from flask_session import Session
 
 db = MongoEngine()
 login_manager = LoginManager()
@@ -21,7 +20,9 @@ def create_app():
     app.config.from_object(DevelopmentConfig)
     app.logger.setLevel(app.config['LOG_LEVEL'])
 
-    Session(app)
+    if app.config['SESSION_TYPE'] != 'null':
+        from flask_session import Session
+        Session(app)
     db.init_app(app)
     login_manager.init_app(app)
 
