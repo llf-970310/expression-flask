@@ -46,11 +46,11 @@ class DevelopmentConfig(BaseConfig):
     # SESSION_REDIS = Redis(host='127.0.0.1', port=6379, db=0, password=None)
     SESSION_REDIS = Redis(host='47.98.174.59', port=6379, db=0, password='ise_expression')
     MONGODB_SETTINGS = {
-        'db': 'expression_flask',
+        'db': 'expression',
         'host': '47.98.174.59',
         'port': 27017,
         # if authentication is needed:
         'username': 'iselab',
-        'password': 'ise###nju.cn',
+        'password': 'iselab###nju.cn',
         'connect': False  # False: connect when first connect instead of instantiated
     }
