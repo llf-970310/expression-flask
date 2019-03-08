@@ -26,6 +26,8 @@ class User(UserMixin, db.Document):
     role = db.StringField(max_length=32, required=True)
     register_time = db.DateTimeField(default=lambda: datetime.datetime.utcnow())
     last_login_time = db.DateTimeField(default=lambda: datetime.datetime.utcnow())
+    questions_history = db.DictField(default={})  # {question_id: fetched_datetime, ...}
+    student_id = db.StringField(max_length=32, unique=True)  # student_id should be unique. todo: remove?
     # birthday = db.DateTimeField()
     # gender = StringField(max_length=8)
     # wx_id = StringField(max_length=64)
@@ -34,3 +36,8 @@ class User(UserMixin, db.Document):
 
     def __repr__(self):
         return "{id:%s, email:%s, name:%s, role:%s}" % (self.id, self.email, self.name, self.role)
+
+    def __str__(self):
+        return "{id:%s,name:%s,student_id:%s,register_time:%s,last_login_time:%s}" % (
+            self.id, self.name.__str__(), self.student_id.__str__(),
+            self.register_time.__str__(), self.last_login_time.__str__())
