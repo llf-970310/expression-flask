@@ -4,9 +4,8 @@
 # Created by dylanchu on 19-1-6
 
 from celery import Celery
-from django.conf import settings
 
-pw = settings.SESSION_REDIS['password']
+pw = 'ise_expression'
 # celery_broker = 'amqp://ise:ise_expression@expression.iselab.cn:5672//'
 celery_broker = 'redis://:%s@expression.iselab.cn:6379/0' % pw
 celery_backend = celery_broker
