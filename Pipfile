@@ -20,6 +20,8 @@ flask-script = "*"
 rednose = "*"
 nose = "*"
 coverage = "*"
+celery = {extras = ["redis"], version = "*"}
+"5668f3e" = {file = "https://github.com/celery/celery/tarball/master"}
 
 [dev-packages]
 
