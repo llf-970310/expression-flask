@@ -73,14 +73,11 @@ def get_result_for_test():
     test_id = request.form.get('testID')
     if not test_id or (len(test_id) != 12 and len(test_id) != 24):
         return jsonify(errors.Params_error)
-    tests = CurrentTestModel.objects(id=test_id).first()
-    if len(tests) == 0:
+    the_test = CurrentTestModel.objects(id=test_id).first()
+    if the_test is None:
         return jsonify(errors.Exam_not_exist)
     try:
-        question = tests['questions']['1']
-        print(tests)
-        print('------')
-        print(question)
+        question = the_test['questions']['1']
         status = question['status']
         start = question['analysis_start_time']
         end = question['analysis_end_time']
