@@ -82,10 +82,11 @@ def get_result_for_test():
         start = question['analysis_start_time']
         end = question['analysis_end_time']
         if status != 'error':
-            msg = {"status": status, "analysis_start_time": start, "analysis_end_time": end}
+            msg = {"status": status, "analysis_start_time": str(start), "analysis_end_time": str(end)}  # 转为str保证时间格式
             return jsonify(errors.success(msg))
         else:
-            msg = {"status": status, "stack": question['stack'], "analysis_start_time": start, "analysis_end_time": end}
+            msg = {"status": status, "stack": question['stack'], "analysis_start_time": str(start),
+                   "analysis_end_time": str(end)}
         return jsonify(errors.error(msg))
     except Exception as e:
         current_app.logger.error('get_result_for_test: %s' % traceback.format_exc())
