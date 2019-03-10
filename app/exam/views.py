@@ -6,7 +6,7 @@
 from app.models.user import User
 from . import exam
 from app import errors
-from .config import PathConfig, ExamConfig, QuestionConfig
+from .config import PathConfig, ExamConfig, QuestionConfig, DefaultValue
 from app.models.exam import *
 from flask import request, current_app, jsonify, session
 from flask_login import current_user
@@ -40,7 +40,7 @@ def upload_success_for_test():
     current_test.save()
 
     try:
-        # chdir should be 'xxx/expressiveness_server'
+        # chdir should be 'expression-flask'
         dir_name = os.path.dirname(temp_url)
         if not os.path.exists(dir_name):
             os.makedirs(dir_name)
@@ -48,7 +48,7 @@ def upload_success_for_test():
     except Exception as e:
         current_app.logger.error(e)
 
-    # change question state to handling
+    # change question status to handling
     current_test.questions['1'].status = 'handling'
     current_test.questions['1'].wav_upload_url = upload_url.lstrip('/expression')
     current_test.questions['1'].wav_temp_url = ''.join(('/expression/', temp_url))
@@ -93,6 +93,108 @@ def get_result_for_test():
     except Exception as e:
         current_app.logger.error('get_result_for_test: %s' % traceback.format_exc())
         return jsonify(errors.exception({'Exception': str(e)}))
+
+
+@exam.route('/upload-success', methods=['POST'])
+def upload_success():
+    if not current_user.is_authenticated:  # todo: 进一步检查是否有做题权限
+        return jsonify(errors.Authorize_needed)
+    q_num = request.form.get("nowQuestionNum")
+    current_app.logger.info("upload_success: now_question_num: %s, user_name: %s" %
+                            (str(q_num), session.get("user_name", "NO USER")))
+
+    test_id = session.get("test_id")  # for production
+    # test_id = request.form.get("test_id")  # just for unittest
+
+    current_test = CurrentTestModel.objects(id=test_id).first()
+    if current_test is None:
+        current_app.logger.error("upload_success: CRITICAL: Test Not Exists!! - test_id: %s" % test_id)
+        return jsonify(errors.Exam_not_exist)
+
+    # print(current_test.id)  # the model has no field '_id', use .id instead
+    questions = current_test['questions']
+    # print(questions)
+
+    upload_url = questions[q_num]['wav_upload_url']
+    temp_url = questions[q_num]['wav_temp_url']
+    # print("[INFO] upload_success: upload_url: " + upload_url)
+    current_app.logger.info("upload_success: upload_url: " + upload_url)
+    # 处理音频
+    try:
+        # chdir should be 'expression-flask'
+        dir_name = os.path.dirname(temp_url)
+        if not os.path.exists(dir_name):
+            os.makedirs(dir_name)
+        shutil.copyfile(upload_url, temp_url)
+    except Exception as e:
+        current_app.logger.error(e)
+
+    # change question status to handling
+    q = current_test.questions[q_num]
+    q.status = 'handling'
+    q['analysis_start_time'] = datetime.datetime.utcnow()
+    current_test.save()
+
+    try:
+        if q.q_type == 3 or q.q_type == '3':
+            ret = analysis_main_3.apply_async(args=(str(current_test.id), str(q_num)), queue='for_q_type3', priority=10)
+            # todo: store ret.id in redis for status query
+        else:
+            ret = analysis_main_12.apply_async(args=(str(current_test.id), str(q_num)), queue='for_q_type12', priority=2)
+            # todo: store ret.id in redis for status query
+        current_app.logger.info("AsyncResult id: %s" % ret.id)
+    except Exception as e:
+        current_app.logger.error('upload_success_for_test: celery enqueue:\n%s' % traceback.format_exc())
+        return jsonify(errors.exception({'Exception': str(e)}))
+    resp = {"status": "Success", "desc": "添加任务成功，等待服务器处理", "dataID": current_test.id.__str__(), "taskID": ret.id}
+    return jsonify(errors.success(resp))
+
+
+@exam.route('/get-result', methods=['POST'])
+def get_result():
+    if not current_user.is_authenticated:
+        return jsonify(errors.Authorize_needed)
+    current_app.logger.info("get_result: user_name: " + session.get("user_name", "NO USER"))
+    current_test_id = session.get("test_id", DefaultValue.test_id)
+    test = CurrentTestModel.objects(id=current_test_id).first()
+    if test is None:
+        current_app.logger.error("upload_file ERROR: No Tests!, test_id: %s" % current_test_id)
+        return jsonify(errors.Exam_not_exist)
+    questions = test['questions']
+
+    score = {}
+    for i in range(ExamConfig.total_question_num, 0, -1):
+        if questions[str(i)]['status'] == 'finished':
+            score[i] = questions[str(i)]['score']
+        elif questions[str(i)]['status'] != 'none' and questions[str(i)]['status'] != 'url_fetched' and \
+                questions[str(i)]['status'] != 'handling':
+            return jsonify(errors.Process_audio_failed)
+        else:
+            break
+
+    if len(score) == len(questions):
+        # final score:
+        x = {
+            "quality": round(score[1]['quality'], 6),
+            "main": round(score[2]['main'] * 0.25 + score[3]['main'] * 0.25 + score[4]['main'] * 0.25 + score[5][
+                'main'] * 0.25, 6),
+            "detail": round(score[2]['detail'] * 0.25 + score[3]['detail'] * 0.25 + score[4]['detail'] * 0.25 +
+                            score[5]['detail'] * 0.25, 6),
+            "structure": round(score[6]['structure'], 6),
+            "logic": round(score[6]['logic'], 6)
+        }
+        x['total'] = round(x["quality"] * 0.3 + x["main"] * 0.35 + x["detail"] * 0.15
+                           + x["structure"] * 0.1 + x["logic"] * 0.1, 6)
+        data = {"音质": x['quality'], "结构": x['structure'], "逻辑": x['logic'],
+                "细节": x['detail'], "主旨": x['main']}
+        result = {"status": "Success", "totalScore": x['total'], "data": data}
+        return jsonify(errors.success(result))
+    else:
+        try_times = session.get("tryTimes", 0) + 1
+        session['tryTimes'] = try_times
+        # print("try times: " + str(try_times))
+        current_app.logger.info("try times: " + str(try_times))
+        return jsonify(errors.WIP)
 
 
 @exam.route('/next-question', methods=['POST'])

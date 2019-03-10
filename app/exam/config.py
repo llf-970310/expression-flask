@@ -27,3 +27,14 @@ class QuestionConfig(object):
         2: {"detail": "点击 “显示题目” 后，请先阅读屏幕上的文字。之后，请讲述段落大意及细节信息。", "tip": '约350字，阅读时间一分钟，讲述时间30秒。'},
         3: {"detail": "根据问题发表自己观点。", "tip": "准备1分钟 叙述2分钟"}
     }
+
+
+class DefaultValue(AppConfig):
+    user_id = 'user_id_placeholder'
+    user_name = 'default name'
+    question_id = 'question_id_placeholder'
+    question_content = 'Default content'
+    question_level = 1
+    question_type = 1
+    used_time = 0
+    test_id = "000000000000000000000000"

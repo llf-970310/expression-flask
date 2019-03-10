@@ -66,3 +66,5 @@ Register_not_allowed = {'code': 4305, 'msg': '当前不允许注册', 'needDispl
 
 Init_exam_failed = {'code': 5101, 'msg': '题目生成失败', 'needDisplay': True}
 Get_question_failed = {'code': 5102, 'msg': '获取题目失败', 'needDisplay': True}
+Process_audio_failed = {'code': 5103, 'msg': '获取题目失败', 'needDisplay': True}
+WIP = {'code': 5104, 'msg': '正在处理', "status": 'InProcess', 'needDisplay': True}
