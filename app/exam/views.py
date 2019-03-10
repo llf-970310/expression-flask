@@ -3,9 +3,9 @@
 #
 # Created by dylanchu on 19-2-25
 
-from . import exam, errors
+from . import exam
+from app import errors
 from .config import PathConfig
-from app.models.user import User
 from app.models.exam import *
 from flask import request, current_app, jsonify
 from celery_tasks import analysis_main_12, analysis_main_3

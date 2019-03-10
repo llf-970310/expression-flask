@@ -20,10 +20,12 @@ class Roles(object):
 
 
 class User(UserMixin, db.Document):
-    email = db.EmailField(max_length=128, required=True, unique=True)
-    password = db.StringField(max_length=128, required=True)
+    # email = db.EmailField(max_length=128, required=True, unique=True)  # todo: enable
+    # password = db.StringField(max_length=128, required=True)  # todo: enable
+    email = db.EmailField(max_length=128)
+    password = db.StringField(max_length=128)
     name = db.StringField(max_length=32, required=True)
-    role = db.StringField(max_length=32, required=True)
+    role = db.StringField(max_length=32, default=Roles.Default)
     register_time = db.DateTimeField(default=lambda: datetime.datetime.utcnow())
     last_login_time = db.DateTimeField(default=lambda: datetime.datetime.utcnow())
     questions_history = db.DictField(default={})  # {question_id: fetched_datetime, ...}

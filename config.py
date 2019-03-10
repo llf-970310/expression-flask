@@ -37,6 +37,8 @@ class BaseConfig(object):
         _MD5_TOOL.update((password + _MD5_SALT).encode())
         return _MD5_TOOL.hexdigest()
 
+    NOT_CHECK_LOGIN_PASSWORD = False
+
 
 class DevelopmentConfig(BaseConfig):
     WTF_CSRF_ENABLED = False  # 是否开启flask-wtf的csrf保护,默认是True,用postman提交表单测试需要设为False
@@ -54,3 +56,4 @@ class DevelopmentConfig(BaseConfig):
         'password': 'iselab###nju.cn',
         'connect': False  # False: connect when first connect instead of instantiated
     }
+    NOT_CHECK_LOGIN_PASSWORD = True
