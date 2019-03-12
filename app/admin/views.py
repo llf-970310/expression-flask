@@ -4,21 +4,12 @@
 # Created by dylanchu on 19-2-26
 
 from . import admin
-from flask_login import login_required, current_user
-import random
-
 from app.exam.util import *
 from app.models.user import UserModel
 from app import errors
 from app.models.exam import *
 from flask import request, current_app, jsonify, session
-from flask_login import current_user
-from celery_tasks import analysis_main_12, analysis_main_3
 import datetime
-import shutil
-import os
-import traceback
-
 
 @admin.route('/admin-login',methonds='POST')
 def admin_login():

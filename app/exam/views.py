@@ -2,7 +2,6 @@
 # coding: utf-8
 #
 # Created by dylanchu on 19-2-25
-import json
 import random
 
 from app.exam.util import *
