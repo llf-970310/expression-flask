@@ -63,8 +63,12 @@ User_not_exist = {'code': 4302, 'msg': '用户不存在', 'needDisplay': True}
 User_already_exist = {'code': 4303, 'msg': '用户已存在', 'needDisplay': True}
 Already_logged_in = {'code': 4304, 'msg': '用户已经登录', 'needDisplay': True}
 Register_not_allowed = {'code': 4305, 'msg': '当前不允许注册', 'needDisplay': True}
+Admin_status_login={'code':4306,'msg':'请以管理员身份登录','needDisplay':True}
+Student_id_short={'code':4037,'msg':'学号不能少于6位，不足6位请在前面加0补足！','needDisplay':True}
+Student_id_space={'code':4038,'msg':'学号中间不能有空格！','needDisplay':True}
 
 Init_exam_failed = {'code': 5101, 'msg': '题目生成失败', 'needDisplay': True}
 Get_question_failed = {'code': 5102, 'msg': '获取题目失败', 'needDisplay': True}
 Process_audio_failed = {'code': 5103, 'msg': '获取题目失败', 'needDisplay': True}
+Music_deal_failed={'code':5104,'msg':'音频处理出错','needDisplay': True}
 WIP = {'code': 5104, 'msg': '正在处理', "status": 'InProcess', 'needDisplay': True}

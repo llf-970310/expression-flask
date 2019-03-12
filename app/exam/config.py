@@ -2,6 +2,12 @@
 # coding: utf-8
 #
 # Created by dylanchu on 19-3-7
+import os
+
+
+class ApiConfig(object):
+    name = 'api'
+    backup_prefix = 'backup'
 
 
 class PathConfig(object):
@@ -29,7 +35,7 @@ class QuestionConfig(object):
     }
 
 
-class DefaultValue(AppConfig):
+class DefaultValue(object):
     user_id = 'user_id_placeholder'
     user_name = 'default name'
     question_id = 'question_id_placeholder'
@@ -38,3 +44,7 @@ class DefaultValue(AppConfig):
     question_type = 1
     used_time = 0
     test_id = "000000000000000000000000"
+
+class Setting(object):
+    BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    AUTO_REGISTER_IF_USER_NOT_EXISTS = False
