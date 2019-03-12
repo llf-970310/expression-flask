@@ -11,7 +11,7 @@ import datetime
 
 @login_manager.user_loader
 def load_user(user_id):
-    return User.objects(pk=user_id).first()
+    return UserModel.objects(pk=user_id).first()
 
 
 class Roles(object):
@@ -19,7 +19,7 @@ class Roles(object):
     Default = 'default'
 
 
-class User(UserMixin, db.Document):
+class UserModel(UserMixin, db.Document):
     # email = db.EmailField(max_length=128, required=True, unique=True)  # todo: enable
     # password = db.StringField(max_length=128, required=True)  # todo: enable
     email = db.EmailField(max_length=128)

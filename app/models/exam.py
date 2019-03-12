@@ -8,28 +8,6 @@ from mongoengine import *
 # 中文资料：https://segmentfault.com/a/1190000008025156#articleHeader8
 
 
-class UserModel(Document):
-    name = StringField(max_length=32)
-    student_id = StringField(max_length=32, unique=True)  # student_id should be unique
-    register_time = DateTimeField(default=lambda: datetime.datetime.utcnow())
-    last_login_time = DateTimeField(default=lambda: datetime.datetime.utcnow())
-    questions_history = DictField(default={})  # {question_id: fetched_datetime, ...}
-    password = StringField(max_length=32)
-
-    meta = {'collection': 'users'}
-
-    # wx_id = StringField()
-    # age = IntField(min_value=0)
-    # gender = StringField(max_length=8)
-    # job = StringField(max_length=32)
-    # last_test_id = StringField()
-
-    def __str__(self):
-        return "{id:%s,name:%s,student_id:%s,register_time:%s,last_login_time:%s}" % (
-            self.id, self.name.__str__(), self.student_id.__str__(),
-            self.register_time.__str__(), self.last_login_time.__str__())
-
-
 class QuestionModel(db.DynamicDocument):
     text = db.StringField(max_length=512)
     level = db.IntField(min_value=1, max_value=10)
