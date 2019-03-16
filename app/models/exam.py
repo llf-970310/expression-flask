@@ -14,6 +14,7 @@ class QuestionModel(db.DynamicDocument):
     q_type = db.IntField(min_value=1, max_value=3)  # type是留字，可能会有一些坑
     used_times = db.IntField(min_value=0, default=0)
     wordbase = db.DictField(default={})
+    file_location = db.StringField(max_length=32)
 
     meta = {'collection': 'questions'}
 

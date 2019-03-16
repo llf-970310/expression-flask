@@ -51,6 +51,7 @@ def upload_success_for_test():
     current_test.questions['1'].wav_upload_url = upload_url.lstrip('/expression')
     current_test.questions['1'].wav_temp_url = ''.join(('/expression/', temp_url))
     current_test.questions['1']['analysis_start_time'] = datetime.datetime.utcnow()
+    current_test.questions['1'].file_location = 'BOS'
     current_test.save()
 
     try:
