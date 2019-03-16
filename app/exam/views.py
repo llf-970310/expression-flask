@@ -14,46 +14,45 @@ from flask import request, current_app, jsonify, session
 from flask_login import current_user
 from celery_tasks import analysis_main_12, analysis_main_3
 import datetime
-import os
 import traceback
 
 
-@exam.route('/upload', methods=['POST'])
-def upload_file():
-    # get question number
-    question_num = request.form.get("nowQuestionNum")
-
-    # # 如果重复上传，直接返回
-    # if request.session.get("start_upload_" + str(question_num), False):
-    #     print("upload_file: REPEAT UPLOAD!!!!!: question_num: " + str(question_num))
-    #     return HttpResponse('{"status":"Success"}', content_type='application/json', charset='utf-8')
-    # # 在session中说明开始上传，防止同一题目重复上传
-    # request.session["start_upload_" + str(question_num)] = True
-
-    # get test
-    test_id = session.get("test_id")
-    tests = CurrentTestModel.objects(id=test_id)
-    if len(tests) == 0:
-        # print("[ERROR] upload_file ERROR: No Tests!, test_id: %s" % test_id)
-        current_app.logger.error("upload_file ERROR: No Tests!, test_id: %s" % test_id)
-        return jsonify(errors.Exam_not_exist)
-    test = tests[0]
-
-    # get question
-    question = test.questions[question_num]
-
-    # get file name and dir
-    file_dir = os.path.join(Setting.BASE_DIR, os.path.dirname(question.wav_upload_url))
-    file_name = os.path.basename(question.wav_upload_url)
-
-    video = request.form.get("video")
-    # print("[INFO] upload file start: dir: " + file_dir + ", name: " + file_name)
-    current_app.logger.info("upload file start: dir: " + file_dir + ", name: " + file_name)
-    save_file_to_path(video, file_name, file_dir)
-    # print("[INFO] upload file end: dir: " + file_dir + ", name: " + file_name)
-    current_app.logger.info("upload file end: dir: " + file_dir + ", name: " + file_name)
-    resp = {"status": "Success"}
-    return jsonify(errors.success(resp))
+# @exam.route('/upload', methods=['POST'])
+# def upload_file():
+#     # get question number
+#     question_num = request.form.get("nowQuestionNum")
+#
+#     # # 如果重复上传，直接返回
+#     # if request.session.get("start_upload_" + str(question_num), False):
+#     #     print("upload_file: REPEAT UPLOAD!!!!!: question_num: " + str(question_num))
+#     #     return HttpResponse('{"status":"Success"}', content_type='application/json', charset='utf-8')
+#     # # 在session中说明开始上传，防止同一题目重复上传
+#     # request.session["start_upload_" + str(question_num)] = True
+#
+#     # get test
+#     test_id = session.get("test_id")
+#     tests = CurrentTestModel.objects(id=test_id)
+#     if len(tests) == 0:
+#         # print("[ERROR] upload_file ERROR: No Tests!, test_id: %s" % test_id)
+#         current_app.logger.error("upload_file ERROR: No Tests!, test_id: %s" % test_id)
+#         return jsonify(errors.Exam_not_exist)
+#     test = tests[0]
+#
+#     # get question
+#     question = test.questions[question_num]
+#
+#     # get file name and dir
+#     file_dir = os.path.join(Setting.BASE_DIR, os.path.dirname(question.wav_upload_url))
+#     file_name = os.path.basename(question.wav_upload_url)
+#
+#     video = request.form.get("video")
+#     # print("[INFO] upload file start: dir: " + file_dir + ", name: " + file_name)
+#     current_app.logger.info("upload file start: dir: " + file_dir + ", name: " + file_name)
+#     save_file_to_path(video, file_name, file_dir)
+#     # print("[INFO] upload file end: dir: " + file_dir + ", name: " + file_name)
+#     current_app.logger.info("upload file end: dir: " + file_dir + ", name: " + file_name)
+#     resp = {"status": "Success"}
+#     return jsonify(errors.success(resp))
 
 
 @exam.route('/get-upload-url', methods=['POST'])
