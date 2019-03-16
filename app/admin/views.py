@@ -11,13 +11,14 @@ from app.models.exam import *
 from flask import request, current_app, jsonify, session
 import datetime
 
-@admin.route('/admin-login',methonds='POST')
+
+@admin.route('/admin-login', methods='POST')
 def admin_login():
     user_name = request.form.get("adminName")
     password = request.form.get("adminPassword")
     users = UserModel.objects(Q(student_id=user_name) & Q(password=password))
     if len(users) == 0:
-        msg={"needDisplay": True, "tip": "用户名或密码错误"}
+        msg = {"needDisplay": True, "tip": "用户名或密码错误"}
         return jsonify(errors.error(msg))
     user = users[0]
     user.last_login_time = datetime.datetime.utcnow()
@@ -35,19 +36,19 @@ def admin_login():
     return jsonify(errors.success(resp))
 
 
-@admin.route('/admin-get-question',methods='POST')
+@admin.route('/admin-get-question', methods='POST')
 def admin_get_question():
     if not session.get("admin_login"):
-        resp={"needDisplay": True, "tip": "请以管理员身份登陆"}
+        resp = {"needDisplay": True, "tip": "请以管理员身份登陆"}
         return jsonify(errors.error(resp))
     question_id = int(request.form.get("questionId"))
     questions = QuestionModel.objects(q_id=question_id)
     if len(questions) == 0:
-        resp={"needDisplay": True, "tip": "没有此题号"}
+        resp = {"needDisplay": True, "tip": "没有此题号"}
         return jsonify(errors.error(resp))
     question = questions[0]
     if question["q_type"] != 2:
-        resp={"needDisplay": True, "tip": "暂时只支持题型2"}
+        resp = {"needDisplay": True, "tip": "暂时只支持题型2"}
         return jsonify(errors.error(resp))
 
     # 生成测试
@@ -76,7 +77,7 @@ def admin_get_question():
     return jsonify(errors.success(json.dumps(context)))
 
 
-@admin.route('/admin-get-result',methos='POST')
+@admin.route('/admin-get-result', methos='POST')
 def admin_get_result():
     if not session.get("admin_login"):
         return jsonify(errors.Admin_status_login)
@@ -120,7 +121,7 @@ def admin_get_result():
     return jsonify(errors.success(result))
 
 
-@admin.route('/admin-get-result-stub',methods='POST')
+@admin.route('/admin-get-result-stub', methods='POST')
 def admin_get_result_stub():
     if not session.get("admin_login"):
         return jsonify(errors.Admin_status_login)
