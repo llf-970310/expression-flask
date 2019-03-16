@@ -89,6 +89,7 @@ def get_upload_url():
         _temp_str = "%sr%s" % (int(time.time()), random.randint(100, 1000))
         file_name = "%s%s" % (_temp_str, PathConfig.audio_extension)
         question.wav_upload_url = file_dir + '/' + file_name
+        question.file_location = 'BOS'
         current_test.save()
         current_app.logger.info("get_upload_url:newly assigned: %s" % question.wav_upload_url)
 
