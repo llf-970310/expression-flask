@@ -12,7 +12,7 @@ from flask import request, current_app, jsonify, session
 import datetime
 
 
-@admin.route('/admin-login', methods='POST')
+@admin.route('/admin-login', methods=['POST'])
 def admin_login():
     user_name = request.form.get("adminName")
     password = request.form.get("adminPassword")
@@ -36,7 +36,7 @@ def admin_login():
     return jsonify(errors.success(resp))
 
 
-@admin.route('/admin-get-question', methods='POST')
+@admin.route('/admin-get-question', methods=['POST'])
 def admin_get_question():
     if not session.get("admin_login"):
         resp = {"needDisplay": True, "tip": "请以管理员身份登陆"}
@@ -77,7 +77,7 @@ def admin_get_question():
     return jsonify(errors.success(json.dumps(context)))
 
 
-@admin.route('/admin-get-result', methos='POST')
+@admin.route('/admin-get-result', methos=['POST'])
 def admin_get_result():
     if not session.get("admin_login"):
         return jsonify(errors.Admin_status_login)
@@ -121,7 +121,7 @@ def admin_get_result():
     return jsonify(errors.success(result))
 
 
-@admin.route('/admin-get-result-stub', methods='POST')
+@admin.route('/admin-get-result-stub', methods=['POST'])
 def admin_get_result_stub():
     if not session.get("admin_login"):
         return jsonify(errors.Admin_status_login)
