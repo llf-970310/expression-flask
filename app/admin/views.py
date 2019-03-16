@@ -77,7 +77,7 @@ def admin_get_question():
     return jsonify(errors.success(json.dumps(context)))
 
 
-@admin.route('/admin-get-result', methos=['POST'])
+@admin.route('/admin-get-result', methods=['POST'])
 def admin_get_result():
     if not session.get("admin_login"):
         return jsonify(errors.Admin_status_login)
