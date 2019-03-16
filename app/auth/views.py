@@ -9,7 +9,7 @@ from flask_login import login_user, logout_user, current_user
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField
 from wtforms.validators import DataRequired
-from app.models.user import User
+from app.models.user import UserModel
 
 from . import auth
 from app import errors
@@ -39,9 +39,9 @@ def register():
         # todo: validate email format
         return jsonify(errors.Params_error)
 
-    existing_user = User.objects(email=email).first()
+    existing_user = UserModel.objects(email=email).first()
     if existing_user is None:
-        new_user = User()
+        new_user = UserModel()
         new_user.email = email.lower()
         new_user.password = current_app.md5_hash(password)
         new_user.name = name
@@ -69,7 +69,7 @@ def login():
 
     current_app.logger.info('login student_name: %s, student_id: %s' % (str(name), str(student_id)))
 
-    check_user = User.objects(student_id=student_id).first()  # todo: student_id should be migrated
+    check_user = UserModel.objects(student_id=student_id).first()  # todo: student_id should be migrated
     if check_user:
         if check_user['password'] == current_app.md5_hash(password) or current_app.config['NOT_CHECK_LOGIN_PASSWORD']:
             login_user(check_user)

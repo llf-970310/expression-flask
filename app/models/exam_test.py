@@ -4,7 +4,7 @@
 # Created by dylanchu on 19-3-7
 
 from app.models.exam import *
-from app.models.user import User as UserModel
+from app.models.user import UserModel
 
 if __name__ == '__main__':
     import time
