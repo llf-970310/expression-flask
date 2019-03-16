@@ -93,7 +93,7 @@ def get_upload_url():
         current_test.save()
         current_app.logger.info("get_upload_url:newly assigned: %s" % question.wav_upload_url)
 
-    context = json.dumps({"fileLocation": "BOS", "url": "/api/upload/%s" % question.wav_upload_url})
+    context = {"fileLocation": "BOS", "url": question.wav_upload_url}
     current_app.logger.info("get_upload_url: url: " + question.wav_upload_url)
     return jsonify(errors.success(context))
 
