@@ -5,16 +5,11 @@
 
 from . import exam
 from app import errors
-from .config import PathConfig
 from app.models.exam import *
 from flask import request, current_app, jsonify
 from celery_tasks import analysis_main_12, analysis_main_3
 import datetime
-import shutil
-import os
 import traceback
-import random
-import time
 
 
 @exam.route('/upload-success-for-test', methods=['POST'])
@@ -23,8 +18,6 @@ def upload_success_for_test():
     q_type = int(request.form.get("questionType"))
     if not upload_url or not q_type:
         return jsonify(errors.Params_error)
-    _temp_folder = "%sr%s" % (time.time(), random.randint(100, 1000))
-    temp_url = '/'.join((PathConfig.audio_copy_temp_basedir, "batch_test", _temp_folder, os.path.basename(upload_url)))
 
     current_app.logger.info("upload_success_for_test: upload_url: " + upload_url)
 
@@ -32,24 +25,13 @@ def upload_success_for_test():
     current_test = CurrentTestModel()
     current_test.test_start_time = datetime.datetime.utcnow()
     q = QuestionModel.objects(q_type=q_type).order_by('used_times')[0]
-    q_current = CurrentQuestionEmbed(q_id=q.id.__str__(), q_type=q.q_type, q_text=q.text, wav_upload_url='',
-                                     wav_temp_url='')
+    q_current = CurrentQuestionEmbed(q_id=q.id.__str__(), q_type=q.q_type, q_text=q.text, wav_upload_url='')
     current_test.questions = {"1": q_current}
     current_test.save()
-
-    try:
-        # chdir should be 'expression-flask'
-        dir_name = os.path.dirname(temp_url)
-        if not os.path.exists(dir_name):
-            os.makedirs(dir_name)
-        shutil.copyfile(upload_url, temp_url)
-    except Exception as e:
-        current_app.logger.error(e)
 
     # change question status to handling
     current_test.questions['1'].status = 'handling'
     current_test.questions['1'].wav_upload_url = upload_url.lstrip('/expression')
-    current_test.questions['1'].wav_temp_url = ''.join(('/expression/', temp_url))
     current_test.questions['1']['analysis_start_time'] = datetime.datetime.utcnow()
     current_test.questions['1'].file_location = 'BOS'
     current_test.save()
@@ -92,5 +74,3 @@ def get_result_for_test():
     except Exception as e:
         current_app.logger.error('get_result_for_test: %s' % traceback.format_exc())
         return jsonify(errors.exception({'Exception': str(e)}))
-
-
