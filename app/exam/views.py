@@ -213,7 +213,7 @@ def next_question():
     # 如果超出最大题号，如用户多次刷新界面，则重定向到结果页面
     if next_question_num > ExamConfig.total_question_num:
         session["question_num"] = 0
-        return jsonify(errors.redirect('/usr/result'))
+        return jsonify(errors.Exam_finished)
 
     # 根据题号查找题目
     context = question_dealer(next_question_num, session["test_id"], session["user_id"])
