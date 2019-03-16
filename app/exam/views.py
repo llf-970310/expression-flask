@@ -31,12 +31,11 @@ import traceback
 #
 #     # get test
 #     test_id = session.get("test_id")
-#     tests = CurrentTestModel.objects(id=test_id)
-#     if len(tests) == 0:
+#     test = CurrentTestModel.objects(id=test_id).first()
+#     if test is None:
 #         # print("[ERROR] upload_file ERROR: No Tests!, test_id: %s" % test_id)
 #         current_app.logger.error("upload_file ERROR: No Tests!, test_id: %s" % test_id)
 #         return jsonify(errors.Exam_not_exist)
-#     test = tests[0]
 #
 #     # get question
 #     question = test.questions[question_num]
@@ -61,12 +60,11 @@ def get_upload_url():
     question_num = int(request.form.get("nowQuestionNum"))
     # get test
     test_id = session.get("test_id", DefaultValue.test_id)
-    tests = CurrentTestModel.objects(id=test_id)
-    if len(tests) == 0:
+    current_test = CurrentTestModel.objects(id=test_id).first()
+    if current_test is None:
         # print("[ERROR] get_upload_url ERROR: No Tests!, test_id: %s" % test_id)
         current_app.logger.error("get_upload_url ERROR: No Tests!, test_id: %s" % test_id)
         return jsonify(errors.Exam_not_exist)
-    current_test = tests[0]
 
     # get question
     user_id = session.get("user_id")
