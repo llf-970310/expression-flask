@@ -33,7 +33,9 @@ def create_app():
     from .exam import exam as exam_blueprint
     app.register_blueprint(exam_blueprint, url_prefix='/api/exam')
     from .admin import admin as admin_blueprint
-    app.register_blueprint(admin_blueprint, url_prefix='/admin')
+    app.register_blueprint(admin_blueprint, url_prefix='/api/admin')
+    from .accounts import accounts as accounts_blueprint
+    app.register_blueprint(accounts_blueprint, url_prefix='/api/accounts')
 
     app.md5_hash = app.config['MD5_HASH']
 
