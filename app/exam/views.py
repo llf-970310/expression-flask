@@ -102,7 +102,7 @@ def get_upload_url():
 
     # print("[INFO] get_upload_url: url: " + question.wav_upload_url)
     current_app.logger.info("get_upload_url: url: " + question.wav_upload_url)
-    return jsonify(errors.success(context))
+    return jsonify(errors.success())
 
 
 @exam.route('/upload-success', methods=['POST'])
