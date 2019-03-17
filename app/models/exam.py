@@ -27,8 +27,8 @@ class CurrentQuestionEmbed(db.EmbeddedDocument):
     q_id = db.StringField(max_length=32)
     q_type = db.IntField(min_value=1, max_value=3)
     q_text = db.StringField(max_length=512)
+    file_location = db.StringField(max_length=32)
     wav_upload_url = db.StringField(max_length=256)
-    wav_temp_url = db.StringField(max_length=256)
     status = db.StringField(max_length=32,
                             default="none")  # "none|url_fetched|handling|finished",finished 由docker设置
     analysis_start_time = db.DateTimeField()

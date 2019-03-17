@@ -114,7 +114,7 @@ def admin_get_result():
                    }
         result = json.dumps({"status": "Success", "result": context})
     elif question['status'] not in ['none', 'url_fetched', 'handling']:
-        return jsonify(errors.Music_deal_failed)
+        return jsonify(errors.Audio_process_failed)
     else:
         result = json.dumps({"status": "InProcess"})
 

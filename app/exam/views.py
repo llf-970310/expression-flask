@@ -14,47 +14,44 @@ from flask import request, current_app, jsonify, session
 from flask_login import current_user
 from celery_tasks import analysis_main_12, analysis_main_3
 import datetime
-import shutil
-import os
 import traceback
 
 
-@exam.route('/upload', methods=['POST'])
-def upload_file():
-    # get question number
-    question_num = request.form.get("nowQuestionNum")
-
-    # # 如果重复上传，直接返回
-    # if request.session.get("start_upload_" + str(question_num), False):
-    #     print("upload_file: REPEAT UPLOAD!!!!!: question_num: " + str(question_num))
-    #     return HttpResponse('{"status":"Success"}', content_type='application/json', charset='utf-8')
-    # # 在session中说明开始上传，防止同一题目重复上传
-    # request.session["start_upload_" + str(question_num)] = True
-
-    # get test
-    test_id = session.get("test_id")
-    tests = CurrentTestModel.objects(id=test_id)
-    if len(tests) == 0:
-        # print("[ERROR] upload_file ERROR: No Tests!, test_id: %s" % test_id)
-        current_app.logger.error("upload_file ERROR: No Tests!, test_id: %s" % test_id)
-        return jsonify(errors.Exam_not_exist)
-    test = tests[0]
-
-    # get question
-    question = test.questions[question_num]
-
-    # get file name and dir
-    file_dir = os.path.join(Setting.BASE_DIR, os.path.dirname(question.wav_upload_url))
-    file_name = os.path.basename(question.wav_upload_url)
-
-    video = request.form.get("video")
-    # print("[INFO] upload file start: dir: " + file_dir + ", name: " + file_name)
-    current_app.logger.info("upload file start: dir: " + file_dir + ", name: " + file_name)
-    save_file_to_path(video, file_name, file_dir)
-    # print("[INFO] upload file end: dir: " + file_dir + ", name: " + file_name)
-    current_app.logger.info("upload file end: dir: " + file_dir + ", name: " + file_name)
-    resp={"status":"Success"}
-    return jsonify(errors.success(resp))
+# @exam.route('/upload', methods=['POST'])
+# def upload_file():
+#     # get question number
+#     question_num = request.form.get("nowQuestionNum")
+#
+#     # # 如果重复上传，直接返回
+#     # if request.session.get("start_upload_" + str(question_num), False):
+#     #     print("upload_file: REPEAT UPLOAD!!!!!: question_num: " + str(question_num))
+#     #     return HttpResponse('{"status":"Success"}', content_type='application/json', charset='utf-8')
+#     # # 在session中说明开始上传，防止同一题目重复上传
+#     # request.session["start_upload_" + str(question_num)] = True
+#
+#     # get test
+#     test_id = session.get("test_id")
+#     test = CurrentTestModel.objects(id=test_id).first()
+#     if test is None:
+#         # print("[ERROR] upload_file ERROR: No Tests!, test_id: %s" % test_id)
+#         current_app.logger.error("upload_file ERROR: No Tests!, test_id: %s" % test_id)
+#         return jsonify(errors.Exam_not_exist)
+#
+#     # get question
+#     question = test.questions[question_num]
+#
+#     # get file name and dir
+#     file_dir = os.path.join(Setting.BASE_DIR, os.path.dirname(question.wav_upload_url))
+#     file_name = os.path.basename(question.wav_upload_url)
+#
+#     video = request.form.get("video")
+#     # print("[INFO] upload file start: dir: " + file_dir + ", name: " + file_name)
+#     current_app.logger.info("upload file start: dir: " + file_dir + ", name: " + file_name)
+#     save_file_to_path(video, file_name, file_dir)
+#     # print("[INFO] upload file end: dir: " + file_dir + ", name: " + file_name)
+#     current_app.logger.info("upload file end: dir: " + file_dir + ", name: " + file_name)
+#     resp = {"status": "Success"}
+#     return jsonify(errors.success(resp))
 
 
 @exam.route('/get-upload-url', methods=['POST'])
@@ -63,12 +60,11 @@ def get_upload_url():
     question_num = int(request.form.get("nowQuestionNum"))
     # get test
     test_id = session.get("test_id", DefaultValue.test_id)
-    tests = CurrentTestModel.objects(id=test_id)
-    if len(tests) == 0:
+    current_test = CurrentTestModel.objects(id=test_id).first()
+    if current_test is None:
         # print("[ERROR] get_upload_url ERROR: No Tests!, test_id: %s" % test_id)
         current_app.logger.error("get_upload_url ERROR: No Tests!, test_id: %s" % test_id)
         return jsonify(errors.Exam_not_exist)
-    current_test = tests[0]
 
     # get question
     user_id = session.get("user_id")
@@ -84,23 +80,18 @@ def get_upload_url():
     temp path for copy: 相对目录(temp_audio)/用户id/文件名(同上)
     """
 
-    # 如果数据库里已经有这题的url，说明是重复请求，就不用再创建url了
-    if question.wav_temp_url != '' and question.wav_upload_url != '':
-        # print("[INFO] get_upload_url: url REPEAT: " + question.wav_upload_url)
-        current_app.logger.info("get_upload_url: url REPEAT: " + question.wav_upload_url)
-        result=json.dumps({"url": "/api/upload"})
-        return jsonify(errors.success(result))
-    # 否则，创建url，存数据库 ，然后返回
-    file_dir = '/'.join((PathConfig.audio_save_basedir, get_date_str('-'), user_id))
-    _temp_fn = "%sr%s" % (int(time.time()), random.randint(100, 1000))  # todo: still need to modify for batch submit
-    file_name = "%s%s" % (_temp_fn, PathConfig.audio_extension)
-    question.wav_upload_url = file_dir + '/' + file_name
-    context = json.dumps({"url": "/api/upload"})
+    # 如果数据库没有该题的url，创建url，存数据库 ，然后返回
+    # 如果数据库里已经有这题的url，说明是重复请求，不用再创建
+    if not question.wav_upload_url:
+        file_dir = '/'.join((PathConfig.audio_save_basedir, get_date_str('-'), user_id))
+        _temp_str = "%sr%s" % (int(time.time()), random.randint(100, 1000))
+        file_name = "%s%s" % (_temp_str, PathConfig.audio_extension)
+        question.wav_upload_url = file_dir + '/' + file_name
+        question.file_location = 'BOS'
+        current_test.save()
+        current_app.logger.info("get_upload_url:newly assigned: %s" % question.wav_upload_url)
 
-    question.wav_temp_url = '/'.join((PathConfig.audio_copy_temp_basedir, user_id, file_name))
-    current_test.save()
-
-    # print("[INFO] get_upload_url: url: " + question.wav_upload_url)
+    context = {"fileLocation": "BOS", "url": question.wav_upload_url}
     current_app.logger.info("get_upload_url: url: " + question.wav_upload_url)
     return jsonify(errors.success())
 
@@ -126,18 +117,8 @@ def upload_success():
     # print(questions)
 
     upload_url = questions[q_num]['wav_upload_url']
-    temp_url = questions[q_num]['wav_temp_url']
     # print("[INFO] upload_success: upload_url: " + upload_url)
     current_app.logger.info("upload_success: upload_url: " + upload_url)
-    # 处理音频
-    try:
-        # chdir should be 'expression-flask'
-        dir_name = os.path.dirname(temp_url)
-        if not os.path.exists(dir_name):
-            os.makedirs(dir_name)
-        shutil.copyfile(upload_url, temp_url)
-    except Exception as e:
-        current_app.logger.error(e)
 
     # change question status to handling
     q = current_test.questions[q_num]
@@ -209,12 +190,12 @@ def get_result():
 
 @exam.route('/next-question', methods=['POST'])
 def next_question():
-    if not current_user.is_authenticated:  # todo: 进一步检查是否有做题权限
+    if not current_user.is_authenticated:
         return jsonify(errors.Authorize_needed)
     # 关闭浏览器时session过期
     # session.set_expiry(0)
     # init question
-    if session.get("new_test"):
+    if session.get("new_test"):  # todo: 此处进一步检查是否有做题权限
         # 生成当前题目
         test_id = init_question(session["user_id"])
         if not test_id:
@@ -230,7 +211,7 @@ def next_question():
     # 如果超出最大题号，如用户多次刷新界面，则重定向到结果页面
     if next_question_num > ExamConfig.total_question_num:
         session["question_num"] = 0
-        return jsonify(errors.redirect('/usr/result'))
+        return jsonify(errors.Exam_finished)
 
     # 根据题号查找题目
     context = question_dealer(next_question_num, session["test_id"], session["user_id"])
@@ -286,8 +267,7 @@ def init_question(user_id):
 
     for i in range(len(temp_all_q_lst)):
         q = temp_all_q_lst[i]
-        q_current = CurrentQuestionEmbed(q_id=q.id.__str__(), q_type=q.q_type, q_text=q.text, wav_upload_url='',
-                                         wav_temp_url='')
+        q_current = CurrentQuestionEmbed(q_id=q.id.__str__(), q_type=q.q_type, q_text=q.text, wav_upload_url='')
         current_test.questions.update({str(i + 1): q_current})
         q.update(inc__used_times=1)  # update
 
@@ -327,6 +307,3 @@ def question_dealer(question_num, test_id, user_id):
     user.save()
 
     return context
-
-
-
