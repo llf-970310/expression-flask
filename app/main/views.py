@@ -30,7 +30,7 @@ def welcome():
     return render_template('user/welcome.html', user_name=session.get("user_name"), max_question_num=6, answer_time=10)
 
 
-@main.route('/question')
+@main.route('/question', methods=['GET', 'POST'])
 def get_question():
     if session.get("user_name", '') == '':
         return redirect("/")

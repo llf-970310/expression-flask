@@ -97,7 +97,7 @@ function displayChart() {
 
 
 function returnIndex() {
-    window.location.href = "/user";
+    window.location.href = "/";
 }
 
 function logout() {
