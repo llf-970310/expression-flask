@@ -12,28 +12,28 @@ from flask import request, current_app, jsonify, session
 import datetime
 
 
-@admin.route('/admin-login', methods=['POST'])
-def admin_login():
-    user_name = request.form.get("adminName")
-    password = request.form.get("adminPassword")
-    users = UserModel.objects(Q(student_id=user_name) & Q(password=password))
-    if len(users) == 0:
-        msg = {"needDisplay": True, "tip": "用户名或密码错误"}
-        return jsonify(errors.error(msg))
-    user = users[0]
-    user.last_login_time = datetime.datetime.utcnow()
-    # 设置session
-    session["user_name"] = user_name
-    session["student_id"] = user_name
-    session["question_num"] = 0
-    session["new_test"] = True
-    session["user_id"] = user.id.__str__()
-    session["test_id"] = DefaultValue.test_id
-    session["admin_login"] = True
-    current_app.logger.info("[INFO] admin login, name: %s, password: %s." % (user_name, password))
-    # print("[INFO] admin login, name: %s, password: %s." % (user_name, password))
-    resp = {"status": "Success"}
-    return jsonify(errors.success(resp))
+# @admin.route('/admin-login', methods=['POST'])
+# def admin_login():
+#     user_name = request.form.get("adminName")
+#     password = request.form.get("adminPassword")
+#     users = UserModel.objects(Q(student_id=user_name) & Q(password=password))
+#     if len(users) == 0:
+#         msg = {"needDisplay": True, "tip": "用户名或密码错误"}
+#         return jsonify(errors.error(msg))
+#     user = users[0]
+#     user.last_login_time = datetime.datetime.utcnow()
+#     # 设置session
+#     session["user_name"] = user_name
+#     session["student_id"] = user_name
+#     session["question_num"] = 0
+#     session["new_test"] = True
+#     session["user_id"] = user.id.__str__()
+#     session["test_id"] = DefaultValue.test_id
+#     session["admin_login"] = True
+#     current_app.logger.info("[INFO] admin login, name: %s, password: %s." % (user_name, password))
+#     # print("[INFO] admin login, name: %s, password: %s." % (user_name, password))
+#     resp = {"status": "Success"}
+#     return jsonify(errors.success(resp))
 
 
 @admin.route('/admin-get-question', methods=['POST'])

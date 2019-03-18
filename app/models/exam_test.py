@@ -50,10 +50,10 @@ if __name__ == '__main__':
 
     # ---------------------------example:add(complicate)-------------------------------------------
     current_test = CurrentTestModel()
-    users = UserModel.objects(student_id="MF1832144")
-    current_test.user_id = users[0].id.__str__()
-    current_test.test_start_time = datetime.datetime.strptime('2018-11-11 00:08:00', '%Y-%m-%d %H:%M:%S')
-    current_test.paper_type = [1, 1, 0]
+    # users = UserModel.objects(student_id="MF1832144")
+    # current_test.user_id = users[0].id.__str__()
+    # current_test.test_start_time = datetime.datetime.strptime('2018-11-11 00:08:00', '%Y-%m-%d %H:%M:%S')
+    # current_test.paper_type = [1, 1, 0]
     # current_test.current_q_num = 1 这个是默认的，生成的时候不用写
     # current_test.total_score=0.0这个是默认的，生成的时候不用写
     q1 = QuestionModel.objects[0]

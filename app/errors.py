@@ -66,6 +66,7 @@ Register_not_allowed = {'code': 4305, 'msg': '当前不允许注册', 'needDispl
 Admin_status_login = {'code': 4306, 'msg': '请以管理员身份登录', 'needDisplay': True}
 Student_id_short = {'code': 4037, 'msg': '学号不能少于6位，不足6位请在前面加0补足！', 'needDisplay': True}
 Student_id_space = {'code': 4038, 'msg': '学号中间不能有空格！', 'needDisplay': True}
+Illegal_invitation_code = {'code': 4039, 'msg': '无效的邀请码'}
 
 Exam_finished = {'code': 5100, 'msg': '测试已完成', 'needDisplay': True}
 Init_exam_failed = {'code': 5101, 'msg': '题目生成失败', 'needDisplay': True}
