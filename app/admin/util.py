@@ -14,6 +14,7 @@ def generate_code(length=4):
     return s
 
 
+# 标准时间戳，秒为单位
 def timestamp2datetime(stamp):
     import datetime
     return datetime.datetime.utcfromtimestamp(stamp)

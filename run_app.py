@@ -4,10 +4,11 @@
 # Created by dylanchu on 19-2-22
 
 from app import create_app
+import logging
 
 app = create_app()
 
 if __name__ == '__main__':
-    # handler = logging.FileHandler('flask.log')
-    # app.logger.addHandler(handler)
+    handler = logging.FileHandler('flask.log')
+    app.logger.addHandler(handler)
     app.run()

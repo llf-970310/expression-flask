@@ -1,0 +1,73 @@
+login request: ImmutableMultiDict([])
+login request: ImmutableMultiDict([('email', 'admin@site.com'), ('pwd', '1234')])
+login request: ImmutableMultiDict([('email', 'admin@site.com'), ('pwd', '1234')])
+login request: ImmutableMultiDict([('email', 'admin@site.com'), ('pwd', '1234')])
+login user: 管理员1, id: 5c8facc6cb0836251d293b9b
+login request: ImmutableMultiDict([('email', 'admin@site.com'), ('pwd', '12345')])
+login user: 管理员1, id: 5c8facc6cb0836251d293b9b
+login request: ImmutableMultiDict([('email', 'admin@site.com'), ('pwd', '12345')])
+login request: ImmutableMultiDict([('email', 'admin@site.com'), ('pwd', '12345')])
+login user: 管理员1, id: 5c8facc6cb0836251d293b9b
+logout request: ImmutableMultiDict([])
+user(id:5c8facc6cb0836251d293b9b) logout
+login request: ImmutableMultiDict([('email', 'admin@site.com'), ('pwd', '12345')])
+logout request: ImmutableMultiDict([])
+login request: ImmutableMultiDict([('email', 'admin@site.com'), ('pwd', '12345')])
+login request: ImmutableMultiDict([('email', 'admin@site.com'), ('pwd', '1234')])
+login user: 管理员1, id: 5c8facc6cb0836251d293b9b
+logout request: ImmutableMultiDict([])
+user(id:5c8facc6cb0836251d293b9b) logout
+login request: ImmutableMultiDict([('email', 'aaa@site.com'), ('pwd', '1234')])
+login user: 张三, id: 5c8facc6cb0836251d293b9c
+register request: ImmutableMultiDict([('email', 'aaa@site.com'), ('pwd', '12345678'), ('name', '汤大业'), ('code', 'vzly64lz8dq2rcqd')])
+logout request: ImmutableMultiDict([])
+user(id:5c8facc6cb0836251d293b9c) logout
+register request: ImmutableMultiDict([('email', 'aaa@site.com'), ('pwd', '12345678'), ('name', '汤大业'), ('code', 'vzly64lz8dq2rcqd')])
+register request: ImmutableMultiDict([('email', 'aaa'), ('pwd', '12345678'), ('name', '汤大业'), ('code', 'vzly64lz8dq2rcqd')])
+register request: ImmutableMultiDict([('email', 'tangdaye@site.com'), ('pwd', '12345678'), ('name', '汤大业'), ('code', 'vzly64lz8dq2rcqd2')])
+register request: ImmutableMultiDict([('email', 'tangdaye@site.com'), ('pwd', '12345678'), ('name', '汤大业'), ('code', 'vzly64lz8dq2rcqd')])
+user info: {id:None,name:汤大业,register_time:2019-03-19 11:59:07.249789,last_login_time:2019-03-19 11:59:07.249743}
+user(id = 5c90d98bcb0836060c020041) has been saved
+invitation info: code:vzly64lz8dq2rcqd
+creator:管理员1
+vip_start_time:2019-03-19 06:58:37
+vip_end_time:2019-03-19 07:15:17
+remaining_exam_num:3
+activate_users:['汤大业']
+invitation(id = 5c9093dfcb0836034f04bf31) has been saved
+register request: ImmutableMultiDict([('email', 'chudongyu@site.com'), ('pwd', '12345678'), ('name', '汤大业'), ('code', 'vzly64lz8dq2rcqd')])
+logout request: ImmutableMultiDict([])
+user(id:5c90d98bcb0836060c020041) logout
+register request: ImmutableMultiDict([('email', 'chudongyu@site.com'), ('pwd', '12345678'), ('name', '汤大业'), ('code', 'vzly64lz8dq2rcqd')])
+user info: {id:None,name:汤大业,register_time:2019-03-19 11:59:43.071140,last_login_time:2019-03-19 11:59:43.071107}
+user(id = 5c90d9afcb0836060c020042) has been saved
+invitation info: code:vzly64lz8dq2rcqd
+creator:管理员1
+vip_start_time:2019-03-19 06:58:37
+vip_end_time:2019-03-19 07:15:17
+remaining_exam_num:3
+activate_users:['汤大业', '汤大业']
+Exception on /api/auth/register [POST]
+Traceback (most recent call last):
+  File "/Users/tangdaye/.local/share/virtualenvs/expression-flask-w4lHFcLB/lib/python3.7/site-packages/flask/app.py", line 2292, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/Users/tangdaye/.local/share/virtualenvs/expression-flask-w4lHFcLB/lib/python3.7/site-packages/flask/app.py", line 1815, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "/Users/tangdaye/.local/share/virtualenvs/expression-flask-w4lHFcLB/lib/python3.7/site-packages/flask/app.py", line 1718, in handle_user_exception
+    reraise(exc_type, exc_value, tb)
+  File "/Users/tangdaye/.local/share/virtualenvs/expression-flask-w4lHFcLB/lib/python3.7/site-packages/flask/_compat.py", line 35, in reraise
+    raise value
+  File "/Users/tangdaye/.local/share/virtualenvs/expression-flask-w4lHFcLB/lib/python3.7/site-packages/flask/app.py", line 1813, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "/Users/tangdaye/.local/share/virtualenvs/expression-flask-w4lHFcLB/lib/python3.7/site-packages/flask/app.py", line 1799, in dispatch_request
+    return self.view_functions[rule.endpoint](**req.view_args)
+  File "/Users/tangdaye/git-project/expression-flask/app/auth/views.py", line 62, in register
+    existing_invitation.save()
+  File "/Users/tangdaye/.local/share/virtualenvs/expression-flask-w4lHFcLB/lib/python3.7/site-packages/mongoengine/document.py", line 362, in save
+    self.validate(clean=clean)
+  File "/Users/tangdaye/.local/share/virtualenvs/expression-flask-w4lHFcLB/lib/python3.7/site-packages/mongoengine/base/document.py", line 393, in validate
+    raise ValidationError(message, errors=errors)
+mongoengine.errors.ValidationError: ValidationError (InvitationModel:5c9093dfcb0836034f04bf31) (Integer value is too small: ['available_times'])
+register request: ImmutableMultiDict([('email', 'chudongyu@site.com'), ('pwd', '12345678'), ('name', '汤大业'), ('code', 'vzly64lz8dq2rcqd')])
+register request: ImmutableMultiDict([('email', 'chudongyu@site.com'), ('pwd', '12345678'), ('name', '汤大业'), ('code', 'vzly64lz8dq2rcqd')])
+register request: ImmutableMultiDict([('email', 'chudongyu@site.com'), ('pwd', '12345678'), ('name', '汤大业'), ('code', 'vzly64lz8dq2rcqd')])

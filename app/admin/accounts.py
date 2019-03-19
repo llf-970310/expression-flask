@@ -18,15 +18,15 @@ from . import admin
 
 @admin.route('/accounts/invite', methods=['POST'])  # url will be .../admin/accounts/test
 def accounts_invite():
-    current_app.looger.info('create invitation request: %s' % request.form.__str__())
+    current_app.logger.info('create invitation request: %s' % request.form.__str__())
     # 检验是否有权限申请邀请码
     if not current_user.is_authenticated:
         return jsonify(errors.Authorize_needed)
-    if not current_user.role == 'admin':  # todo 是这样判断的吗
+    if not current_user.role == 'admin':
         return jsonify(errors.Admin_status_login)
     form, invitation = request.form, InvitationModel()
     try:
-        vip_start_time = timestamp2datetime(int(form.get('vipStartTime')))
+        vip_start_time = timestamp2datetime(int(form.get('vipStartTime').strip()))
         vip_end_time = timestamp2datetime(int(form.get('vipEndTime').strip()))
         remaining_exam_num = int(form.get('remainingExamNum').strip())
         available_times = int(form.get('availableTimes').strip())
@@ -58,8 +58,8 @@ def accounts_invite():
     invitation.remaining_exam_num = remaining_exam_num
     invitation.available_times = available_times
     invitation.code = generate_code(AccountsConfig.invitation_code_length)
-    current_app.looger.info('invitation info:%s' % invitation.__str__())
+    current_app.logger.info('invitation info:%s' % invitation.__str__())
     # 生成指定位数随机字符串为邀请码
     invitation.save(invitation)
-    current_app.looger.info('invitation(id: %s)' % invitation.id)
-    return jsonify(errors.success({'msg': '生成邀请码成功', 'code': invitation.code}))
+    current_app.logger.info('invitation(id: %s)' % invitation.id)
+    return jsonify(errors.success({'msg': '生成邀请码成功', 'invitationCode': invitation.code}))

@@ -57,4 +57,4 @@ class DevelopmentConfig(BaseConfig):
         'password': 'iselab###nju.cn',
         'connect': False  # False: connect when first connect instead of instantiated
     }
-    NOT_CHECK_LOGIN_PASSWORD = True
+    NOT_CHECK_LOGIN_PASSWORD = False

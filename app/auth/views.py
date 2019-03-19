@@ -16,7 +16,7 @@ from app import errors
 
 @auth.route('/register', methods=['POST'])
 def register():
-    current_app.looger.info('register request: %s' % request.form.__str__())
+    current_app.logger.info('register request: %s' % request.form.__str__())
     if current_user.is_authenticated:
         return jsonify(errors.Already_logged_in)
     if not current_app.config.get('ALLOW_REGISTER'):
@@ -39,7 +39,7 @@ def register():
     if existing_user is not None:
         return jsonify(errors.User_already_exist)
     existing_invitation = InvitationModel.objects(code=code).first()
-    if existing_invitation is None or existing_invitation.remaining_exam_num <= 0:
+    if existing_invitation is None or existing_invitation.available_times <= 0:
         return jsonify(errors.Illegal_invitation_code)
     new_user = UserModel()
     new_user.email = email.lower()
@@ -50,18 +50,18 @@ def register():
     new_user.vip_start_time = existing_invitation.vip_start_time
     new_user.vip_end_time = existing_invitation.vip_end_time
     new_user.remaining_exam_num = existing_invitation.remaining_exam_num
-    current_app.looger.info('user info: %s' % new_user.__str__())
+    current_app.logger.info('user info: %s' % new_user.__str__())
     # todo 从这开始需要同步
     new_user.save()
-    current_app.looger.info('user(id = %s) has been saved' % new_user.id)
+    current_app.logger.info('user(id = %s) has been saved' % new_user.id)
 
     # 修改这个邀请码
     existing_invitation.activate_users.append(name)
     existing_invitation.available_times -= 1
-    current_app.looger.info('invitation info: %s' % existing_invitation.__str__())
+    current_app.logger.info('invitation info: %s' % existing_invitation.__str__())
     existing_invitation.save()
-    # 同步到这结束
-    current_app.looger.info('invitation(id = %s) has been saved' % existing_invitation.id)
+    # todo 同步到这结束
+    current_app.logger.info('invitation(id = %s) has been saved' % existing_invitation.id)
 
     login_user(new_user)  # 直接登录？好吧
 
@@ -70,7 +70,7 @@ def register():
 
 @auth.route('/login', methods=['POST'])
 def login():
-    current_app.looger.info('login request: %s' % request.form.__str__())
+    current_app.logger.info('login request: %s' % request.form.__str__())
     if current_user.is_authenticated:
         return jsonify(errors.Already_logged_in)
     email = request.form.get('email')
@@ -99,7 +99,9 @@ def login():
 
 @auth.route('/logout', methods=['POST'])
 def logout():
+    current_app.logger.info('logout request: %s' % request.form.__str__())
     if current_user.is_authenticated:
+        current_app.logger.info('user(id:%s) logout' % current_user.id)
         logout_user()
         return jsonify(errors.success())
     else:
