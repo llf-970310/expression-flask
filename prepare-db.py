@@ -14,6 +14,10 @@ if __name__ == '__main__':
     admin.role = Roles.Admin
     # admin.student_id = 'default'
     admin.save()
+    print(type(admin.role))
+    print(admin.role)
+    print(admin.role == Roles.Default)
+    print(admin.role == Roles.Admin)
 
     user1 = UserModel()
     user1.email = 'aaa@site.com'
