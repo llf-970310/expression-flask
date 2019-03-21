@@ -23,7 +23,7 @@ def register():
         return jsonify(errors.Register_not_allowed)
 
     email = request.form.get('email').strip().lower()
-    password = request.form.get('pwd').strip()
+    password = request.form.get('password').strip()
     name = request.form.get('name').strip()
     code = request.form.get('code').strip()
     """
@@ -73,9 +73,9 @@ def login():
     current_app.logger.info('login request: %s' % request.form.__str__())
     if current_user.is_authenticated:
         return jsonify(errors.Already_logged_in)
-    email = request.form.get('email')
+    email = request.form.get('username')
     # name = request.form.get('name')
-    password = request.form.get('pwd')
+    password = request.form.get('password')
     """
         校验form，规则
         1. email符合规范
@@ -94,7 +94,8 @@ def login():
     check_user.save()  # 修改最后登录时间
     # !important
     return jsonify(errors.success(
-        {'msg': '登录成功', 'user_id': str(check_user.id), 'role': str(check_user.role)}))  # role : default | admin
+        {'msg': '登录成功', 'uuid': str(check_user.id), 'name': str(check_user.name), 'token': '8dfhassad0asdjwoeiruty',
+         'role': str(check_user.role)}))  # role : default | admin
 
 
 @auth.route('/logout', methods=['POST'])

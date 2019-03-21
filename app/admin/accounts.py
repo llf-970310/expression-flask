@@ -22,12 +22,12 @@ def accounts_invite():
     # 检验是否有权限申请邀请码
     if not current_user.is_authenticated:
         return jsonify(errors.Authorize_needed)
-    if not current_user.role == 'admin':
+    if not current_user.is_admin():
         return jsonify(errors.Admin_status_login)
     form, invitation = request.form, InvitationModel()
     try:
-        vip_start_time = timestamp2datetime(int(form.get('vipStartTime').strip()))
-        vip_end_time = timestamp2datetime(int(form.get('vipEndTime').strip()))
+        vip_start_time = timestamp2datetime(float(form.get('vipStartTime').strip()))
+        vip_end_time = timestamp2datetime(float(form.get('vipEndTime').strip()))
         remaining_exam_num = int(form.get('remainingExamNum').strip())
         available_times = int(form.get('availableTimes').strip())
     except Exception:

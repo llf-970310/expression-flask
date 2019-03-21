@@ -49,3 +49,6 @@ class UserModel(UserMixin, db.Document):
     def __str__(self):
         return "{id:%s,name:%s,register_time:%s,last_login_time:%s}" % (
             self.id, self.name.__str__(), self.register_time.__str__(), self.last_login_time.__str__())
+
+    def is_admin(self):
+        return self.role == Roles.Admin
