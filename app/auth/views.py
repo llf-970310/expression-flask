@@ -88,6 +88,8 @@ def login():
     if not validate_email(email):
         return jsonify(errors.Params_error)
     check_user = UserModel.objects(email=email).first()
+    if not check_user:
+        return jsonify(errors.Authorize_failed)
     if (not current_app.config['IGNORE_LOGIN_PASSWORD']) and (check_user.password != current_app.md5_hash(password)):
         return jsonify(errors.Authorize_failed)
     login_user(check_user)
@@ -199,9 +201,13 @@ def wechat_bind():
     password = request.form.get('pwd')
     if not (email and password):
         return jsonify(errors.Params_error)
+
     check_user = UserModel.objects(email=email).first()
+    if not check_user:
+        return jsonify(errors.Authorize_failed)
     if (not current_app.config['IGNORE_LOGIN_PASSWORD']) and (check_user.password != current_app.md5_hash(password)):
         return jsonify(errors.Authorize_failed)
+
     if check_user.wx_id:
         return jsonify(errors.Wechat_already_bind)
     current_app.logger.info('login user: %s, id: %s' % (check_user.name, check_user.id))
@@ -210,5 +216,5 @@ def wechat_bind():
     current_user.wx_id = wx_union_id
     current_user.last_login_time = datetime.datetime.utcnow()
     current_user.save()
-    resp = {'msg': '绑定成功，登录成功', 'user_id': str(check_user.id), 'role': str(check_user.role)}  # role : Default | Admin
+    resp = {'msg': '绑定成功，登录成功', 'user_id': str(check_user.id), 'role': str(check_user.role)}
     return jsonify(errors.success(resp))
