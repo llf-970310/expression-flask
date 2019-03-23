@@ -25,6 +25,7 @@ celery = {extras = ["redis"],version = "*"}
 tornado = "==5.1.1"
 flower = "*"
 gevent = "*"
+requests = "*"
 
 [dev-packages]
 

@@ -76,6 +76,7 @@ Admin_status_login = {'code': 4306, 'msg': '请以管理员身份登录'}
 Student_id_short = {'code': 4037, 'msg': '学号不能少于6位，不足6位请在前面加0补足！'}
 Student_id_space = {'code': 4038, 'msg': '学号中间不能有空格！'}
 Illegal_invitation_code = {'code': 4039, 'msg': '无效的邀请码'}
+Wechat_already_bind = {'code': 4040, 'msg': '微信已绑定，若要重新绑定，请先解绑'}
 
 Exam_finished = {'code': 5100, 'msg': '测试已完成'}
 Init_exam_failed = {'code': 5101, 'msg': '题目生成失败'}

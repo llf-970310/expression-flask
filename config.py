@@ -37,7 +37,7 @@ class BaseConfig(object):
         _MD5_TOOL.update((password + _MD5_SALT).encode())
         return _MD5_TOOL.hexdigest()
 
-    NOT_CHECK_LOGIN_PASSWORD = False
+    IGNORE_LOGIN_PASSWORD = False
 
 
 class DevelopmentConfig(BaseConfig):
@@ -57,4 +57,6 @@ class DevelopmentConfig(BaseConfig):
         'password': 'iselab###nju.cn',
         'connect': False  # False: connect when first connect instead of instantiated
     }
-    NOT_CHECK_LOGIN_PASSWORD = False
+    IGNORE_LOGIN_PASSWORD = False
+    WX_APPID = 'wxd7bad9aab33bb581'
+    WX_SECRET = 'f45a6fe1aa873577a18098726befd278'
