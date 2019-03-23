@@ -25,7 +25,7 @@ def error(x=None):
     :type x: dict or None
     :return: dict
     """
-    d = {'code': 1, 'msg': 'error'}
+    d = {'code': 1, 'msg': 'error', 'data': {}}
     if x:
         for t in x:
             if t == 'code' or t == 'msg':
@@ -40,7 +40,7 @@ def exception(x=None):
     :type x: dict or None
     :return: dict
     """
-    d = {'code': 1, 'msg': 'exception'}
+    d = {'code': 1, 'msg': 'exception', 'data': {}}
     if x:
         for t in x:
             if t == 'code' or t == 'msg':
