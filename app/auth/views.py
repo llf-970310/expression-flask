@@ -65,7 +65,13 @@ def register():
 
     login_user(new_user)  # 直接登录？好吧
 
-    return jsonify(errors.success({'msg': '注册成功，已自动登录', 'user_id': str(new_user.id)}))
+    return jsonify(errors.success({
+        'msg': '注册成功，已自动登录',
+        'uuid': str(new_user.id),
+        'name': str(new_user.name),
+        'token': '8dfhassad0asdjwoeiruty',
+        'role': str(new_user.role)
+    }))
 
 
 @auth.route('/login', methods=['POST'])

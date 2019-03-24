@@ -378,3 +378,138 @@ logout request: ImmutableMultiDict([])
 user(id:5c8facc6cb0836251d293b9b) logout
 login request: ImmutableMultiDict([('username', 'admin@site.com'), ('password', '1234')])
 login user: 管理员1, id: 5c8facc6cb0836251d293b9b
+logout request: ImmutableMultiDict([])
+user(id:5c8facc6cb0836251d293b9b) logout
+login request: ImmutableMultiDict([('username', 'admin@site.com'), ('password', '1234')])
+login user: 管理员1, id: 5c8facc6cb0836251d293b9b
+logout request: ImmutableMultiDict([])
+user(id:5c8facc6cb0836251d293b9b) logout
+login request: ImmutableMultiDict([('username', 'admin@site.com'), ('password', '1234')])
+login user: 管理员1, id: 5c8facc6cb0836251d293b9b
+logout request: ImmutableMultiDict([])
+user(id:5c8facc6cb0836251d293b9b) logout
+login request: ImmutableMultiDict([('username', 'admin@site.com'), ('password', '1234')])
+login user: 管理员1, id: 5c8facc6cb0836251d293b9b
+create invitation request: ImmutableMultiDict([('vipStartTime', '1553173532.739'), ('vipEndTime', '1555765534.335'), ('remainingExamNum', '1'), ('availableTimes', '3')])
+create invitation request: ImmutableMultiDict([('vipStartTime', '1553173532.739'), ('vipEndTime', '1555765534.335'), ('remainingExamNum', '1'), ('availableTimes', '3')])
+create invitation request: ImmutableMultiDict([('vipStartTime', '1553173532.739'), ('vipEndTime', '1555765534.335'), ('remainingExamNum', '1'), ('availableTimes', '3')])
+create invitation request: ImmutableMultiDict([('vipStartTime', '1553173532.739'), ('vipEndTime', '1555765534.335'), ('remainingExamNum', '1'), ('availableTimes', '3')])
+logout request: ImmutableMultiDict([])
+user(id:5c8facc6cb0836251d293b9b) logout
+login request: ImmutableMultiDict([('username', 'admin@site.com'), ('password', '1234')])
+login user: 管理员1, id: 5c8facc6cb0836251d293b9b
+create invitation request: ImmutableMultiDict([('vipStartTime', '1553173863.814'), ('vipEndTime', '1555765865.255'), ('remainingExamNum', '1'), ('availableTimes', '3')])
+create invitation request: ImmutableMultiDict([('vipStartTime', '1553173863.814'), ('vipEndTime', '1555765865.255'), ('remainingExamNum', '1'), ('availableTimes', '3')])
+create invitation request: ImmutableMultiDict([('vipStartTime', '1553173863.814'), ('vipEndTime', '1555765865.255'), ('remainingExamNum', '1'), ('availableTimes', '3')])
+invitation info:code:r6htslb1wto8lpta
+creator:管理员1
+vip_start_time:2019-03-21 13:11:03
+vip_end_time:2019-04-20 13:11:05
+remaining_exam_num:1
+activate_users:[]
+invitation(id: 5c938dcfcb08361a9e7b2d1d)
+logout request: ImmutableMultiDict([])
+user(id:5c8facc6cb0836251d293b9b) logout
+login request: ImmutableMultiDict([('username', 'admin@site.com'), ('password', '1234')])
+login user: 管理员1, id: 5c8facc6cb0836251d293b9b
+logout request: ImmutableMultiDict([])
+user(id:5c8facc6cb0836251d293b9b) logout
+register request: ImmutableMultiDict([('email', 'chudongyu@site.com'), ('password', '1234'), ('name', 'chudongyu'), ('code', 'r6htslb1wto8lpta')])
+user info: {id:None,name:chudongyu,register_time:2019-03-21 14:10:16.892710,last_login_time:2019-03-21 14:10:16.892685}
+user(id = 5c939b48cb08361b6a9c5407) has been saved
+invitation info: code:r6htslb1wto8lpta
+creator:管理员1
+vip_start_time:2019-03-21 13:11:03
+vip_end_time:2019-04-20 13:11:05
+remaining_exam_num:1
+activate_users:['chudongyu']
+invitation(id = 5c938dcfcb08361a9e7b2d1d) has been saved
+Exception on /api/auth/register [POST]
+Traceback (most recent call last):
+  File "/Users/tangdaye/.local/share/virtualenvs/expression-flask-w4lHFcLB/lib/python3.7/site-packages/flask/app.py", line 2292, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/Users/tangdaye/.local/share/virtualenvs/expression-flask-w4lHFcLB/lib/python3.7/site-packages/flask/app.py", line 1815, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "/Users/tangdaye/.local/share/virtualenvs/expression-flask-w4lHFcLB/lib/python3.7/site-packages/flask/app.py", line 1718, in handle_user_exception
+    reraise(exc_type, exc_value, tb)
+  File "/Users/tangdaye/.local/share/virtualenvs/expression-flask-w4lHFcLB/lib/python3.7/site-packages/flask/_compat.py", line 35, in reraise
+    raise value
+  File "/Users/tangdaye/.local/share/virtualenvs/expression-flask-w4lHFcLB/lib/python3.7/site-packages/flask/app.py", line 1813, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "/Users/tangdaye/.local/share/virtualenvs/expression-flask-w4lHFcLB/lib/python3.7/site-packages/flask/app.py", line 1799, in dispatch_request
+    return self.view_functions[rule.endpoint](**req.view_args)
+  File "/Users/tangdaye/git-project/expression-flask/app/auth/views.py", line 73, in register
+    'role': str(new_user.role)
+  File "/Users/tangdaye/git-project/expression-flask/app/models/user.py", line 49, in role
+    return Roles(self.__role.value)
+AttributeError: 'str' object has no attribute 'value'
+register request: ImmutableMultiDict([('email', 'chudongyu@site.com'), ('password', '1234'), ('name', 'chudongyu'), ('code', 'r6htslb1wto8lpta')])
+register request: ImmutableMultiDict([('email', 'chudongyu@site.com'), ('password', '1234'), ('name', 'chudongyu'), ('code', 'r6htslb1wto8lpta')])
+register request: ImmutableMultiDict([('email', 'chudongyu@site.com'), ('password', '1234'), ('name', 'chudongyu'), ('code', 'r6htslb1wto8lpta')])
+user info: {id:None,name:chudongyu,register_time:2019-03-21 14:12:04.063604,last_login_time:2019-03-21 14:12:04.063578}
+user(id = 5c939bb4cb08361b85b63be9) has been saved
+invitation info: code:r6htslb1wto8lpta
+creator:管理员1
+vip_start_time:2019-03-21 13:11:03
+vip_end_time:2019-04-20 13:11:05
+remaining_exam_num:1
+activate_users:['chudongyu', 'chudongyu']
+invitation(id = 5c938dcfcb08361a9e7b2d1d) has been saved
+login request: ImmutableMultiDict([('username', 'chudongyu@site.com'), ('password', '1234')])
+login request: ImmutableMultiDict([('username', 'chudongyu@site.com'), ('password', '1234')])
+login user: chudongyu, id: 5c939bb4cb08361b85b63be9
+logout request: ImmutableMultiDict([])
+user(id:5c939bb4cb08361b85b63be9) logout
+login request: ImmutableMultiDict([('username', 'chudongyu@site.com'), ('password', '1234')])
+login user: chudongyu, id: 5c939bb4cb08361b85b63be9
+logout request: ImmutableMultiDict([])
+user(id:5c939bb4cb08361b85b63be9) logout
+login request: ImmutableMultiDict([('username', 'admin@site.com'), ('password', '1234')])
+login user: 管理员1, id: 5c8facc6cb0836251d293b9b
+create invitation request: ImmutableMultiDict([('vipStartTime', '1553177704.6'), ('vipEndTime', '1555769707.373'), ('remainingExamNum', '1'), ('availableTimes', '3')])
+invitation info:code:lw81lp12m3kq96r2
+creator:管理员1
+vip_start_time:2019-03-21 14:15:04
+vip_end_time:2019-04-20 14:15:07
+remaining_exam_num:1
+activate_users:[]
+invitation(id: 5c939c6ecb08361b85b63bea)
+create invitation request: ImmutableMultiDict([('vipStartTime', '1553177783.374'), ('vipEndTime', '1555769784.822'), ('remainingExamNum', '3'), ('availableTimes', '1')])
+invitation info:code:tysmbc066e28m5ou
+creator:管理员1
+vip_start_time:2019-03-21 14:16:23
+vip_end_time:2019-04-20 14:16:24
+remaining_exam_num:3
+activate_users:[]
+invitation(id: 5c939cb9cb08361b85b63beb)
+logout request: ImmutableMultiDict([])
+user(id:5c8facc6cb0836251d293b9b) logout
+register request: ImmutableMultiDict([('email', 'fengjunjie@site.com'), ('password', '1234'), ('name', '冯俊杰'), ('code', 'tysmbc066e28m5ou')])
+login request: ImmutableMultiDict([('username', 'admin@site.com'), ('password', '1234')])
+login user: 管理员1, id: 5c8facc6cb0836251d293b9b
+create invitation request: ImmutableMultiDict([('vipStartTime', '1553177891.473'), ('vipEndTime', '1555769892.939'), ('remainingExamNum', '3'), ('availableTimes', '1')])
+invitation info:code:ic8gxz5j8h9epw8w
+creator:管理员1
+vip_start_time:2019-03-21 14:18:11
+vip_end_time:2019-04-20 14:18:12
+remaining_exam_num:3
+activate_users:[]
+invitation(id: 5c939d25cb08361b85b63bec)
+register request: ImmutableMultiDict([('email', 'fengjunjie@site.com'), ('password', '1234'), ('name', '冯俊杰'), ('code', 'ic8gxz5j8h9epw8w')])
+register request: ImmutableMultiDict([('email', 'fengjunjie@site.com'), ('password', '1234'), ('name', '冯俊杰'), ('code', 'ic8gxz5j8h9epw8w')])
+logout request: ImmutableMultiDict([])
+user(id:5c8facc6cb0836251d293b9b) logout
+register request: ImmutableMultiDict([('email', 'fengjunjie@site.com'), ('password', '1234'), ('name', '冯俊杰'), ('code', 'ic8gxz5j8h9epw8w')])
+user info: {id:None,name:冯俊杰,register_time:2019-03-21 14:18:50.670155,last_login_time:2019-03-21 14:18:50.670129}
+user(id = 5c939d4acb08361b85b63bed) has been saved
+invitation info: code:ic8gxz5j8h9epw8w
+creator:管理员1
+vip_start_time:2019-03-21 14:18:11
+vip_end_time:2019-04-20 14:18:12
+remaining_exam_num:3
+activate_users:['冯俊杰']
+invitation(id = 5c939d25cb08361b85b63bec) has been saved
+logout request: ImmutableMultiDict([])
+user(id:5c939d4acb08361b85b63bed) logout
+login request: ImmutableMultiDict([('username', 'admin@site.com'), ('password', '1234')])
+login user: 管理员1, id: 5c8facc6cb0836251d293b9b

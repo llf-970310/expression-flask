@@ -63,4 +63,4 @@ class UserModel(UserMixin, db.Document):
             self.id, self.name.__str__(), self.register_time.__str__(), self.last_login_time.__str__())
 
     def is_admin(self):
-        return self.role == Roles.Admin
+        return self.__role == Roles.Admin.value
