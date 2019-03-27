@@ -197,6 +197,7 @@ def next_question():
     # init question
     if not session.get("init_done") or session.get("new_test"):  # todo: 此处进一步检查是否有做题权限
         # 生成当前题目
+        current_app.logger.info('nowQuestionNum: %s, init exam...' % request.form.get("nowQuestionNum"))
         test_id = init_question(session["user_id"])
         if not test_id:
             return jsonify(errors.Init_exam_failed)
@@ -205,6 +206,7 @@ def next_question():
         session["init_done"] = True
         session["new_test"] = False
     # 获得下一题号
+    current_app.logger.info('nowQuestionNum: %s' % request.form.get("nowQuestionNum"))
     next_question_num = int(request.form.get("nowQuestionNum", 0)) + 1
     session["question_num"] = next_question_num
     current_app.logger.info("net_question: username: %s, next_question_num: %s" % (
