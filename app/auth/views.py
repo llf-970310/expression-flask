@@ -11,6 +11,7 @@ from flask_login import login_user, logout_user, current_user
 from app.models.user import UserModel
 from app.models.invitation import InvitationModel
 from app.auth.util import *
+from flask import redirect
 
 from . import auth
 from app import errors
@@ -172,10 +173,13 @@ def wechat_login():
     wx_union_id = user_info.get('unionid')
     check_user = UserModel.objects(wx_id=wx_union_id).first()
     if not check_user:
-        session['wx_union_id'] = wx_union_id
-        data = {'msg': '用户尚未绑定微信，前端请指引用户补充填写信息，进行绑定'}
-        data.update({'userInfo': user_info})
-        return jsonify(errors.error(data))
+        headimgurl = user_info.get('headimgurl')
+        nickname = user_info.get('nickname')
+        return redirect("/#/login-wechat?headimgurl=%s&nickname=%s" % (headimgurl, nickname))
+        # session['wx_union_id'] = wx_union_id
+        # data = {'msg': '用户尚未绑定微信，前端请指引用户补充填写信息，进行绑定'}
+        # data.update({'userInfo': user_info})
+        # return jsonify(errors.error(data))
     session['wx_token'] = oauth2_ret.get('access_token')
     session['wx_openid'] = oauth2_ret.get('openid')
     session['wx_nickname'] = user_info.get('nickname')
@@ -183,7 +187,7 @@ def wechat_login():
     check_user.last_login_time = datetime.datetime.utcnow()
     check_user.save()
     current_app.logger.info('login from wechat: %s, id: %s' % (check_user.name, check_user.id))
-    return jsonify(errors.success())
+    return redirect('/')
 
 
 """
