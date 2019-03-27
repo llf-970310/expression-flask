@@ -197,7 +197,7 @@ def next_question():
     # init question
     now_q_num = request.form.get("nowQuestionNum")
     current_app.logger.info('nowQuestionNum: %s' % now_q_num)
-    if now_q_num is None:  # TODO: 仅根据前端请求判断不太合理
+    if now_q_num is None or now_q_num == '0' or now_q_num == 0:  # TODO: 仅根据前端请求判断不太合理
         now_q_num = 0
         # 生成当前题目
         current_app.logger.info('init exam...')
@@ -212,7 +212,7 @@ def next_question():
     next_question_num = int(now_q_num) + 1  # 不能转换时怎么处理,如'aaa'
     session["question_num"] = next_question_num
     current_app.logger.info("api next-question: username: %s, next_question_num: %s" % (
-        session.get("user_name", "NO USER"), next_question_num))
+        current_user.name, next_question_num))
     # 如果超出最大题号，如用户多次刷新界面，则重定向到结果页面
     if next_question_num > ExamConfig.total_question_num:
         session["question_num"] = 0
