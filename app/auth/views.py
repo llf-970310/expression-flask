@@ -22,7 +22,8 @@ def user_info():
     current_app.logger.info('get user info request: %s' % request.form.__str__())
     if current_user.is_authenticated:
         return jsonify(errors.success({
-            'role': str(current_user.role.value)
+            'role': str(current_user.role.value),
+            'name': current_user.name
         }))
     else:
         return jsonify(errors.Authorize_needed)
@@ -154,7 +155,8 @@ def wechat_params():  # todo: as api
 @auth.route('/wechat/login')
 def wechat_login():
     if current_user.is_authenticated:
-        return jsonify(errors.Already_logged_in)
+        # return jsonify(errors.Already_logged_in)
+        return redirect('/')
     code = request.args.get('code')
     if not code:
         return jsonify(errors.Params_error)
@@ -173,13 +175,13 @@ def wechat_login():
     wx_union_id = user_info.get('unionid')
     check_user = UserModel.objects(wx_id=wx_union_id).first()
     if not check_user:
-        headimgurl = user_info.get('headimgurl')
-        nickname = user_info.get('nickname')
-        return redirect("/#/login-wechat?headimgurl=%s&nickname=%s" % (headimgurl, nickname))
-        # session['wx_union_id'] = wx_union_id
+        session['wx_union_id'] = wx_union_id
         # data = {'msg': '用户尚未绑定微信，前端请指引用户补充填写信息，进行绑定'}
         # data.update({'userInfo': user_info})
         # return jsonify(errors.error(data))
+        headimgurl = user_info.get('headimgurl')
+        nickname = user_info.get('nickname')
+        return redirect("/#/login-wechat?headimgurl=%s&nickname=%s" % (headimgurl, nickname))
     session['wx_token'] = oauth2_ret.get('access_token')
     session['wx_openid'] = oauth2_ret.get('openid')
     session['wx_nickname'] = user_info.get('nickname')
