@@ -195,29 +195,35 @@ def next_question():
     # 关闭浏览器时session过期
     # session.set_expiry(0)
     # init question
-    if session.get("new_test"):  # todo: 此处进一步检查是否有做题权限
+    now_q_num = request.form.get("nowQuestionNum")
+    current_app.logger.info('nowQuestionNum: %s' % now_q_num)
+    if now_q_num is None or now_q_num == '0' or now_q_num == 0:  # TODO: 仅根据前端请求判断不太合理
+        now_q_num = 0
         # 生成当前题目
+        current_app.logger.info('init exam...')
         test_id = init_question(session["user_id"])
         if not test_id:
             return jsonify(errors.Init_exam_failed)
         else:
             session["test_id"] = test_id
+        session["init_done"] = True
         session["new_test"] = False
     # 获得下一题号
-    next_question_num = int(request.form.get("nowQuestionNum", 0)) + 1
+    next_question_num = int(now_q_num) + 1  # 不能转换时怎么处理,如'aaa'
     session["question_num"] = next_question_num
-    current_app.logger.info("net_question: username: %s, next_question_num: %s" % (
-        session.get("user_name", "NO USER"), str(next_question_num)))
+    current_app.logger.info("api next-question: username: %s, next_question_num: %s" % (
+        current_user.name, next_question_num))
     # 如果超出最大题号，如用户多次刷新界面，则重定向到结果页面
     if next_question_num > ExamConfig.total_question_num:
         session["question_num"] = 0
+        session["new_test"] = True  # TODO: 这样不合理（重复请求时）,开始做题应单独作为一个接口请求,进行 init exam
         return jsonify(errors.Exam_finished)
 
     # 根据题号查找题目
     context = question_dealer(next_question_num, session["test_id"], session["user_id"])
     if not context:
         return jsonify(errors.Get_question_failed)
-    return jsonify(errors.success({'data': context}))
+    return jsonify(errors.success(context))
 
 
 def init_question(user_id):
@@ -276,7 +282,7 @@ def init_question(user_id):
     return current_test.id.__str__()
 
 
-def question_dealer(question_num, test_id, user_id):
+def question_dealer(question_num, test_id, user_id) -> dict:
     # get test
     test = CurrentTestModel.objects(id=test_id).first()
     if test is None:
