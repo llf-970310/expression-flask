@@ -195,15 +195,14 @@ def next_question():
     # 关闭浏览器时session过期
     # session.set_expiry(0)
     # init question
-    # if session.get("new_test"):  # todo: 此处进一步检查是否有做题权限
-    next_question_num = int(request.form.get("nowQuestionNum", 0)) + 1  # 仅为暂时解决session没有new_test的bug  TODO: fix
-    if next_question_num == 1:  # 仅为暂时解决session没有new_test的bug  TODO: fix
+    if not session.get("init_done") or session.get("new_test"):  # todo: 此处进一步检查是否有做题权限
         # 生成当前题目
         test_id = init_question(session["user_id"])
         if not test_id:
             return jsonify(errors.Init_exam_failed)
         else:
             session["test_id"] = test_id
+        session["init_done"] = True
         session["new_test"] = False
     # 获得下一题号
     next_question_num = int(request.form.get("nowQuestionNum", 0)) + 1
@@ -213,6 +212,7 @@ def next_question():
     # 如果超出最大题号，如用户多次刷新界面，则重定向到结果页面
     if next_question_num > ExamConfig.total_question_num:
         session["question_num"] = 0
+        session["new_test"] = True  # TODO: 这样不合理（重复请求时）,开始做题应单独作为一个接口请求,进行 init exam
         return jsonify(errors.Exam_finished)
 
     # 根据题号查找题目
