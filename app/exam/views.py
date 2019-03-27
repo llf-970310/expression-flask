@@ -195,7 +195,9 @@ def next_question():
     # 关闭浏览器时session过期
     # session.set_expiry(0)
     # init question
-    if session.get("new_test"):  # todo: 此处进一步检查是否有做题权限
+    # if session.get("new_test"):  # todo: 此处进一步检查是否有做题权限
+    next_question_num = int(request.form.get("nowQuestionNum", 0)) + 1  # 仅为暂时解决session没有new_test的bug  TODO: fix
+    if next_question_num == 1:  # 仅为暂时解决session没有new_test的bug  TODO: fix
         # 生成当前题目
         test_id = init_question(session["user_id"])
         if not test_id:
