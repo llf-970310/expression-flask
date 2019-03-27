@@ -17,7 +17,7 @@ def load_user(user_id):
 
 class Roles(Enum):
     Admin = 'admin'
-    Default = 'default'
+    Default = 'user'
 
 
 class UserModel(UserMixin, db.Document):

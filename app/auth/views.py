@@ -16,6 +16,17 @@ from . import auth
 from app import errors
 
 
+@auth.route('/user/info', methods=['GET'])
+def user_info():
+    current_app.logger.info('get user info request: %s' % request.form.__str__())
+    if current_user.is_authenticated:
+        return jsonify(errors.success({
+            'role': str(current_user.role.value)
+        }))
+    else:
+        return jsonify(errors.Authorize_needed)
+
+
 @auth.route('/register', methods=['POST'])
 def register():
     current_app.logger.info('register request: %s' % request.form.__str__())
@@ -70,9 +81,7 @@ def register():
     return jsonify(errors.success({
         'msg': '注册成功，已自动登录',
         'uuid': str(new_user.id),
-        'name': str(new_user.name),
-        'token': '8dfhassad0asdjwoeiruty',
-        'role': str(new_user.role)
+        'name': str(new_user.name)
     }))
 
 
@@ -82,7 +91,6 @@ def login():
     if current_user.is_authenticated:
         return jsonify(errors.Already_logged_in)
     email = request.form.get('username')
-    # name = request.form.get('name')
     password = request.form.get('password')
     """
         校验form，规则
@@ -103,9 +111,11 @@ def login():
     check_user.last_login_time = datetime.datetime.utcnow()
     check_user.save()  # 修改最后登录时间
     # !important
-    return jsonify(errors.success(
-        {'msg': '登录成功', 'uuid': str(check_user.id), 'name': str(check_user.name), 'token': '8dfhassad0asdjwoeiruty',
-         'role': str(check_user.role)}))  # role : default | admin
+    return jsonify(errors.success({
+        'msg': '登录成功',
+        'uuid': str(check_user.id),
+        'name': str(check_user.name),
+    }))
 
 
 @auth.route('/logout', methods=['POST'])
