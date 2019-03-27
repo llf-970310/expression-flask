@@ -223,7 +223,7 @@ def next_question():
     context = question_dealer(next_question_num, session["test_id"], session["user_id"])
     if not context:
         return jsonify(errors.Get_question_failed)
-    return jsonify(errors.success({'data': context}))
+    return jsonify(errors.success(context))
 
 
 def init_question(user_id):
@@ -282,7 +282,7 @@ def init_question(user_id):
     return current_test.id.__str__()
 
 
-def question_dealer(question_num, test_id, user_id):
+def question_dealer(question_num, test_id, user_id) -> dict:
     # get test
     test = CurrentTestModel.objects(id=test_id).first()
     if test is None:
