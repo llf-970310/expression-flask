@@ -211,8 +211,8 @@ def next_question():
     # 获得下一题号
     next_question_num = int(now_q_num) + 1  # 不能转换时怎么处理,如'aaa'
     session["question_num"] = next_question_num
-    current_app.logger.info("net_question: username: %s, next_question_num: %s" % (
-        session.get("user_name", "NO USER"), str(next_question_num)))
+    current_app.logger.info("api next-question: username: %s, next_question_num: %s" % (
+        session.get("user_name", "NO USER"), next_question_num))
     # 如果超出最大题号，如用户多次刷新界面，则重定向到结果页面
     if next_question_num > ExamConfig.total_question_num:
         session["question_num"] = 0
