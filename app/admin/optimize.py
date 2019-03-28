@@ -10,14 +10,14 @@ import datetime
 
 @admin.route('/get-score-data', methods=['GET'])
 def get_score_data():
-    question_num = int(request.form.get('question-num'))
+    question_num = request.form.get('question-num')
     print("get_score_data: questionNum: " + str(question_num))
     return jsonify(errors.success(mock_data.score_data))
 
 
 @admin.route('/get-weight-data', methods=['GET'])
 def get_weight_data():
-    question_num = int(request.form.get("question-num"))
+    question_num = request.form.get("question-num")
     print("get_weight_data: questionNum: " + str(question_num))
     return jsonify(errors.success(mock_data.weight_data))
 
@@ -35,7 +35,7 @@ def update_weight():
 
 @admin.route('/get-last-cost-data', methods=['GET'])
 def get_last_cost_data():
-    question_num = int(request.form.get("question-num"))
+    question_num = request.form.get("question-num")
     print("get_last_cost_data: questionNum: " + str(question_num))
     return jsonify(errors.success(mock_data.cost_data))
 

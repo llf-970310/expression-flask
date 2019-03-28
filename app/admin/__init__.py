@@ -9,3 +9,5 @@ admin = Blueprint('admin', __name__)
 
 from . import accounts
 from . import exam
+from . import optimize
+from . import question
