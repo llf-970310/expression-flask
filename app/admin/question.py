@@ -21,12 +21,12 @@ def get_all_questions():
     size = request.args.get('size')
 
     if page == None or page == '':
-        page = QuestionConfig.default_page
+        page = QuestionConfig.DEFAULT_PAGE
     else:
         page = int(page)
 
     if size == None or size == '':
-        size = QuestionConfig.default_size
+        size = QuestionConfig.DEFAULT_SIZE
     else:
         size = int(size)
 
@@ -44,7 +44,7 @@ def get_question(id):
     """
     import random
     index = int(id) % 4
-    return jsonify(errors.success(mock_data.questionDB[index]))
+    return jsonify(errors.success(mock_data.question_db[index]))
 
 
 @admin.route('/question-from-pool', methods=['GET'])
@@ -53,7 +53,7 @@ def get_question_from_pool():
 
     :return: 题库中的某道题
     """
-    return jsonify(errors.success({'question': mock_data.questionFromPool, 'id': 32}))
+    return jsonify(errors.success({'question': mock_data.question_from_pool, 'id': 32}))
 
 
 @admin.route('/question', methods=['POST'])
@@ -62,19 +62,19 @@ def post_new_question():
 
     :return:
     """
-    isFromPool = request.form.get('isFromPool')
-    idInPool = request.form.get('idInPool')
-    questionDataRawText = request.form.get('data[rawText]')
-    questionDataKeywords = json.loads(request.form.get('data[keywords]'))
-    questionDataMainwords = json.loads(request.form.get('data[mainwords]'))
-    questionDataDetailwords = json.loads(request.form.get('data[detailwords]'))
+    is_from_pool = request.form.get('isFromPool')
+    id_in_pool = request.form.get('idInPool')
+    question_data_raw_text = request.form.get('data[rawText]')
+    question_data_keywords = json.loads(request.form.get('data[keywords]'))
+    question_data_mainwords = json.loads(request.form.get('data[mainwords]'))
+    question_data_detailwords = json.loads(request.form.get('data[detailwords]'))
 
-    current_app.logger.info(isFromPool)
-    current_app.logger.info(idInPool)
-    current_app.logger.info(questionDataRawText)
-    current_app.logger.info(questionDataKeywords)
-    current_app.logger.info(questionDataMainwords)
-    current_app.logger.info(questionDataDetailwords)
+    current_app.logger.info(is_from_pool)
+    current_app.logger.info(id_in_pool)
+    current_app.logger.info(question_data_raw_text)
+    current_app.logger.info(question_data_keywords)
+    current_app.logger.info(question_data_mainwords)
+    current_app.logger.info(question_data_detailwords)
 
     return jsonify(errors.success())
 
@@ -86,15 +86,15 @@ def modify_question():
     :return:
     """
     id = request.form.get('id')
-    questionDataRawText = request.form.get('data[rawText]')
-    questionDataKeywords = json.loads(request.form.get('data[keywords]'))
-    questionDataMainwords = json.loads(request.form.get('data[mainwords]'))
-    questionDataDetailwords = json.loads(request.form.get('data[detailwords]'))
+    question_data_raw_text = request.form.get('data[rawText]')
+    question_data_keywords = json.loads(request.form.get('data[keywords]'))
+    question_data_mainwords = json.loads(request.form.get('data[mainwords]'))
+    question_data_detailwords = json.loads(request.form.get('data[detailwords]'))
 
     current_app.logger.info(id)
-    current_app.logger.info(questionDataRawText)
-    current_app.logger.info(questionDataKeywords)
-    current_app.logger.info(questionDataMainwords)
-    current_app.logger.info(questionDataDetailwords)
+    current_app.logger.info(question_data_raw_text)
+    current_app.logger.info(question_data_keywords)
+    current_app.logger.info(question_data_mainwords)
+    current_app.logger.info(question_data_detailwords)
 
     return jsonify(errors.success())
