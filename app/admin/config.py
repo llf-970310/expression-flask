@@ -6,3 +6,7 @@
 
 class AccountsConfig:
     invitation_code_length = 16
+
+class QuestionConfig:
+    default_page = 1
+    default_size = 50
