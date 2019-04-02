@@ -11,3 +11,4 @@ from . import accounts
 from . import exam
 from . import optimize
 from . import question
+from . import score
