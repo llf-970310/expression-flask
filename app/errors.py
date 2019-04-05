@@ -84,3 +84,6 @@ Get_question_failed = {'code': 5102, 'msg': '获取题目失败'}
 Process_audio_failed = {'code': 5103, 'msg': '获取题目失败'}
 Audio_process_failed = {'code': 5104, 'msg': '音频处理出错'}
 WIP = {'code': 5104, 'msg': '正在处理'}
+
+Question_not_exist = {'code': 4002, 'msg': '题目不存在'}
+Optimize_not_exist = {'code': 4003, 'msg': '该题目未进行过优化'}

@@ -18,3 +18,7 @@ def generate_code(length=4):
 def timestamp2datetime(stamp):
     import datetime
     return datetime.datetime.utcfromtimestamp(stamp)
+
+
+def str_to_bool(str):
+    return True if str.lower() == 'true' else False

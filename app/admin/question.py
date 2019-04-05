@@ -11,6 +11,21 @@ import json
 from app.admin.config import QuestionConfig
 
 
+@admin.route('/question-type-two', methods=['GET'])
+def get_all_type_two_questions():
+    questions = QuestionModel.objects(q_type=2)
+    data = []
+    for question in questions:
+        data.append({
+            "questionId": question['q_id'],
+            "rawText": question['text'],
+            "inOptimize": question['in_optimize'],
+            "lastOpDate": question['last_optimize_time'],
+            "optimized": question['auto_optimized'],
+        })
+    return jsonify(errors.success({"count": len(data), "questions": data}))
+
+
 @admin.route('/questions', methods=['GET'])
 def get_all_questions():
     """获取所有题目 TODO

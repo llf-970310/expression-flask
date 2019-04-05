@@ -3,7 +3,7 @@
 #
 # Created by dylanchu on 19-2-15
 
-from config import DevelopmentConfig
+from app_config import DevelopmentConfig
 from flask import Flask
 from flask_login import LoginManager
 from flask_mongoengine import MongoEngine

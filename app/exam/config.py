@@ -25,6 +25,9 @@ class ExamConfig(object):
     question_prepare_time = {1: 5, 2: 60, 3: 60}
     total_question_num = sum(question_num_each_type.values())
     total_question_type_num = len(question_num_each_type)
+    key_percent = 0.7
+    detail_percent = 0.3
+    full_score = 100
 
 
 class QuestionConfig(object):
