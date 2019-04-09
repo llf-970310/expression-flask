@@ -23,10 +23,55 @@ def user_info():
     if current_user.is_authenticated:
         return jsonify(errors.success({
             'role': str(current_user.role.value),
-            'name': current_user.name
+            'name': current_user.name,
+            'email':current_user.email,
+            'register_time':current_user.register_time,
+            'last_login_time':current_user.last_login_time,
+            'questions_history':current_user.questions_history,
+            'wx_id':current_user.wx_id,
+            'vip_start_time':current_user.vip_start_time,
+            'vip_end_time':current_user.vip_end_time,
+            'remaining_exam_num':current_user.remaining_exam_num
+
         }))
     else:
         return jsonify(errors.Authorize_needed)
+
+
+@auth.route('/update',methods=['POST'])
+def update():
+    email = request.form.get('email').strip().lower()
+    password = request.form.get('password').strip()
+    name = request.form.get('name').strip()
+    if not (email and password):
+        return jsonify(errors.Params_error)
+    if not validate_email(email):
+        return jsonify(errors.Params_error)
+    check_user = UserModel.objects(email=email).first()
+    check_user.password=password
+    check_user.name=name
+    check_user.save()
+    return jsonify(errors.success({
+        'msg': '修改成功',
+        'uuid': str(check_user.id),
+        'name': str(check_user.name),
+        'password':str(check_user.password)
+    }))
+
+
+@auth.route('/untying',methods=['POST'])
+def untying():
+    email = request.form.get('email').strip().lower()
+    check_user=UserModel.objects(email=email).first()
+    if not check_user.wx_id:
+        return jsonify(errors.Wechat_not_bind)
+    check_user.wx_id=''
+    check_user.save()
+    return  jsonify(errors.success(
+        {
+            'msg':'解绑成功'
+        }
+    ))
 
 
 @auth.route('/register', methods=['POST'])
