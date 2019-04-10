@@ -8,6 +8,8 @@ import json
 import requests
 from flask import current_app, jsonify, request, session, url_for
 from flask_login import login_user, logout_user, current_user
+
+from app.models.exam import CurrentTestModel
 from app.models.user import UserModel
 from app.models.invitation import InvitationModel
 from app.auth.util import *
@@ -38,16 +40,21 @@ def user_info():
         return jsonify(errors.Authorize_needed)
 
 
+@auth.route('/info',methods=['POST'])
+def info():
+    user_id=session.get("user_id")
+    user=UserModel.objects(id=user_id).first()
+    return jsonify(errors.success(user))
+
+
 @auth.route('/update',methods=['POST'])
 def update():
-    email = request.form.get('email').strip().lower()
+    user_id = session.get("user_id")
     password = request.form.get('password').strip()
     name = request.form.get('name').strip()
-    if not (email and password):
+    if not password:
         return jsonify(errors.Params_error)
-    if not validate_email(email):
-        return jsonify(errors.Params_error)
-    check_user = UserModel.objects(email=email).first()
+    check_user = UserModel.objects(id=user_id).first()
     check_user.password=password
     check_user.name=name
     check_user.save()
@@ -61,8 +68,8 @@ def update():
 
 @auth.route('/untying',methods=['POST'])
 def untying():
-    email = request.form.get('email').strip().lower()
-    check_user=UserModel.objects(email=email).first()
+    user_id = session.get("user_id")
+    check_user=UserModel.objects(id=user_id).first()
     if not check_user.wx_id:
         return jsonify(errors.Wechat_not_bind)
     check_user.wx_id=''
@@ -72,6 +79,13 @@ def untying():
             'msg':'解绑成功'
         }
     ))
+
+
+@auth.route('/showscore',methods=['POST'])
+def showscore():
+    user_id = session.get("user_id")
+    socrelist=CurrentTestModel.objects(user_id=user_id)
+    return jsonify(errors.success(socrelist))
 
 
 @auth.route('/register', methods=['POST'])
