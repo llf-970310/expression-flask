@@ -84,8 +84,10 @@ def untying():
 @auth.route('/showscore',methods=['POST'])
 def showscore():
     user_id = session.get("user_id")
-    socrelist=CurrentTestModel.objects(user_id=user_id)
-    return jsonify(errors.success(socrelist))
+    scorelist=CurrentTestModel.objects(user_id=user_id)
+    if scorelist is None:
+        return jsonify(errors.Exam_not_exist)
+    return jsonify(errors.success(scorelist))
 
 
 @auth.route('/register', methods=['POST'])
