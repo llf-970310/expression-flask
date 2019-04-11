@@ -25,3 +25,5 @@ class OptimizeConfig:
         'totalStatistic': {"mean": 0, "sigma": 0, "difficulty": 0, "discrimination": 0},
 
     }
+    SCORE_GROUP_PERCENT = 0.27
+
