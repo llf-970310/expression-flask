@@ -40,13 +40,6 @@ def user_info():
         return jsonify(errors.Authorize_needed)
 
 
-@auth.route('/info',methods=['POST'])
-def info():
-    user_id=session.get("user_id")
-    user=UserModel.objects(id=user_id).first()
-    return jsonify(errors.success(user))
-
-
 @auth.route('/update',methods=['POST'])
 def update():
     if current_user.is_authenticated:
@@ -96,6 +89,7 @@ def showscore():
     check_user = UserModel.objects(email=email).first()
     user_id=check_user.id
     scorelist=CurrentTestModel.objects(user_id=user_id)
+    current_app.logger.info(scorelist.size)
     if scorelist is None:
         return jsonify(errors.Exam_not_exist)
     return jsonify(errors.success(scorelist))
