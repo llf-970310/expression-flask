@@ -49,12 +49,15 @@ def info():
 
 @auth.route('/update',methods=['POST'])
 def update():
-    user_id = session.get("user_id")
+    if current_user.is_authenticated:
+        email=current_user.email
+    else:
+        return jsonify(errors.Authorize_needed)
     password = request.form.get('password').strip()
     name = request.form.get('name').strip()
     if not password:
         return jsonify(errors.Params_error)
-    check_user = UserModel.objects(id=user_id).first()
+    check_user = UserModel.objects(email=email).first()
     check_user.password=password
     check_user.name=name
     check_user.save()
@@ -68,8 +71,11 @@ def update():
 
 @auth.route('/untying',methods=['POST'])
 def untying():
-    user_id = session.get("user_id")
-    check_user=UserModel.objects(id=user_id).first()
+    if current_user.is_authenticated:
+        email = current_user.email
+    else:
+        return jsonify(errors.Authorize_needed)
+    check_user=UserModel.objects(email=email).first()
     if not check_user.wx_id:
         return jsonify(errors.Wechat_not_bind)
     check_user.wx_id=''
@@ -83,7 +89,12 @@ def untying():
 
 @auth.route('/showscore',methods=['POST'])
 def showscore():
-    user_id = session.get("user_id")
+    if current_user.is_authenticated:
+        email = current_user.email
+    else:
+        return jsonify(errors.Authorize_needed)
+    check_user = UserModel.objects(email=email).first()
+    user_id=check_user.id
     scorelist=CurrentTestModel.objects(user_id=user_id)
     if scorelist is None:
         return jsonify(errors.Exam_not_exist)
