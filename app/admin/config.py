@@ -27,3 +27,6 @@ class OptimizeConfig:
     }
     SCORE_GROUP_PERCENT = 0.27
 
+
+class ScoreConfig:
+    DEFAULT_USER_EMAIL = 'default@site.com'
