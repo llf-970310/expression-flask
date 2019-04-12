@@ -1,12 +1,13 @@
-from . import admin, mock_data, algorithm, analysis, util
+from . import admin, algorithm, analysis, util
 from app.admin.config import OptimizeConfig
 from app.exam.config import ExamConfig
 from app import errors
 from app.models.exam import *
 from app.models.analysis import *
-from flask import request, current_app, jsonify, session
+from flask import request, jsonify
 import datetime
 import json
+from functools import reduce
 
 
 @admin.route('/get-score-data', methods=['GET'])
@@ -40,7 +41,7 @@ def get_weight_data():
     question = QuestionModel.objects(q_id=question_num).first()
     if not question:
         return jsonify(errors.Question_not_exist)
-    data = question2weight(question)
+    data = __question2weight(question)
     # return jsonify(errors.success(mock_data.weight_data))
     print(errors.success(data))
     return jsonify(errors.success(data))
@@ -62,7 +63,7 @@ def update_weight():
     question['last_optimize_time'] = datetime.datetime.utcnow()
     question.save()
     # return jsonify(errors.success(mock_data.weight_data))
-    return jsonify(errors.success(question2weight(question)))
+    return jsonify(errors.success(__question2weight(question)))
 
 
 @admin.route('/get-last-cost-data', methods=['GET'])
@@ -96,10 +97,6 @@ def start_auto_optimize():
     settings = json.loads(request.form.get("settings"))
     print("start_auto_optimize: questionNum: " + str(question_num))
     print(settings)
-    # temp
-    # questions = QuestionModel.objects(q_type=2)
-    # for q in questions:
-    #     analysis.re_analysis(q)
 
     # 重新计算某道题目所有人的击中向量
     question = QuestionModel.objects(q_id=question_num).first()
@@ -114,9 +111,7 @@ def start_auto_optimize():
     detail_hit_mat = []
     analysis_list = analysis_list.order_by('score_detail')  # !!!从低到高排序
     for a in analysis_list:
-        detail_hits = []
-        for d in a['detail_hits']:
-            detail_hits += d
+        detail_hits = reduce(lambda x, y: x + y, a['detail_hits'])
         detail_hit_mat.append(detail_hits)
     key_y = algorithm.get_gaussian_array(settings['keyMean'], settings['keySigma'], len(key_hit_mat))
     detail_y = algorithm.get_gaussian_array(settings['detailMean'], settings['detailSigma'], len(detail_hit_mat))
@@ -162,7 +157,7 @@ def refresh_auto_optimize():
     return jsonify(errors.success())
 
 
-def question2weight(question):
+def __question2weight(question):
     detail = []
     for lst in question['wordbase']['detailwords']:
         detail += lst
