@@ -27,7 +27,7 @@ def user_info():
             'role': str(current_user.role.value),
             'name': current_user.name,
             'email':current_user.email,
-            'password':current_user.password,
+            'password': current_user.password,
             'register_time':current_user.register_time,
             'last_login_time':current_user.last_login_time,
             'questions_history':current_user.questions_history,
