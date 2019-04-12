@@ -1,6 +1,6 @@
 from . import admin, algorithm, analysis, util
-from app.admin.config import OptimizeConfig
-from app.exam.config import ExamConfig
+from app.admin.admin_config import OptimizeConfig
+from app.exam.exam_config import ExamConfig
 from app import errors
 from app.models.exam import *
 from app.models.analysis import *

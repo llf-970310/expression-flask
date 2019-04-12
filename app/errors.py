@@ -88,3 +88,6 @@ WIP = {'code': 5104, 'msg': '正在处理'}
 
 Question_not_exist = {'code': 4002, 'msg': '题目不存在'}
 Optimize_not_exist = {'code': 4003, 'msg': '该题目未进行过优化'}
+
+Score_no_data = {'code': 4701, 'msg': '暂无数据'}
+Origin_question_no_more = {'code': 4702, 'msg': '题库中暂无题目'}

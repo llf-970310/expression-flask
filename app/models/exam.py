@@ -8,6 +8,9 @@ from app import db
 
 
 class QuestionModel(db.DynamicDocument):
+    """
+    正常使用的题目 question
+    """
     text = db.StringField(max_length=512)
     level = db.IntField(min_value=1, max_value=10)
     q_type = db.IntField(min_value=1, max_value=3)  # type是留字，可能会有一些坑
@@ -28,6 +31,9 @@ class QuestionModel(db.DynamicDocument):
 
 
 class CurrentQuestionEmbed(db.EmbeddedDocument):
+    """
+    用户做题的题目 current.question[x]
+    """
     q_id = db.StringField(max_length=32)
     q_type = db.IntField(min_value=1, max_value=3)
     q_text = db.StringField(max_length=512)
@@ -45,6 +51,9 @@ class CurrentQuestionEmbed(db.EmbeddedDocument):
 
 
 class CurrentTestModel(db.Document):
+    """
+    current
+    """
     user_id = db.StringField(max_length=32, default=None)
     test_start_time = db.DateTimeField()
     paper_type = db.ListField()

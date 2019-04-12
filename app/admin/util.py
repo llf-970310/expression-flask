@@ -20,5 +20,12 @@ def timestamp2datetime(stamp):
     return datetime.datetime.utcfromtimestamp(stamp)
 
 
+def convert_date_to_str(date, separator='') -> str:
+    """
+    Desc:   获得当前日期格式化字符串，可指定分隔符，如: 20181009(默认), 2018-10-31(输入为-), 2018===10===31(输入为===)
+    """
+    return date.strftime("%%Y%s%%m%s%%d" % (separator, separator))
+
+
 def str_to_bool(str):
     return True if str.lower() == 'true' else False

@@ -12,6 +12,9 @@ class AnalysisModel(db.DynamicDocument):
     voice_features = db.DictField(default={})
     key_hits = db.ListField(db.FloatField(default=0))
     detail_hits = db.ListField(db.ListField(db.FloatField(default=0)))
+    user = db.ObjectIdField()
+    date = db.DateTimeField()
+
     meta = {'collection': 'analysis'}
 
 
@@ -24,4 +27,3 @@ class OptimizeModel(db.DynamicDocument):
     complete_time = db.DateTimeField(default=lambda: datetime.datetime.utcnow())
     finish = db.BooleanField(default=True)
     meta = {'collection': 'optimize'}
-

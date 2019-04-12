@@ -6,7 +6,7 @@
 # 该文件存放面向管理员的accounts相关views,与view无关的具体功能的实现请写在app/accounts/utils.py中,在此尽量只作引用
 from flask import request, current_app, jsonify, session
 from flask_login import current_user
-from app.admin.config import AccountsConfig
+from app.admin.admin_config import AccountsConfig
 from app.admin.util import *
 from app.models.invitation import *
 
