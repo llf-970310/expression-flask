@@ -1,5 +1,5 @@
 from . import admin, mock_data, algorithm, analysis, util
-from app.admin.config import OptimizeConfig
+from app.admin.admin_config import OptimizeConfig
 from app.exam.config import ExamConfig
 from app import errors
 from app.models.exam import *

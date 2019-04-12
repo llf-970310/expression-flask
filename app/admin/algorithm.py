@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.special import erfinv
-from .config import OptimizeConfig
+from .admin_config import OptimizeConfig
 
 
 def get_gaussian_array(mu, sigma, n):

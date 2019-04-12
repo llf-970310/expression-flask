@@ -1,15 +1,12 @@
-from . import admin, util
+from . import admin, util, analysis
+from app.admin.admin_config import QuestionConfig
 from app.exam.util import *
-from app.models.user import UserModel
 from app import errors
 from app.models.exam import *
 from app.models.origin import *
 from flask import request, current_app, jsonify, session
 from . import mock_data
-import datetime
 import json
-
-from app.admin.config import QuestionConfig
 
 
 @admin.route('/question-type-two', methods=['GET'])
@@ -122,6 +119,10 @@ def get_question(id):
     current_app.logger.info('q_id = ' + id)
     result_question = QuestionModel.objects(q_id=id).first()
 
+    # 要获取的题目不存在
+    if not result_question:
+        return jsonify(errors.Question_not_exist)
+
     # wrap question
     context = {
         "questionId": result_question['q_id'],
@@ -140,6 +141,11 @@ def get_question_from_pool():
     :return: 题库中的某道题
     """
     result_question = OriginQuestionModel.objects().first()
+
+    # 题库导入时无题目
+    if not result_question:
+        return jsonify(errors.Origin_question_no_more)
+
     context = {
         "rawText": result_question['text'],
         "keywords": result_question['wordbase']['keywords'],
@@ -165,6 +171,14 @@ def post_new_question():
         "detailwords": json.loads(request.form.get('data[detailwords]')),
     }
 
+    if util.str_to_bool(is_from_pool):
+        # 词库导入时，需要删除原项，即从 origin_questions 中删除
+        origin_question = OriginQuestionModel.objects(q_id=id_in_pool).first()
+        if not origin_question:
+            return jsonify(errors.Question_not_exist)
+        else:
+            origin_question.delete()
+
     # 进入 questions 的 q_id
     next_q_id = get_next_available_question_id()
     current_app.logger.info('next_q_id: ' + next_q_id.__str__())
@@ -177,12 +191,6 @@ def post_new_question():
         q_id=next_q_id
     )
     new_question.save()
-
-    if util.str_to_bool(is_from_pool) == True:
-        # 词库导入时，需要删除原项，即从 origin_questions 中删除
-        origin_question = OriginQuestionModel.objects(q_id=id_in_pool).first()
-        origin_question.delete()
-
     return jsonify(errors.success())
 
 
@@ -210,6 +218,9 @@ def modify_question():
     }
 
     question = QuestionModel.objects(q_id=id).first()
+    if not question:
+        return jsonify(errors.Question_not_exist)
+
     question.update(
         text=question_data_raw_text,
         wordbase=question_wordbase,
