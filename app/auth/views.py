@@ -51,7 +51,7 @@ def update():
     if not password:
         return jsonify(errors.Params_error)
     check_user = UserModel.objects(email=email).first()
-    check_user.password=password
+    check_user.password=current_app.md5_hash(password)
     check_user.name=name
     check_user.save()
     return jsonify(errors.success({
