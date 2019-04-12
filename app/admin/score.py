@@ -1,6 +1,6 @@
 from . import admin, algorithm, util
 from app.exam.util import *
-from app.exam.config import ExamConfig
+from app.exam.exam_config import ExamConfig
 from app.admin.admin_config import ScoreConfig
 from app import errors
 from app.models.user import UserModel

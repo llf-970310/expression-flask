@@ -8,7 +8,7 @@ from app.exam.util import *
 from app.models.user import UserModel
 from . import exam
 from app import errors
-from .config import ExamConfig, QuestionConfig, DefaultValue
+from .exam_config import ExamConfig, QuestionConfig, DefaultValue
 from app.models.exam import *
 from flask import request, current_app, jsonify, session
 from flask_login import current_user
