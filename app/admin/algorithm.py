@@ -1,5 +1,6 @@
 import numpy as np
 from scipy.special import erfinv
+from .config import OptimizeConfig
 
 
 def get_gaussian_array(mu, sigma, n):
@@ -69,7 +70,7 @@ def analysis_score(score_array, full_score):
     mean = np.mean(np_score_array)
     sigma = np.std(np_score_array)
     difficulty = mean / full_score
-    n = round(len(score_array) * 0.27)
+    n = 1 if len(score_array) <= 2 else round(len(score_array) * OptimizeConfig.SCORE_GROUP_PERCENT)
     low, high = 0, 0
     for i in range(n):
         low += np_score_array[i]
