@@ -19,6 +19,10 @@ from . import auth
 from app import errors
 
 
+def datetime_toString(dt):
+    return dt.strftime("%Y-%m-%d %H:%M:%S")
+
+
 @auth.route('/user/info', methods=['GET'])
 def user_info():
     current_app.logger.info('get user info request: %s' % request.form.__str__())
@@ -28,12 +32,12 @@ def user_info():
             'name': current_user.name,
             'email':current_user.email,
             'password': current_user.password,
-            'register_time':current_user.register_time,
-            'last_login_time':current_user.last_login_time,
+            'register_time':datetime_toString(current_user.register_time),
+            'last_login_time':datetime_toString(current_user.last_login_time),
             'questions_history':current_user.questions_history,
             'wx_id':current_user.wx_id,
-            'vip_start_time':current_user.vip_start_time,
-            'vip_end_time':current_user.vip_end_time,
+            'vip_start_time':datetime_toString(current_user.vip_start_time),
+            'vip_end_time':datetime_toString(current_user.vip_end_time),
             'remaining_exam_num':current_user.remaining_exam_num
 
         }))
