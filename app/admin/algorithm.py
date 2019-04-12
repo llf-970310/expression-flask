@@ -16,7 +16,7 @@ def get_gaussian_array(mu, sigma, n):
     return y
 
 
-def get_cost_and_grad(x, theta, l, y):
+def __get_cost_and_grad(x, theta, l, y):
     """
     获得损失函数值和损失函数导数值
     :param x: numpy矩阵，每行为一个样本，每列为对应参数的取值，包括第一列补充的1
@@ -26,10 +26,10 @@ def get_cost_and_grad(x, theta, l, y):
     :return: 在当前参数（theta）下，损失函数值和损失函数的导数值
     """
     m = len(x)
-    j = 1 / (2 * m) * np.power(np.dot(x, theta.T) - y.T, 2).sum() + l / (2 * m) * np.power(theta, 2).sum()
+    cost = 1 / (2 * m) * np.power(np.dot(x, theta.T) - y.T, 2).sum() + l / (2 * m) * np.power(theta, 2).sum()
     theta_temp = np.mat([0] + theta.tolist()[1:])
     grad = 1 / m * np.dot(x.T, np.dot(x, theta.T) - y.T) + l / m * theta_temp.T
-    return j, grad
+    return cost, grad
 
 
 def gradient_descent(x, y, a, l, times, theta=None):
@@ -49,14 +49,14 @@ def gradient_descent(x, y, a, l, times, theta=None):
     np_x = np.mat(list(map(lambda lst: [1] + lst, x)))  # 在最前面补1
     np_y = np.mat(y)
     np_theta = np.mat(theta)
-    history_j = []  # 存储历史损失函数值
+    history_cost = []  # 存储历史损失函数值
     for i in range(times):
-        j, grad = get_cost_and_grad(np_x, np_theta, l, np_y)
+        cost, grad = __get_cost_and_grad(np_x, np_theta, l, np_y)
         np_theta = np_theta - a * grad.T
         # np_theta = (np.abs(np_theta) + np_theta) / 2
-        history_j.append(j)
+        history_cost.append(cost)
     np_theta = (np.abs(np_theta) + np_theta) / 2
-    return np_theta.tolist()[0], history_j
+    return np_theta.tolist()[0], history_cost
 
 
 def analysis_score(score_array, full_score):

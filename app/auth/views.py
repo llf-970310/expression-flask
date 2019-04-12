@@ -94,9 +94,8 @@ def showscore():
     check_user = UserModel.objects(email=email).first()
     user_id=check_user.id
     scorelist=CurrentTestModel.objects(user_id=user_id)
-    current_app.logger.info(scorelist.size)
-    if scorelist is None:
-        return jsonify(errors.Exam_not_exist)
+    if scorelist.count()==0:
+        return jsonify(errors.No_history)
     return jsonify(errors.success(scorelist))
 
 

@@ -23,7 +23,7 @@ def re_analysis(analysis_question):
     # # 首先，将analysis表里所有这道题的答案都重新分析一遍
     # old_analysis_list = AnalysisModel.objects(question_num=analysis_question['q_id'])
     # for analysis in old_analysis_list:
-    #     compute_score_and_save(analysis, analysis['voice_features'], analysis_question, analysis['test_start_time'])
+    #     __compute_score_and_save(analysis, analysis['voice_features'], analysis_question)
     #     total_key = analysis['score_key']
     #     total_detail = analysis['score_detail']
     #     count += 1
@@ -52,7 +52,7 @@ def re_analysis(analysis_question):
     #                 'speeds': question['feature']['speeds'],
     #             }
     #             analysis['voice_features'] = voice_features
-    #             compute_score_and_save(analysis, voice_features, analysis_question, test['test_start_time'])
+    #             __compute_score_and_save(analysis, voice_features, analysis_question)
     #             question['analysed'] = True
     #             total_key = analysis['score_key']
     #             total_detail = analysis['score_detail']
@@ -108,7 +108,7 @@ def init_process(analysis_question):
     #             }
     #             analysis['voice_features'] = voice_features
     #             print('test_start_time: ' + test['test_start_time'].__str__())
-    #             compute_score_and_save(analysis, voice_features, analysis_question, test['test_start_time'])
+    #             __compute_score_and_save(analysis, voice_features, analysis_question, test['test_start_time'])
     #             question['analysed'] = True
     #             total_key = analysis['score_key']
     #             total_detail = analysis['score_detail']
@@ -118,7 +118,7 @@ def init_process(analysis_question):
     pass
 
 
-def compute_score_and_save(analysis, voice_features, question, test_start_time):
+def __compute_score_and_save(analysis, voice_features, question, test_start_time):
     # feature_result = analysis_util.analysis_features(None, question['wordbase'], voice_features=voice_features)
     # score = analysis_util.compute_score(feature_result['key_hits'], feature_result['detail_hits'],
     #                                     question['weights']['key'], question['weights']['detail'])

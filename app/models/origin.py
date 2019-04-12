@@ -2,6 +2,7 @@ import datetime
 
 from app import db
 
+
 class OriginQuestionModel(db.DynamicDocument):
     """
     正常使用的题目 question
