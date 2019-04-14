@@ -8,7 +8,7 @@ class AccountsConfig:
     INVITATION_CODE_LEN = 16
 
 
-class QuestionConfig:
+class PaginationConfig:
     DEFAULT_PAGE = 1
     DEFAULT_SIZE = 50
 

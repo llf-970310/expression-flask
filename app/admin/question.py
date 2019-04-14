@@ -1,5 +1,5 @@
 from . import admin, util, analysis
-from app.admin.admin_config import QuestionConfig
+from app.admin.admin_config import PaginationConfig
 from app.exam.util import *
 from app import errors
 from app.models.exam import *
@@ -63,12 +63,12 @@ def get_page_and_size_from_request_args(args):
 
     # 提供默认参数
     if page == None or page == '' or int(page) < 0:
-        page = QuestionConfig.DEFAULT_PAGE
+        page = PaginationConfig.DEFAULT_PAGE
     else:
         page = int(page)
 
     if size == None or size == '' or int(size) < 0:
-        size = QuestionConfig.DEFAULT_SIZE
+        size = PaginationConfig.DEFAULT_SIZE
     else:
         size = int(size)
 

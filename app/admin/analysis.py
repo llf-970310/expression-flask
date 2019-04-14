@@ -2,7 +2,7 @@
 # import sys
 # from app.models.exam import *
 # from app.models.analysis import *
-# from app.exam.config import ExamConfig
+# from app.exam.exam_config import ExamConfig
 #
 # dir_name = '/Users/gyue/Programs/exp-docker/'
 # # dir_name = '/home/ise/docker/exp-docker/'
@@ -23,7 +23,7 @@ def re_analysis(analysis_question):
     # # 首先，将analysis表里所有这道题的答案都重新分析一遍
     # old_analysis_list = AnalysisModel.objects(question_num=analysis_question['q_id'])
     # for analysis in old_analysis_list:
-    #     __compute_score_and_save(analysis, analysis['voice_features'], analysis_question)
+    #     __compute_score_and_save(analysis, analysis['voice_features'], analysis_question, analysis['test_start_time'])
     #     total_key = analysis['score_key']
     #     total_detail = analysis['score_detail']
     #     count += 1
@@ -52,7 +52,7 @@ def re_analysis(analysis_question):
     #                 'speeds': question['feature']['speeds'],
     #             }
     #             analysis['voice_features'] = voice_features
-    #             __compute_score_and_save(analysis, voice_features, analysis_question)
+    #             __compute_score_and_save(analysis, voice_features, analysis_question, test['test_start_time'])
     #             question['analysed'] = True
     #             total_key = analysis['score_key']
     #             total_detail = analysis['score_detail']
@@ -62,10 +62,11 @@ def re_analysis(analysis_question):
     #     test.save()
     #
     # # 更新难度
-    # mean = (total_key * ExamConfig.key_percent + total_detail * ExamConfig.detail_percent) / count
-    # difficulty = mean / ExamConfig.full_score
-    # analysis_question['level'] = round(10 - difficulty * 10)
-    # analysis_question.save()
+    # if count != 0:
+    #     mean = (total_key * ExamConfig.key_percent + total_detail * ExamConfig.detail_percent) / count
+    #     difficulty = mean / ExamConfig.full_score
+    #     analysis_question['level'] = round(10 - difficulty * 10)
+    #     analysis_question.save()
     pass
 
 
@@ -129,10 +130,9 @@ def __compute_score_and_save(analysis, voice_features, question, test_start_time
     # analysis['test_start_time'] = test_start_time
     # print(score)
     # analysis.save()
-    # print('saved: ' + analysis['question_num'].__str__() + '        ' + analysis['user'] + '        ' +
-    #       analysis['date'].__str__())
+    # print('saved: ' + analysis['question_num'].__str__() + '        ' + analysis['user'].__str__()+ '        ' +
+    #       analysis['test_start_time'].__str__())
     pass
-
 
 # if __name__ == '__main__':
 #     print(sys.path)
