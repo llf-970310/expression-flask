@@ -7,8 +7,17 @@ from app_config import DevelopmentConfig
 from flask import Flask
 from flask_login import LoginManager
 from flask_mongoengine import MongoEngine
+from flask_apscheduler import APScheduler as _BaseAPScheduler
+
+
+class APScheduler(_BaseAPScheduler):
+    def run_job(self, id, jobstore=None):
+        with self.app.app_context():
+            super().run_job(id=id, jobstore=jobstore)
+
 
 db = MongoEngine()
+scheduler = APScheduler()
 login_manager = LoginManager()
 login_manager.session_protection = 'strong'
 login_manager.login_view = 'auth.login'
@@ -24,6 +33,12 @@ def create_app():
         from flask_session import Session
         Session(app)
     db.init_app(app)
+
+    from celery_config import CeleryConfig
+    app.config.from_object(CeleryConfig)
+    scheduler.init_app(app)  # 把任务列表放进flask
+    scheduler.start()  # 启动任务列表
+
     login_manager.init_app(app)
 
     from .main import main as main_blueprint

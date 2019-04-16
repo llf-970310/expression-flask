@@ -30,3 +30,4 @@ class OptimizeConfig:
 
 class ScoreConfig:
     DEFAULT_USER_EMAIL = 'default@site.com'
+    DEFAULT_NUM_FORMAT = '0.2f'
