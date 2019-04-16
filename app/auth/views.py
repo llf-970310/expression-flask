@@ -53,11 +53,12 @@ def update():
         return jsonify(errors.Authorize_needed)
     password = request.form.get('password').strip()
     name = request.form.get('name').strip()
-    if not password:
-        return jsonify(errors.Params_error)
     check_user = UserModel.objects(email=email).first()
-    check_user.password=current_app.md5_hash(password)
-    check_user.name=name
+    if not password:
+        check_user.name = name
+    else:
+        check_user.password=current_app.md5_hash(password)
+        check_user.name=name
     check_user.save()
     return jsonify(errors.success({
         'msg': '修改成功',
@@ -94,9 +95,8 @@ def showscore():
     check_user = UserModel.objects(email=email).first()
     user_id=check_user.id
     scorelist=CurrentTestModel.objects(user_id=user_id)
-    current_app.logger.info(scorelist.size)
-    if scorelist is None:
-        return jsonify(errors.Exam_not_exist)
+    if scorelist.count()==0:
+        return jsonify(errors.No_history)
     return jsonify(errors.success(scorelist))
 
 
@@ -290,18 +290,16 @@ def wechat_bind():
     wx_union_id = session.get('wx_union_id')
     if not wx_union_id:
         return jsonify(errors.error())
-    email = request.form.get('email')
-    phone = request.form.get('phone')  # todo:手机号
-    password = request.form.get('pwd')
+    email = request.form.get('username')
+    # phone = request.form.get('phone')  # todo:手机号
+    password = request.form.get('password')
     if not (email and password):
         return jsonify(errors.Params_error)
-
     check_user = UserModel.objects(email=email).first()
     if not check_user:
         return jsonify(errors.Authorize_failed)
     if (not current_app.config['IGNORE_LOGIN_PASSWORD']) and (check_user.password != current_app.md5_hash(password)):
         return jsonify(errors.Authorize_failed)
-
     if check_user.wx_id:
         return jsonify(errors.Wechat_already_bind)
     current_app.logger.info('login user: %s, id: %s' % (check_user.name, check_user.id))
@@ -310,5 +308,8 @@ def wechat_bind():
     current_user.wx_id = wx_union_id
     current_user.last_login_time = datetime.datetime.utcnow()
     current_user.save()
-    resp = {'msg': '绑定成功，登录成功', 'user_id': str(check_user.id), 'role': str(check_user.role)}
-    return jsonify(errors.success(resp))
+    return jsonify(errors.success({
+        'msg': '绑定成功，登录成功',
+        'uuid': str(check_user.id),
+        'name': str(check_user.name),
+    }))

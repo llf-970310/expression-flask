@@ -3,7 +3,7 @@
 import time
 import os
 import json
-from .exam_config import *
+from .exam_config import ApiConfig
 
 
 def get_date_str(separator='') -> str:

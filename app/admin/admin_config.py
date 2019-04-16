@@ -8,7 +8,7 @@ class AccountsConfig:
     INVITATION_CODE_LEN = 16
 
 
-class QuestionConfig:
+class PaginationConfig:
     DEFAULT_PAGE = 1
     DEFAULT_SIZE = 50
 
@@ -30,3 +30,4 @@ class OptimizeConfig:
 
 class ScoreConfig:
     DEFAULT_USER_EMAIL = 'default@site.com'
+    DEFAULT_NUM_FORMAT = '0.2f'

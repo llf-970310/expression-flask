@@ -151,8 +151,9 @@ def generate_result_from_dict(dict, result_key_name):
         detail_score = algorithm.analysis_score(detail_scores, ExamConfig.full_score)['mean']
         result.append({
             result_key_name: key,
-            'mainScore': key_score,
-            'detailScore': detail_score,
-            'totalScore': key_score * ExamConfig.key_percent + detail_score * ExamConfig.detail_percent
+            'mainScore': format(key_score, ScoreConfig.DEFAULT_NUM_FORMAT),
+            'detailScore': format(detail_score, ScoreConfig.DEFAULT_NUM_FORMAT),
+            'totalScore': format(key_score * ExamConfig.key_percent + detail_score * ExamConfig.detail_percent,
+                                 ScoreConfig.DEFAULT_NUM_FORMAT)
         })
     return result
