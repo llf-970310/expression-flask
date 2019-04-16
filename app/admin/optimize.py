@@ -1,9 +1,11 @@
-from . import admin, algorithm, analysis, util
+from . import admin, util
+from .algorithm import OptimizeAlgorithm, GradientDescent, NormalEquation
+from .analysis import Analysis
 from app.admin.admin_config import OptimizeConfig
 from app.exam.exam_config import ExamConfig
 from app import errors
-from app.models.exam import *
-from app.models.analysis import *
+from app.models.exam import QuestionModel
+from app.models.analysis import AnalysisModel, OptimizeModel
 from flask import request, jsonify
 import datetime
 import json
@@ -16,6 +18,7 @@ def get_score_data():
     force = util.str_to_bool(request.args.get('force'))
     if force:
         question = QuestionModel.objects(q_id=question_num).first()
+        analysis = Analysis()
         analysis.re_analysis(question)
     print("get_score_data: questionNum: " + str(question_num))
     analysis_list = AnalysisModel.objects(question_num=question_num)
@@ -28,6 +31,7 @@ def get_score_data():
             data['detail'].append(a['score_detail'])
             data['total'].append(
                 a["score_detail"] * ExamConfig.detail_percent + a["score_key"] * ExamConfig.key_percent)
+    algorithm = OptimizeAlgorithm()
     data['keyStatistic'] = algorithm.analysis_score(data['key'], ExamConfig.full_score)
     data['detailStatistic'] = algorithm.analysis_score(data['detail'], ExamConfig.full_score)
     data['totalStatistic'] = algorithm.analysis_score(data['total'], ExamConfig.full_score)
@@ -99,9 +103,10 @@ def start_auto_optimize():
     print(settings)
 
     # 重新计算某道题目所有人的击中向量
-    question = QuestionModel.objects(q_id=question_num).first()
+    question = QuestionModel.objec逻辑视图2.pngts(q_id=question_num).first()
     if not question:
         return jsonify(errors.Question_not_exist)
+    analysis = Analysis()
     analysis.re_analysis(question)
     # 根据击中向量优化参数
     analysis_list = AnalysisModel.objects(question_num=question_num).order_by('score_key')  # !!!从低到高排序
@@ -113,17 +118,14 @@ def start_auto_optimize():
     for a in analysis_list:
         detail_hits = reduce(lambda x, y: x + y, a['detail_hits'])
         detail_hit_mat.append(detail_hits)
+
+    algorithm = GradientDescent() if settings['algorithm'] == 'gradient' else NormalEquation()
     key_y = algorithm.get_gaussian_array(settings['keyMean'], settings['keySigma'], len(key_hit_mat))
     detail_y = algorithm.get_gaussian_array(settings['detailMean'], settings['detailSigma'], len(detail_hit_mat))
+    settings['theta'] = question['weights']['key'] if settings['reuse'] else None
     # 调用优化方法
-    key_theta, key_j = algorithm.gradient_descent(key_hit_mat, key_y, settings['alpha'], settings['lambda'],
-                                                  settings['times'],
-                                                  question['weights']['key'] if settings['reuse'] else None)
-    detail_theta, detail_j = algorithm.gradient_descent(detail_hit_mat, detail_y, settings['alpha'], settings['lambda'],
-                                                        settings['times'],
-                                                        question['weights']['detail'] if settings['reuse'] else None)
-    print(key_theta)
-    print(detail_theta)
+    key_theta, key_j = algorithm.optimize_param(key_hit_mat, key_y, settings)
+    detail_theta, detail_j = algorithm.optimize_param(detail_hit_mat, detail_y, settings)
     # 存储优化结果
     question['weights']['key'] = key_theta
     question['weights']['detail'] = detail_theta
