@@ -1,5 +1,5 @@
-from . import admin, algorithm, util
-from app.exam.util import *
+from . import admin, util
+from .algorithm import OptimizeAlgorithm
 from app.exam.exam_config import ExamConfig
 from app.admin.admin_config import ScoreConfig
 from app import errors
@@ -141,6 +141,8 @@ def generate_result_from_dict(dict, result_key_name):
     :param result_key_name: 结果集中的 key 值
     :return:
     """
+    algorithm = OptimizeAlgorithm()
+
     result = []
     for key in dict:
         cur_answers = dict[key]

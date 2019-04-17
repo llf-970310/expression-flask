@@ -1,6 +1,5 @@
-from . import admin, util, analysis
+from . import admin, util
 from app.admin.admin_config import PaginationConfig
-from app.exam.util import *
 from app import errors
 from app.models.exam import *
 from app.models.origin import *
