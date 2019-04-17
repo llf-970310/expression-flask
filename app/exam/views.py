@@ -8,7 +8,7 @@ from app.exam.util import *
 from app.models.user import UserModel
 from . import exam
 from app import errors
-from .exam_config import ExamConfig, QuestionConfig, DefaultValue
+from .exam_config import PathConfig, ExamConfig, QuestionConfig, DefaultValue
 from app.models.exam import *
 from flask import request, current_app, jsonify, session
 from flask_login import current_user
@@ -131,7 +131,8 @@ def upload_success():
             ret = analysis_main_3.apply_async(args=(str(current_test.id), str(q_num)), queue='for_q_type3', priority=10)
             # todo: store ret.id in redis for status query
         else:
-            ret = analysis_main_12.apply_async(args=(str(current_test.id), str(q_num)), queue='for_q_type12', priority=2)
+            ret = analysis_main_12.apply_async(args=(str(current_test.id), str(q_num)), queue='for_q_type12',
+                                               priority=2)
             # todo: store ret.id in redis for status query
         current_app.logger.info("AsyncResult id: %s" % ret.id)
     except Exception as e:
@@ -287,7 +288,7 @@ def question_dealer(question_num, test_id, user_id) -> dict:
     test = CurrentTestModel.objects(id=test_id).first()
     if test is None:
         current_app.logger.error("question_generator ERROR: No Tests!, test_id: %s" % test_id)
-        return False
+        return {}
 
     # wrap question
     question = test.questions[str(question_num)]
