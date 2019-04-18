@@ -25,9 +25,9 @@ def get_all_type_two_questions():
         data.append({
             "questionId": question['q_id'],
             "rawText": question['text'],
-            "keywords": array2str(question['wordbase']['keywords'], 2),
-            "mainwords": array2str(question['wordbase']['mainwords'], 2),
-            "detailwords": array2str(question['wordbase']['detailwords'], 3),
+            "keywords": util.array2str(question['wordbase']['keywords'], 2),
+            "mainwords": util.array2str(question['wordbase']['mainwords'], 2),
+            "detailwords": util.array2str(question['wordbase']['detailwords'], 3),
             "inOptimize": question['in_optimize'],
             "lastOpDate": question['last_optimize_time'],
             "optimized": question['auto_optimized'],
@@ -73,39 +73,6 @@ def get_page_and_size_from_request_args(args):
 
     current_app.logger.info('page = %d, size = %d', page, size)
     return (page, size)
-
-
-def array2str(array, level):
-    """
-
-    :param array: 需要展示的的原数组
-    :param level: 数组需要遍历的层级
-    :return: 可直接展示的 word 的数组
-    """
-    if level == 2:
-        string = "「"
-        for i in range(0, len(array)):
-            split = '，'
-            string += ('「' + split.join(array[i]) + '」')
-            if i < len(array) - 1:
-                string += '，'
-        string += '」'
-    elif level == 3:
-        string = '「'
-        for i in range(0, len(array)):
-            string += "「"
-            for j in range(0, len(array[i])):
-                split = '，'
-                string += ('「' + split.join(array[i][j]) + '」')
-                if j < len(array[i]) - 1:
-                    string += '，'
-            string += '」'
-            if i < len(array) - 1:
-                string += '，'
-        string += '」'
-    else:
-        string = ''
-    return string
 
 
 @admin.route('/question/<id>', methods=['GET'])

@@ -125,7 +125,7 @@ def map_answers_by_date(answers):
     """
     res = {}
     for answer in answers:
-        cur_date = util.convert_date_to_str(answer['test_start_time'], '-')
+        cur_date = util.convert_date_to_str(answer['test_start_time'])
         if cur_date in res:
             res[cur_date].append({'key': answer['score_key'], 'detail': answer['score_detail']})
         else:
