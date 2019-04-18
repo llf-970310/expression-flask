@@ -63,3 +63,26 @@ def accounts_invite():
     invitation.save(invitation)
     current_app.logger.info('invitation(id: %s)' % invitation.id)
     return jsonify(errors.success({'msg': '生成邀请码成功', 'invitationCode': invitation.code}))
+
+
+@admin.route('/accounts/invite', methods=['GET'])
+def get_invitations():
+    invitations = InvitationModel.objects()
+
+    # wrap invitations
+    result = []
+    for invitation in invitations:
+        result.append({
+            'code': invitation['code'],
+            'creator': invitation['creator'],
+            # 邀请码剩余可用次数
+            'available_times': invitation['available_times'],
+            # 邀请码有效时间
+            'vip_start_time': convert_datetime_to_str(invitation['vip_start_time']),
+            'vip_end_time': convert_datetime_to_str(invitation['vip_end_time']),
+            # 此邀请码支持的测试次数
+            'remaining_exam_num': invitation['remaining_exam_num'],
+            # 使用此邀请码的用户
+            'activate_users': array2str(invitation['activate_users'], 1)
+        })
+    return jsonify(errors.success({'result': result}))
