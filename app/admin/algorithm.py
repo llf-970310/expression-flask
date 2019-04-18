@@ -2,7 +2,7 @@ import numpy as np
 from scipy.special import erfinv
 
 
-# from .admin_config import OptimizeConfig
+from .admin_config import OptimizeConfig
 
 
 class OptimizeAlgorithm(object):
@@ -32,8 +32,8 @@ class OptimizeAlgorithm(object):
         mean = np.mean(np_score_array)
         sigma = np.std(np_score_array)
         difficulty = mean / full_score
-        # n = 1 if len(score_array) <= 2 else round(len(score_array) * OptimizeConfig.SCORE_GROUP_PERCENT)
-        n = 1 if len(score_array) <= 2 else round(len(score_array) * 0.27)
+        n = 1 if len(score_array) <= 2 else round(len(score_array) * OptimizeConfig.SCORE_GROUP_PERCENT)
+        # n = 1 if len(score_array) <= 2 else round(len(score_array) * 0.27)
         low, high = 0, 0
         for i in range(n):
             low += np_score_array[i]

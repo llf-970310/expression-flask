@@ -103,7 +103,7 @@ def start_auto_optimize():
     print(settings)
 
     # 重新计算某道题目所有人的击中向量
-    question = QuestionModel.objec逻辑视图2.pngts(q_id=question_num).first()
+    question = QuestionModel.objects(q_id=question_num).first()
     if not question:
         return jsonify(errors.Question_not_exist)
     analysis = Analysis()
