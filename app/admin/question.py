@@ -28,7 +28,6 @@ def get_all_type_two_questions():
             "questionId": question['q_id'],
             "rawText": question['text'],
             "keywords": util.array2str(question['wordbase']['keywords'], 2),
-            "mainwords": util.array2str(question['wordbase']['mainwords'], 2),
             "detailwords": util.array2str(question['wordbase']['detailwords'], 3),
             "inOptimize": question['in_optimize'],
             "lastOpDate": question['last_optimize_time'],
@@ -96,7 +95,6 @@ def get_question(id):
         "questionId": result_question['q_id'],
         "rawText": result_question['text'],
         "keywords": result_question['wordbase']['keywords'],
-        "mainwords": result_question['wordbase']['mainwords'],
         "detailwords": result_question['wordbase']['detailwords'],
     }
     return jsonify(errors.success(context))
@@ -117,8 +115,6 @@ def get_question_from_pool():
     context = {
         "rawText": result_question['text'],
         "keywords": result_question['wordbase']['keywords'],
-        # "mainwords": result_question['wordbase']['mainwords'],
-        "mainwords": [[]],
         "detailwords": result_question['wordbase']['detailwords'],
     }
     return jsonify(errors.success({'question': context, 'id': result_question['q_id']}))
@@ -151,7 +147,6 @@ def post_new_question():
     question_data_raw_text = request.form.get('data[rawText]')
     question_wordbase = {
         "keywords": json.loads(request.form.get('data[keywords]')),
-        "mainwords": json.loads(request.form.get('data[mainwords]')),
         "detailwords": json.loads(request.form.get('data[detailwords]')),
     }
 
@@ -197,7 +192,6 @@ def modify_question():
     question_data_raw_text = request.form.get('data[rawText]')
     question_wordbase = {
         "keywords": json.loads(request.form.get('data[keywords]')),
-        "mainwords": json.loads(request.form.get('data[mainwords]')),
         "detailwords": json.loads(request.form.get('data[detailwords]')),
     }
 
