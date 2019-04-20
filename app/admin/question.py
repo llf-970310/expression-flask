@@ -1,11 +1,13 @@
-from . import admin, util
-from app.admin.admin_config import PaginationConfig
+import json
+
+from flask import request, current_app, jsonify
+
 from app import errors
+from app.admin.admin_config import PaginationConfig
 from app.models.exam import *
 from app.models.origin import *
-from flask import request, current_app, jsonify, session
+from . import admin, util
 from . import mock_data
-import json
 
 
 @admin.route('/question-type-two', methods=['GET'])
@@ -115,10 +117,26 @@ def get_question_from_pool():
     context = {
         "rawText": result_question['text'],
         "keywords": result_question['wordbase']['keywords'],
-        "mainwords": result_question['wordbase']['mainwords'],
+        # "mainwords": result_question['wordbase']['mainwords'],
+        "mainwords": [[]],
         "detailwords": result_question['wordbase']['detailwords'],
     }
     return jsonify(errors.success({'question': context, 'id': result_question['q_id']}))
+
+
+@admin.route('/question-from-pool', methods=['DELETE'])
+def delete_specific_question_from_pool():
+    """
+    删除题库中题目
+    """
+    id = request.form.get('idInPool')
+
+    origin_question = OriginQuestionModel.objects(q_id=id).first()
+    if not origin_question:
+        return jsonify(errors.Question_not_exist)
+
+    origin_question.delete()
+    return jsonify(errors.success())
 
 
 @admin.route('/question', methods=['POST'])
