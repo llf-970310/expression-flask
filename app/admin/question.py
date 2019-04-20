@@ -19,8 +19,12 @@ def get_all_type_two_questions():
     (page, size) = get_page_and_size_from_request_args(request.args)
     current_app.logger.info('get_all_type_two_questions  page = %d, size = %d', page, size)
 
-    questions = QuestionModel.objects(q_type=2)[((page - 1) * size):size].order_by('q_id')
     all_questions_num = len(QuestionModel.objects(q_type=2))
+
+    temp_question_query_max = page * size
+    question_query_max = all_questions_num if temp_question_query_max > all_questions_num \
+        else temp_question_query_max
+    questions = QuestionModel.objects(q_type=2)[((page - 1) * size):question_query_max].order_by('q_id')
 
     data = []
     for question in questions:
@@ -106,7 +110,7 @@ def get_question_from_pool():
 
     :return: 题库中的某道题
     """
-    result_question = OriginQuestionModel.objects().first()
+    result_question = OriginTypeTwoQuestionModel.objects().first()
 
     # 题库导入时无题目
     if not result_question:
@@ -116,6 +120,8 @@ def get_question_from_pool():
         "rawText": result_question['text'],
         "keywords": result_question['wordbase']['keywords'],
         "detailwords": result_question['wordbase']['detailwords'],
+        "origin": result_question['origin'],
+        "url": result_question['url'],
     }
     return jsonify(errors.success({'question': context, 'id': result_question['q_id']}))
 
@@ -127,7 +133,7 @@ def delete_specific_question_from_pool():
     """
     id = request.form.get('idInPool')
 
-    origin_question = OriginQuestionModel.objects(q_id=id).first()
+    origin_question = OriginTypeTwoQuestionModel.objects(q_id=id).first()
     if not origin_question:
         return jsonify(errors.Question_not_exist)
 
@@ -152,7 +158,7 @@ def post_new_question():
 
     if util.str_to_bool(is_from_pool):
         # 词库导入时，需要删除原项，即从 origin_questions 中删除
-        origin_question = OriginQuestionModel.objects(q_id=id_in_pool).first()
+        origin_question = OriginTypeTwoQuestionModel.objects(q_id=id_in_pool).first()
         if not origin_question:
             return jsonify(errors.Question_not_exist)
         else:

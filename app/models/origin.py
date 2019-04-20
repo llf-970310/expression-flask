@@ -1,17 +1,15 @@
-import datetime
-
 from app import db
 
 
-class OriginQuestionModel(db.DynamicDocument):
+class OriginTypeTwoQuestionModel(db.DynamicDocument):
     """
     正常使用的题目 question
     """
-    q_type = db.IntField(min_value=1, max_value=3)  # type是留字，可能会有一些坑
-    level = db.IntField(min_value=1, max_value=10)
     text = db.StringField(max_length=512)
     wordbase = db.DictField(default={})
     q_id = db.IntField(min_value=0)  # 题号，从0开始
+    origin = db.StringField(max_length=512)
+    url = db.StringField(max_length=512)
 
     meta = {'collection': 'origin_questions'}
 
