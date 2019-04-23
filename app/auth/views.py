@@ -250,7 +250,7 @@ def wechat_login():
         # data.update({'userInfo': user_info})
         # return jsonify(errors.error(data))
         headimgurl = user_info.get('headimgurl')
-        nickname = user_info.get('nickname')
+        nickname = user_info.get('nickname').encode('ISO-8859-1').decode('utf-8')  # 要转码
         return jsonify(errors.success({
             'msg': '未绑定用户',
             'headimgurl': headimgurl,
