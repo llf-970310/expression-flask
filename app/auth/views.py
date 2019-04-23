@@ -30,25 +30,25 @@ def user_info():
         return jsonify(errors.success({
             'role': str(current_user.role.value),
             'name': current_user.name,
-            'email':current_user.email,
+            'email': current_user.email,
             'password': current_user.password,
-            'register_time':datetime_toString(current_user.register_time),
-            'last_login_time':datetime_toString(current_user.last_login_time),
-            'questions_history':current_user.questions_history,
-            'wx_id':current_user.wx_id,
-            'vip_start_time':datetime_toString(current_user.vip_start_time),
-            'vip_end_time':datetime_toString(current_user.vip_end_time),
-            'remaining_exam_num':current_user.remaining_exam_num
+            'register_time': datetime_toString(current_user.register_time),
+            'last_login_time': datetime_toString(current_user.last_login_time),
+            'questions_history': current_user.questions_history,
+            'wx_id': current_user.wx_id,
+            'vip_start_time': datetime_toString(current_user.vip_start_time),
+            'vip_end_time': datetime_toString(current_user.vip_end_time),
+            'remaining_exam_num': current_user.remaining_exam_num
 
         }))
     else:
         return jsonify(errors.Authorize_needed)
 
 
-@auth.route('/update',methods=['POST'])
+@auth.route('/update', methods=['POST'])
 def update():
     if current_user.is_authenticated:
-        email=current_user.email
+        email = current_user.email
     else:
         return jsonify(errors.Authorize_needed)
     password = request.form.get('password').strip()
@@ -57,45 +57,45 @@ def update():
     if not password:
         check_user.name = name
     else:
-        check_user.password=current_app.md5_hash(password)
-        check_user.name=name
+        check_user.password = current_app.md5_hash(password)
+        check_user.name = name
     check_user.save()
     return jsonify(errors.success({
         'msg': '修改成功',
         'uuid': str(check_user.id),
         'name': str(check_user.name),
-        'password':str(check_user.password)
+        'password': str(check_user.password)
     }))
 
 
-@auth.route('/untying',methods=['POST'])
+@auth.route('/untying', methods=['POST'])
 def untying():
     if current_user.is_authenticated:
         email = current_user.email
     else:
         return jsonify(errors.Authorize_needed)
-    check_user=UserModel.objects(email=email).first()
+    check_user = UserModel.objects(email=email).first()
     if not check_user.wx_id:
         return jsonify(errors.Wechat_not_bind)
-    check_user.wx_id=''
+    check_user.wx_id = ''
     check_user.save()
-    return  jsonify(errors.success(
+    return jsonify(errors.success(
         {
-            'msg':'解绑成功'
+            'msg': '解绑成功'
         }
     ))
 
 
-@auth.route('/showscore',methods=['POST'])
+@auth.route('/showscore', methods=['POST'])
 def showscore():
     if current_user.is_authenticated:
         email = current_user.email
     else:
         return jsonify(errors.Authorize_needed)
     check_user = UserModel.objects(email=email).first()
-    user_id=check_user.id
-    scorelist=CurrentTestModel.objects(user_id=user_id)
-    if scorelist.count()==0:
+    user_id = check_user.id
+    scorelist = CurrentTestModel.objects(user_id=user_id)
+    if scorelist.count() == 0:
         return jsonify(errors.No_history)
     return jsonify(errors.success(scorelist))
 
@@ -223,12 +223,11 @@ def wechat_params():  # todo: as api
     # https://expression.iselab.cn/api/auth/login/wechat?code=061gOGry17jDx90iRjty16tBry1gOGrZ&state=zidingyineirong
 
 
-@auth.route('/wechat/login')
+@auth.route('/wechat/login', methods=['POST'])
 def wechat_login():
     if current_user.is_authenticated:
-        # return jsonify(errors.Already_logged_in)
-        return redirect('/')
-    code = request.args.get('code')
+        return jsonify(errors.Already_logged_in)
+    code = request.form.get('code')
     if not code:
         return jsonify(errors.Params_error)
     oauth2_url = 'https://api.weixin.qq.com/sns/oauth2/access_token?appid={0}&secret={1}&code={2}&' \
@@ -237,7 +236,7 @@ def wechat_login():
     oauth2_ret = json.loads(requests.get(oauth2_url).text)
     err_code = oauth2_ret.get('errcode')
     if err_code:
-        return jsonify(errors.error({'code': int(err_code), 'msg': oauth2_ret.get('errmsg')}))
+        return jsonify(errors.error({'code': int(err_code), 'msg': 'invalid wechat code'}))
     token = oauth2_ret.get('access_token')
     openid = oauth2_ret.get('openid')
 
@@ -252,7 +251,11 @@ def wechat_login():
         # return jsonify(errors.error(data))
         headimgurl = user_info.get('headimgurl')
         nickname = user_info.get('nickname')
-        return redirect("/#/login-wechat?headimgurl=%s&nickname=%s" % (headimgurl, nickname))
+        return jsonify(errors.success({
+            'msg': '未绑定用户',
+            'headimgurl': headimgurl,
+            'nickname': nickname,
+        }))
     session['wx_token'] = oauth2_ret.get('access_token')
     session['wx_openid'] = oauth2_ret.get('openid')
     session['wx_nickname'] = user_info.get('nickname')
@@ -260,7 +263,11 @@ def wechat_login():
     check_user.last_login_time = datetime.datetime.utcnow()
     check_user.save()
     current_app.logger.info('login from wechat: %s, id: %s' % (check_user.name, check_user.id))
-    return redirect('/')
+    return jsonify(errors.success({
+        'msg': '已绑定用户，自动登录',
+        'uuid': str(check_user.id),
+        'name': str(check_user.name),
+    }))
 
 
 """
