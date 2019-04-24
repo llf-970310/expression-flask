@@ -1,4 +1,5 @@
 import json
+from functools import reduce
 
 from flask import request, current_app, jsonify
 
@@ -16,7 +17,7 @@ def get_all_type_two_questions():
 
     :return: 所有第二种类型的题目题目，可直接展示
     """
-    (page, size) = get_page_and_size_from_request_args(request.args)
+    (page, size) = __get_page_and_size_from_request_args(request.args)
     current_app.logger.info('get_all_type_two_questions  page = %d, size = %d', page, size)
 
     all_questions_num = len(QuestionModel.objects(q_type=2))
@@ -46,11 +47,11 @@ def get_all_questions():
 
     :return: 所有题目，可直接展示
     """
-    (page, size) = get_page_and_size_from_request_args(request.args)
+    (page, size) = __get_page_and_size_from_request_args(request.args)
     return jsonify(errors.success(mock_data.questions))
 
 
-def get_page_and_size_from_request_args(args):
+def __get_page_and_size_from_request_args(args):
     """从请求中获得参数
 
     :param args: request.args get请求的参数
@@ -165,21 +166,22 @@ def post_new_question():
             origin_question.delete()
 
     # 进入 questions 的 q_id
-    next_q_id = get_next_available_question_id()
+    next_q_id = __get_next_available_question_id()
     current_app.logger.info('next_q_id: ' + next_q_id.__str__())
-    # 插入 questions
+    # 插入 questions，初始化关键词权重 weights
     new_question = QuestionModel(
         q_type=2,
         level=5,
         text=question_data_raw_text,
         wordbase=question_wordbase,
+        weights=__reset_question_weights(question_wordbase),
         q_id=next_q_id
     )
     new_question.save()
     return jsonify(errors.success())
 
 
-def get_next_available_question_id():
+def __get_next_available_question_id():
     """获取当前题目 question 中最大的题号
 
     :return: 当前最大题号
@@ -205,9 +207,32 @@ def modify_question():
     if not question:
         return jsonify(errors.Question_not_exist)
 
+    # 修改关键词的同时需要重置关键词权重
     question.update(
         text=question_data_raw_text,
         wordbase=question_wordbase,
+        weights=__reset_question_weights(question_wordbase)
     )
 
     return jsonify(errors.success())
+
+
+def __reset_question_weights(wordbase):
+    """
+    1。 重置问题关键词的权重：权重的数量等于词的数量加一，每个词的权重=100/权重的数量
+    2。 重置权重的击中次数为0
+    """
+    weights = {}
+    len_keywords = len(wordbase['keywords'])
+    len_detailwords = len(reduce(lambda x, y: x + y, wordbase['detailwords']))
+
+    # 重置问题关键词的权重
+    key_init = 100 / (len_keywords + 1)
+    detail_init = 100 / (len_detailwords + 1)
+    weights['key'] = [key_init for i in range(len_keywords + 1)]
+    weights['detail'] = [detail_init for i in range(len_detailwords + 1)]
+
+    # 重置权重的击中次数为0
+    weights['key_hit_times'] = [0 for i in range(len_keywords)]
+    weights['detail_hit_times'] = [0 for i in range(len_detailwords)]
+    return weights
