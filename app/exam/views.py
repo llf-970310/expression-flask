@@ -4,6 +4,8 @@
 # Created by dylanchu on 19-2-25
 import random
 
+from baidubce.services.bos import bos_client
+
 from app.exam.util import *
 from app.models.user import UserModel
 from . import exam
@@ -15,7 +17,7 @@ from flask_login import current_user
 from celery_tasks import analysis_main_12, analysis_main_3
 import datetime
 import traceback
-
+from baidubce.services.bos.bos_client import BosClient
 
 # @exam.route('/upload', methods=['POST'])
 # def upload_file():
@@ -125,7 +127,7 @@ def upload_success():
     q.status = 'handling'
     q['analysis_start_time'] = datetime.datetime.utcnow()
     current_test.save()
-
+    time.sleep(1)
     try:
         if q.q_type == 3 or q.q_type == '3':
             ret = analysis_main_3.apply_async(args=(str(current_test.id), str(q_num)), queue='for_q_type3', priority=10)
@@ -314,3 +316,14 @@ def question_dealer(question_num, test_id, user_id) -> dict:
     user.save()
 
     return context
+
+
+@exam.route('/getwav')
+def getwav():
+    bucket_name='ise-expression-bos'
+    object_key='audio/东京爱情故事高潮_铃声之家cnwav.wav'
+    file_name='app'
+    response = bos_client.list_objects(bucket_name)
+    for object in response.contents:
+        print(object.key)
+    return jsonify(errors.success('chenggong'))
