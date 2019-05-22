@@ -127,6 +127,7 @@ def upload_success():
     q.status = 'handling'
     q['analysis_start_time'] = datetime.datetime.utcnow()
     current_test.save()
+    time.sleep(1)
     try:
         if q.q_type == 3 or q.q_type == '3':
             ret = analysis_main_3.apply_async(args=(str(current_test.id), str(q_num)), queue='for_q_type3', priority=10)
