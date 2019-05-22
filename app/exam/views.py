@@ -161,7 +161,7 @@ def get_result():
         current_app.logger.info(questions[str(i)]['status'])
         if questions[str(i)]['status'] == 'finished':
             score[i] = questions[str(i)]['score']
-            current_app.logger.info("score"+score[i])
+            current_app.logger.info("score"+str(score[i]))
         elif questions[str(i)]['status'] != 'none' and questions[str(i)]['status'] != 'url_fetched' and \
                 questions[str(i)]['status'] != 'handling':
             return jsonify(errors.Process_audio_failed)
