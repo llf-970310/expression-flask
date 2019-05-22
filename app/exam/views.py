@@ -146,6 +146,7 @@ def upload_success():
 
 @exam.route('/get-result', methods=['POST'])
 def get_result():
+    time.sleep(2)
     if not current_user.is_authenticated:
         return jsonify(errors.Authorize_needed)
     current_app.logger.info("get_result: user_name: " + session.get("user_name", "NO USER"))
