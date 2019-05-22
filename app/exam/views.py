@@ -127,7 +127,6 @@ def upload_success():
     q.status = 'handling'
     q['analysis_start_time'] = datetime.datetime.utcnow()
     current_test.save()
-    time.sleep(1)
     try:
         if q.q_type == 3 or q.q_type == '3':
             ret = analysis_main_3.apply_async(args=(str(current_test.id), str(q_num)), queue='for_q_type3', priority=10)
@@ -160,6 +159,7 @@ def get_result():
     for i in range(ExamConfig.total_question_num, 0, -1):
         if questions[str(i)]['status'] == 'finished':
             score[i] = questions[str(i)]['score']
+            current_app.logger.info("score"+score[i])
         elif questions[str(i)]['status'] != 'none' and questions[str(i)]['status'] != 'url_fetched' and \
                 questions[str(i)]['status'] != 'handling':
             return jsonify(errors.Process_audio_failed)
@@ -188,6 +188,7 @@ def get_result():
         session['tryTimes'] = try_times
         # print("try times: " + str(try_times))
         current_app.logger.info("try times: " + str(try_times))
+        current_app.logger.info("lenscore: " + len(score) + "lenquestion" +len(questions))
         return jsonify(errors.WIP)
 
 
