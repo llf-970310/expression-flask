@@ -157,7 +157,7 @@ def get_result():
     questions = test['questions']
 
     score = {}
-    current_app.logger.info("question_num"+ExamConfig.total_question_num)
+    current_app.logger.info("question_num"+str(ExamConfig.total_question_num))
     for i in range(6, 0, -1):
         if questions[str(i)]['status'] == 'finished':
             score[i] = questions[str(i)]['score']
