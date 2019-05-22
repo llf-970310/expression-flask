@@ -188,7 +188,7 @@ def get_result():
         session['tryTimes'] = try_times
         # print("try times: " + str(try_times))
         current_app.logger.info("try times: " + str(try_times))
-        current_app.logger.info("lenscore: " + len(score) + "lenquestion" +len(questions))
+        current_app.logger.info("lenscore: " + str(len(score)) + "lenquestion" +str(len(questions)))
         return jsonify(errors.WIP)
 
 
