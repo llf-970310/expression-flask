@@ -154,7 +154,7 @@ def get_result():
     if test is None:
         current_app.logger.error("upload_file ERROR: No Tests!, test_id: %s" % current_test_id)
         return jsonify(errors.Exam_not_exist)
-    questions = test['questions']
+    questions = test[0]['questions']
 
     score = {}
     for i in range(ExamConfig.total_question_num, 0, -1):
