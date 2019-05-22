@@ -155,10 +155,9 @@ def get_result():
         current_app.logger.error("upload_file ERROR: No Tests!, test_id: %s" % current_test_id)
         return jsonify(errors.Exam_not_exist)
     questions = test['questions']
-
     score = {}
-    current_app.logger.info("question_num"+str(ExamConfig.total_question_num))
-    for i in range(6, 0, -1):
+    for i in range(ExamConfig.total_question_num, 0, -1):
+        current_app.logger.info(questions[str(i)]['status'])
         if questions[str(i)]['status'] == 'finished':
             score[i] = questions[str(i)]['score']
             current_app.logger.info("score"+score[i])
@@ -166,6 +165,7 @@ def get_result():
                 questions[str(i)]['status'] != 'handling':
             return jsonify(errors.Process_audio_failed)
         else:
+            current_app.logger.info(str(i))
             break
 
     if len(score) == len(questions):
