@@ -108,7 +108,7 @@ def register():
     if not current_app.config.get('ALLOW_REGISTER'):
         return jsonify(errors.Register_not_allowed)
 
-    email = request.form.get('email').strip().lower()
+    username = request.form.get('username').strip().lower()
     password = request.form.get('password').strip()
     name = request.form.get('name').strip()
     code = request.form.get('code').strip()
@@ -117,18 +117,29 @@ def register():
         1. email符合规范
         2. 各项不为空
     """
-    if not (email and password and name and code):
+    if not (username and password and name and code):
         return jsonify(errors.Params_error)
-    if not validate_email(email):
-        return jsonify(errors.Params_error)
-    existing_user = UserModel.objects(email=email).first()
-    if existing_user is not None:
-        return jsonify(errors.User_already_exist)
+
+    email, phone = '', ''
+    # 邮箱注册
+    if '@' in username:
+        email = username
+        if not validate_email(email):
+            return jsonify(errors.Params_error)
+        existing_user = UserModel.objects(email=email).first()
+        if existing_user is not None:
+            return jsonify(errors.User_already_exist)
+    else:
+        phone = username
+        existing_user = UserModel.objects(phone=phone).first()
+        if existing_user is not None:
+            return jsonify(errors.User_already_exist)
     existing_invitation = InvitationModel.objects(code=code).first()
     if existing_invitation is None or existing_invitation.available_times <= 0:
         return jsonify(errors.Illegal_invitation_code)
     new_user = UserModel()
     new_user.email = email.lower()
+    new_user.phone = phone
     new_user.password = current_app.md5_hash(password)
     new_user.name = name
     new_user.last_login_time = datetime.datetime.utcnow()
@@ -163,18 +174,26 @@ def login():
     current_app.logger.info('login request: %s' % request.form.__str__())
     if current_user.is_authenticated:
         return jsonify(errors.Already_logged_in)
-    email = request.form.get('username')
+    username = request.form.get('username')
     password = request.form.get('password')
     """
         校验form，规则
         1. email符合规范
         2. 各项不为空
     """
-    if not (email and password):
+
+    if not (username and password):
         return jsonify(errors.Params_error)
-    if not validate_email(email):
-        return jsonify(errors.Params_error)
-    check_user = UserModel.objects(email=email).first()
+    check_user = None
+    # 邮箱登录
+    if '@' in username:
+        email = username
+        if not validate_email(email):
+            return jsonify(errors.Params_error)
+        check_user = UserModel.objects(email=email).first()
+    else:
+        phone = username
+        check_user = UserModel.objects(phone=phone).first()
     if not check_user:
         return jsonify(errors.Authorize_failed)
     if (not current_app.config['IGNORE_LOGIN_PASSWORD']) and (check_user.password != current_app.md5_hash(password)):
@@ -183,7 +202,6 @@ def login():
     current_app.logger.info('login user: %s, id: %s' % (check_user.name, check_user.id))
     check_user.last_login_time = datetime.datetime.utcnow()
     check_user.save()  # 修改最后登录时间
-    # !important
     return jsonify(errors.success({
         'msg': '登录成功',
         'uuid': str(check_user.id),
