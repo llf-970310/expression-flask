@@ -9,6 +9,7 @@ from app.models.user import UserModel
 from app import errors
 from app.models.exam import *
 from flask import request, current_app, jsonify, session
+from app.exam.exam_config import ExamConfig, QuestionConfig
 import datetime
 
 

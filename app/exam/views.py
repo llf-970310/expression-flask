@@ -76,7 +76,7 @@ def get_test_wav_info():
     }))
 
 
-@exam.route('/upload-test-wav-success', method=['POST'])
+@exam.route('/upload-test-wav-success', methods=['POST'])
 def upload_test_wav_success():
     if not current_user.is_authenticated:
         return jsonify(errors.Authorize_needed)
@@ -86,7 +86,7 @@ def upload_test_wav_success():
         return jsonify(errors.success(errors.Test_not_exist))
     wav_test['result']['status'] = 'handling'
     try:
-        ret = analysis_wav_test(args=test_id, queue='for_test', priority=10)
+        ret = analysis_wav_test(args=test_id, queue='q_pre_test', priority=20)
         current_app.logger.info("AsyncResult id: %s" % ret.id)
     except Exception as e:
         current_app.logger.error('upload_success_for_test: celery enqueue:\n%s' % traceback.format_exc())
@@ -94,7 +94,7 @@ def upload_test_wav_success():
     return jsonify(errors.success())
 
 
-@exam.route('/get_test_result', method=['POST'])
+@exam.route('/get_test_result', methods=['POST'])
 def get_test_result():
     test_id = request.form.get('test_id')
     wav_test = WavTestModel.objects(id=test_id).first()
@@ -183,11 +183,10 @@ def upload_success():
     time.sleep(1)
     try:
         if q.q_type == 3 or q.q_type == '3':
-            ret = analysis_main_3.apply_async(args=(str(current_test.id), str(q_num)), queue='for_q_type3', priority=6)
+            ret = analysis_main_3.apply_async(args=(str(current_test.id), str(q_num)), queue='q_type3', priority=10)
             # todo: store ret.id in redis for status query
         else:
-            ret = analysis_main_12.apply_async(args=(str(current_test.id), str(q_num)), queue='for_q_type12',
-                                               priority=2)
+            ret = analysis_main_12.apply_async(args=(str(current_test.id), str(q_num)), queue='q_type12', priority=2)
             # todo: store ret.id in redis for status query
         current_app.logger.info("AsyncResult id: %s" % ret.id)
     except Exception as e:
