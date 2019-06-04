@@ -14,9 +14,11 @@ from .exam_config import PathConfig, ExamConfig, QuestionConfig, DefaultValue, S
 from app.models.exam import *
 from flask import request, current_app, jsonify, session
 from flask_login import current_user
-from celery_tasks import analysis_main_12, analysis_main_3
+from celery_tasks import analysis_main_12, analysis_main_3, analysis_wav_test
 import datetime
 import traceback
+
+
 # from baidubce.services.bos.bos_client import BosClient
 
 # @exam.route('/upload', methods=['POST'])
@@ -69,18 +71,42 @@ def get_test_wav_info():
     wav_test['wav_file_location'] = 'BOS'
     wav_test.save()
     return jsonify(errors.success({
-        "fileLocation": "BOS", "wav_upload_url": wav_test['wav_upload_url'], "text": wav_test['text']
+        "fileLocation": "BOS", "wav_upload_url": wav_test['wav_upload_url'], "text": wav_test['text'],
+        "test_id": wav_test.id.__str__()
     }))
 
 
-@exam.route('/upload-test-wav-success')
+@exam.route('/upload-test-wav-success', method=['POST'])
 def upload_test_wav_success():
+    if not current_user.is_authenticated:
+        return jsonify(errors.Authorize_needed)
+    test_id = request.form.get('test_id')
+    wav_test = WavTestModel.objects(id=test_id).first()
+    if not wav_test:
+        return jsonify(errors.success(errors.Test_not_exist))
+    wav_test['result']['status'] = 'handling'
+    try:
+        ret = analysis_wav_test(args=test_id, queue='for_test', priority=10)
+        current_app.logger.info("AsyncResult id: %s" % ret.id)
+    except Exception as e:
+        current_app.logger.error('upload_success_for_test: celery enqueue:\n%s' % traceback.format_exc())
+        return jsonify(errors.exception({'Exception': str(e)}))
     return jsonify(errors.success())
 
 
 @exam.route('/get_test_result')
 def get_test_result():
-    return jsonify(errors.success())
+    test_id = request.form.get('test_id')
+    wav_test = WavTestModel.objects(id=test_id).first()
+    if not wav_test:
+        return jsonify(errors.success(errors.Test_not_exist))
+    if wav_test['result']['status'] == 'handling':
+        return jsonify(errors.success(errors.WIP))
+    elif wav_test['result']['status'] == 'finished':
+        return jsonify(errors.success({"qualityIsOk": len(wav_test['result']['feature']['rcg_text']) >= len(
+            QuestionConfig.test_text) * 0.6, "canRcg": True}))
+    else:
+        return jsonify(errors.success({"canRcg": False, "qualityIsOk": False}))
 
 
 @exam.route('/get-upload-url', methods=['POST'])
@@ -157,7 +183,7 @@ def upload_success():
     time.sleep(1)
     try:
         if q.q_type == 3 or q.q_type == '3':
-            ret = analysis_main_3.apply_async(args=(str(current_test.id), str(q_num)), queue='for_q_type3', priority=10)
+            ret = analysis_main_3.apply_async(args=(str(current_test.id), str(q_num)), queue='for_q_type3', priority=6)
             # todo: store ret.id in redis for status query
         else:
             ret = analysis_main_12.apply_async(args=(str(current_test.id), str(q_num)), queue='for_q_type12',
@@ -188,7 +214,7 @@ def get_result():
         current_app.logger.info(questions[str(i)]['status'])
         if questions[str(i)]['status'] == 'finished':
             score[i] = questions[str(i)]['score']
-            current_app.logger.info("score"+str(score[i]))
+            current_app.logger.info("score" + str(score[i]))
         elif questions[str(i)]['status'] != 'none' and questions[str(i)]['status'] != 'url_fetched' and \
                 questions[str(i)]['status'] != 'handling':
             # return jsonify(errors.Process_audio_failed) 记0分
@@ -220,7 +246,7 @@ def get_result():
         session['tryTimes'] = try_times
         # print("try times: " + str(try_times))
         current_app.logger.info("try times: " + str(try_times))
-        current_app.logger.info("lenscore: " + str(len(score)) + "lenquestion" +str(len(questions)))
+        current_app.logger.info("lenscore: " + str(len(score)) + "lenquestion" + str(len(questions)))
         return jsonify(errors.WIP)
 
 
@@ -349,7 +375,6 @@ def question_dealer(question_num, test_id, user_id) -> dict:
     user.save()
 
     return context
-
 
 # @exam.route('/getwav')
 # def getwav():

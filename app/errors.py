@@ -65,6 +65,7 @@ def redirect(next_url):
 Params_error = {'code': 4000, 'msg': '请求参数错误'}
 Exam_not_exist = {'code': 4001, 'msg': '测试不存在'}
 Add_task_failed = {'code': 4101, 'msg': '添加任务失败'}
+Test_not_exist = {'code': 4002, 'msg': '考前测试不存在'}
 
 Authorize_needed = {'code': 4300, 'msg': '需要登录'}
 Authorize_failed = {'code': 4301, 'msg': '账号或密码错误'}

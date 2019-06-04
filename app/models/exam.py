@@ -15,7 +15,7 @@ class WavTestModel(db.DynamicDocument):
     test_time = db.DateTimeField(default=None)
     file_location = db.StringField(max_length=32, default='local')
     wav_upload_url = db.StringField(max_length=256)
-    result = db.DictField(default={})
+    result = db.DictField(default={'status': 'none', 'feature': {}})
     meta = {'collection': 'wav_test'}
 
 

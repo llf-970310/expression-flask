@@ -21,3 +21,8 @@ def analysis_main_12(current_id_str, q_num_str):
 @app.task
 def analysis_main_3(current_id_str, q_num_str):
     pass
+
+
+@app.task
+def analysis_wav_test(test_id_str):
+    pass
