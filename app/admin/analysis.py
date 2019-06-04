@@ -25,7 +25,7 @@ class Analysis(object):
         old_analysis_list = AnalysisModel.objects(question_num=analysis_question['q_id'])
         for analysis in old_analysis_list:
             self.__compute_score_and_save(analysis, analysis['voice_features'], analysis_question,
-                                      analysis['test_start_time'])
+                                          analysis['test_start_time'])
             total_key = analysis['score_key']
             total_detail = analysis['score_detail']
             count += 1

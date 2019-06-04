@@ -4,20 +4,20 @@
 # Created by dylanchu on 19-2-25
 import random
 
-from baidubce.services.bos import bos_client
+# from baidubce.services.bos import bos_client
 
 from app.exam.util import *
 from app.models.user import UserModel
 from . import exam
 from app import errors
-from .exam_config import PathConfig, ExamConfig, QuestionConfig, DefaultValue
+from .exam_config import PathConfig, ExamConfig, QuestionConfig, DefaultValue, Setting
 from app.models.exam import *
 from flask import request, current_app, jsonify, session
 from flask_login import current_user
 from celery_tasks import analysis_main_12, analysis_main_3
 import datetime
 import traceback
-from baidubce.services.bos.bos_client import BosClient
+# from baidubce.services.bos.bos_client import BosClient
 
 # @exam.route('/upload', methods=['POST'])
 # def upload_file():
@@ -54,6 +54,33 @@ from baidubce.services.bos.bos_client import BosClient
 #     current_app.logger.info("upload file end: dir: " + file_dir + ", name: " + file_name)
 #     resp = {"status": "Success"}
 #     return jsonify(errors.success(resp))
+
+
+@exam.route('/get-test-wav-info', methods=['POST'])
+def get_test_wav_info():
+    user_id = session.get('user_id')
+    file_dir = '/'.join((PathConfig.audio_test_basedir, get_date_str('-'), user_id))
+    _temp_str = "%sr%s" % (int(time.time()), random.randint(100, 1000))
+    file_name = "%s%s" % (_temp_str, PathConfig.audio_extension)
+    wav_test = WavTestModel()
+    wav_test['text'] = QuestionConfig.test_text
+    wav_test['user_id'] = user_id
+    wav_test['wav_upload_url'] = file_dir + '/' + file_name
+    wav_test['wav_file_location'] = 'BOS'
+    wav_test.save()
+    return jsonify(errors.success({
+        "fileLocation": "BOS", "wav_upload_url": wav_test['wav_upload_url'], "text": wav_test['text']
+    }))
+
+
+@exam.route('/upload-test-wav-success')
+def upload_test_wav_success():
+    return jsonify(errors.success())
+
+
+@exam.route('/get_test_result')
+def get_test_result():
+    return jsonify(errors.success())
 
 
 @exam.route('/get-upload-url', methods=['POST'])
@@ -164,7 +191,9 @@ def get_result():
             current_app.logger.info("score"+str(score[i]))
         elif questions[str(i)]['status'] != 'none' and questions[str(i)]['status'] != 'url_fetched' and \
                 questions[str(i)]['status'] != 'handling':
-            return jsonify(errors.Process_audio_failed)
+            # return jsonify(errors.Process_audio_failed) 记0分
+            score[i] = 0
+            current_app.logger.info("！！记0分 score" + str(score[i]))
         else:
             current_app.logger.info(str(i))
             break
@@ -322,12 +351,12 @@ def question_dealer(question_num, test_id, user_id) -> dict:
     return context
 
 
-@exam.route('/getwav')
-def getwav():
-    bucket_name='ise-expression-bos'
-    object_key='audio/东京爱情故事高潮_铃声之家cnwav.wav'
-    file_name='app'
-    response = bos_client.list_objects(bucket_name)
-    for object in response.contents:
-        print(object.key)
-    return jsonify(errors.success('chenggong'))
+# @exam.route('/getwav')
+# def getwav():
+#     bucket_name='ise-expression-bos'
+#     object_key='audio/东京爱情故事高潮_铃声之家cnwav.wav'
+#     file_name='app'
+#     response = bos_client.list_objects(bucket_name)
+#     for object in response.contents:
+#         print(object.key)
+#     return jsonify(errors.success('chenggong'))

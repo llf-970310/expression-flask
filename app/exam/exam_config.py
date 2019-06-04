@@ -14,6 +14,7 @@ class PathConfig(object):
     parent_abs_path = '/expression'
     audio_save_basedir = 'audio'
     audio_copy_temp_basedir = 'temp_audio'
+    audio_test_basedir = 'audio/test'
     audio_extension = '.wav'
 
 
@@ -37,6 +38,7 @@ class QuestionConfig(object):
         2: {"detail": "点击 “显示题目” 后，请先阅读屏幕上的文字。之后，请讲述段落大意及细节信息。", "tip": '约350字，阅读时间一分钟，讲述时间30秒。'},
         3: {"detail": "根据问题发表自己观点。", "tip": "准备1分钟 叙述2分钟"}
     }
+    test_text = '这是一段测试收音效果的文字，请朗读这段话'
 
 
 class DefaultValue(object):

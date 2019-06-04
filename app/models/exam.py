@@ -6,6 +6,18 @@ from app import db
 # 参考资料：http://docs.mongoengine.org/guide/index.html , http://docs.mongoengine.org/apireference.html
 # 中文资料：https://segmentfault.com/a/1190000008025156#articleHeader8
 
+class WavTestModel(db.DynamicDocument):
+    """
+    用户的音频测试 wav+test
+    """
+    text = db.StringField(max_length=512)
+    user_id = db.StringField(max_length=32)
+    test_time = db.DateTimeField(default=None)
+    file_location = db.StringField(max_length=32, default='local')
+    wav_upload_url = db.StringField(max_length=256)
+    result = db.DictField(default={})
+    meta = {'collection': 'wav_test'}
+
 
 class QuestionModel(db.DynamicDocument):
     """
