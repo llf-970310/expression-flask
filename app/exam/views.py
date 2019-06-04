@@ -94,7 +94,7 @@ def upload_test_wav_success():
     return jsonify(errors.success())
 
 
-@exam.route('/get_test_result')
+@exam.route('/get_test_result', method=['POST'])
 def get_test_result():
     test_id = request.form.get('test_id')
     wav_test = WavTestModel.objects(id=test_id).first()
