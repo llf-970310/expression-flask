@@ -4,6 +4,8 @@
 # Created by dylanchu on 19-2-25
 import random
 
+from baidubce.services.bos import bos_client
+
 from app.exam.util import *
 from app.models.user import UserModel
 from . import exam
@@ -15,7 +17,7 @@ from flask_login import current_user
 from celery_tasks import analysis_main_12, analysis_main_3
 import datetime
 import traceback
-
+from baidubce.services.bos.bos_client import BosClient
 
 # @exam.route('/upload', methods=['POST'])
 # def upload_file():
@@ -125,7 +127,7 @@ def upload_success():
     q.status = 'handling'
     q['analysis_start_time'] = datetime.datetime.utcnow()
     current_test.save()
-
+    time.sleep(1)
     try:
         if q.q_type == 3 or q.q_type == '3':
             ret = analysis_main_3.apply_async(args=(str(current_test.id), str(q_num)), queue='for_q_type3', priority=10)
@@ -144,6 +146,7 @@ def upload_success():
 
 @exam.route('/get-result', methods=['POST'])
 def get_result():
+    time.sleep(10)
     if not current_user.is_authenticated:
         return jsonify(errors.Authorize_needed)
     current_app.logger.info("get_result: user_name: " + session.get("user_name", "NO USER"))
@@ -153,32 +156,34 @@ def get_result():
         current_app.logger.error("upload_file ERROR: No Tests!, test_id: %s" % current_test_id)
         return jsonify(errors.Exam_not_exist)
     questions = test['questions']
-
     score = {}
     for i in range(ExamConfig.total_question_num, 0, -1):
+        current_app.logger.info(questions[str(i)]['status'])
         if questions[str(i)]['status'] == 'finished':
             score[i] = questions[str(i)]['score']
+            current_app.logger.info("score"+str(score[i]))
         elif questions[str(i)]['status'] != 'none' and questions[str(i)]['status'] != 'url_fetched' and \
                 questions[str(i)]['status'] != 'handling':
             return jsonify(errors.Process_audio_failed)
         else:
+            current_app.logger.info(str(i))
             break
 
     if len(score) == len(questions):
         # final score:
         x = {
             "quality": round(score[1]['quality'], 6),
-            "main": round(score[2]['main'] * 0.25 + score[3]['main'] * 0.25 + score[4]['main'] * 0.25 + score[5][
-                'main'] * 0.25, 6),
+            "key": round(score[2]['key'] * 0.25 + score[3]['key'] * 0.25 + score[4]['key'] * 0.25 + score[5][
+                'key'] * 0.25, 6),
             "detail": round(score[2]['detail'] * 0.25 + score[3]['detail'] * 0.25 + score[4]['detail'] * 0.25 +
                             score[5]['detail'] * 0.25, 6),
             "structure": round(score[6]['structure'], 6),
             "logic": round(score[6]['logic'], 6)
         }
-        x['total'] = round(x["quality"] * 0.3 + x["main"] * 0.35 + x["detail"] * 0.15
+        x['total'] = round(x["quality"] * 0.3 + x["key"] * 0.35 + x["detail"] * 0.15
                            + x["structure"] * 0.1 + x["logic"] * 0.1, 6)
         data = {"音质": x['quality'], "结构": x['structure'], "逻辑": x['logic'],
-                "细节": x['detail'], "主旨": x['main']}
+                "细节": x['detail'], "主旨": x['key']}
         result = {"status": "Success", "totalScore": x['total'], "data": data}
         return jsonify(errors.success(result))
     else:
@@ -186,6 +191,7 @@ def get_result():
         session['tryTimes'] = try_times
         # print("try times: " + str(try_times))
         current_app.logger.info("try times: " + str(try_times))
+        current_app.logger.info("lenscore: " + str(len(score)) + "lenquestion" +str(len(questions)))
         return jsonify(errors.WIP)
 
 
@@ -314,3 +320,14 @@ def question_dealer(question_num, test_id, user_id) -> dict:
     user.save()
 
     return context
+
+
+@exam.route('/getwav')
+def getwav():
+    bucket_name='ise-expression-bos'
+    object_key='audio/东京爱情故事高潮_铃声之家cnwav.wav'
+    file_name='app'
+    response = bos_client.list_objects(bucket_name)
+    for object in response.contents:
+        print(object.key)
+    return jsonify(errors.success('chenggong'))

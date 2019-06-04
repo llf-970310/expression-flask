@@ -24,7 +24,7 @@ class UserModel(UserMixin, db.Document):
     # email = db.EmailField(max_length=128, required=True, unique=True)  # todo: enable
     # password = db.StringField(max_length=128, required=True)  # todo: enable
     email = db.EmailField(max_length=128)
-    # phone_number = db.StringField(max_length=16)
+    phone = db.StringField(max_length=16)
     password = db.StringField(max_length=128)
     name = db.StringField(max_length=32, required=True)
     __role = db.StringField(max_length=32, default=Roles.Default.value)

@@ -30,25 +30,25 @@ def user_info():
         return jsonify(errors.success({
             'role': str(current_user.role.value),
             'name': current_user.name,
-            'email':current_user.email,
+            'email': current_user.email,
             'password': current_user.password,
-            'register_time':datetime_toString(current_user.register_time),
-            'last_login_time':datetime_toString(current_user.last_login_time),
-            'questions_history':current_user.questions_history,
-            'wx_id':current_user.wx_id,
-            'vip_start_time':datetime_toString(current_user.vip_start_time),
-            'vip_end_time':datetime_toString(current_user.vip_end_time),
-            'remaining_exam_num':current_user.remaining_exam_num
+            'register_time': datetime_toString(current_user.register_time),
+            'last_login_time': datetime_toString(current_user.last_login_time),
+            'questions_history': current_user.questions_history,
+            'wx_id': current_user.wx_id,
+            'vip_start_time': datetime_toString(current_user.vip_start_time),
+            'vip_end_time': datetime_toString(current_user.vip_end_time),
+            'remaining_exam_num': current_user.remaining_exam_num
 
         }))
     else:
         return jsonify(errors.Authorize_needed)
 
 
-@auth.route('/update',methods=['POST'])
+@auth.route('/update', methods=['POST'])
 def update():
     if current_user.is_authenticated:
-        email=current_user.email
+        email = current_user.email
     else:
         return jsonify(errors.Authorize_needed)
     password = request.form.get('password').strip()
@@ -57,45 +57,45 @@ def update():
     if not password:
         check_user.name = name
     else:
-        check_user.password=current_app.md5_hash(password)
-        check_user.name=name
+        check_user.password = current_app.md5_hash(password)
+        check_user.name = name
     check_user.save()
     return jsonify(errors.success({
         'msg': '修改成功',
         'uuid': str(check_user.id),
         'name': str(check_user.name),
-        'password':str(check_user.password)
+        'password': str(check_user.password)
     }))
 
 
-@auth.route('/untying',methods=['POST'])
+@auth.route('/untying', methods=['POST'])
 def untying():
     if current_user.is_authenticated:
         email = current_user.email
     else:
         return jsonify(errors.Authorize_needed)
-    check_user=UserModel.objects(email=email).first()
+    check_user = UserModel.objects(email=email).first()
     if not check_user.wx_id:
         return jsonify(errors.Wechat_not_bind)
-    check_user.wx_id=''
+    check_user.wx_id = ''
     check_user.save()
-    return  jsonify(errors.success(
+    return jsonify(errors.success(
         {
-            'msg':'解绑成功'
+            'msg': '解绑成功'
         }
     ))
 
 
-@auth.route('/showscore',methods=['POST'])
+@auth.route('/showscore', methods=['POST'])
 def showscore():
     if current_user.is_authenticated:
         email = current_user.email
     else:
         return jsonify(errors.Authorize_needed)
     check_user = UserModel.objects(email=email).first()
-    user_id=check_user.id
-    scorelist=CurrentTestModel.objects(user_id=user_id)
-    if scorelist.count()==0:
+    user_id = check_user.id
+    scorelist = CurrentTestModel.objects(user_id=user_id)
+    if scorelist.count() == 0:
         return jsonify(errors.No_history)
     return jsonify(errors.success(scorelist))
 
@@ -108,7 +108,7 @@ def register():
     if not current_app.config.get('ALLOW_REGISTER'):
         return jsonify(errors.Register_not_allowed)
 
-    email = request.form.get('email').strip().lower()
+    username = request.form.get('username').strip().lower()
     password = request.form.get('password').strip()
     name = request.form.get('name').strip()
     code = request.form.get('code').strip()
@@ -117,18 +117,29 @@ def register():
         1. email符合规范
         2. 各项不为空
     """
-    if not (email and password and name and code):
+    if not (username and password and name and code):
         return jsonify(errors.Params_error)
-    if not validate_email(email):
-        return jsonify(errors.Params_error)
-    existing_user = UserModel.objects(email=email).first()
-    if existing_user is not None:
-        return jsonify(errors.User_already_exist)
+
+    email, phone = '', ''
+    # 邮箱注册
+    if '@' in username:
+        email = username
+        if not validate_email(email):
+            return jsonify(errors.Params_error)
+        existing_user = UserModel.objects(email=email).first()
+        if existing_user is not None:
+            return jsonify(errors.User_already_exist)
+    else:
+        phone = username
+        existing_user = UserModel.objects(phone=phone).first()
+        if existing_user is not None:
+            return jsonify(errors.User_already_exist)
     existing_invitation = InvitationModel.objects(code=code).first()
     if existing_invitation is None or existing_invitation.available_times <= 0:
         return jsonify(errors.Illegal_invitation_code)
     new_user = UserModel()
     new_user.email = email.lower()
+    new_user.phone = phone
     new_user.password = current_app.md5_hash(password)
     new_user.name = name
     new_user.last_login_time = datetime.datetime.utcnow()
@@ -163,18 +174,26 @@ def login():
     current_app.logger.info('login request: %s' % request.form.__str__())
     if current_user.is_authenticated:
         return jsonify(errors.Already_logged_in)
-    email = request.form.get('username')
+    username = request.form.get('username')
     password = request.form.get('password')
     """
         校验form，规则
         1. email符合规范
         2. 各项不为空
     """
-    if not (email and password):
+
+    if not (username and password):
         return jsonify(errors.Params_error)
-    if not validate_email(email):
-        return jsonify(errors.Params_error)
-    check_user = UserModel.objects(email=email).first()
+    check_user = None
+    # 邮箱登录
+    if '@' in username:
+        email = username
+        if not validate_email(email):
+            return jsonify(errors.Params_error)
+        check_user = UserModel.objects(email=email).first()
+    else:
+        phone = username
+        check_user = UserModel.objects(phone=phone).first()
     if not check_user:
         return jsonify(errors.Authorize_failed)
     if (not current_app.config['IGNORE_LOGIN_PASSWORD']) and (check_user.password != current_app.md5_hash(password)):
@@ -183,7 +202,6 @@ def login():
     current_app.logger.info('login user: %s, id: %s' % (check_user.name, check_user.id))
     check_user.last_login_time = datetime.datetime.utcnow()
     check_user.save()  # 修改最后登录时间
-    # !important
     return jsonify(errors.success({
         'msg': '登录成功',
         'uuid': str(check_user.id),
@@ -223,12 +241,11 @@ def wechat_params():  # todo: as api
     # https://expression.iselab.cn/api/auth/login/wechat?code=061gOGry17jDx90iRjty16tBry1gOGrZ&state=zidingyineirong
 
 
-@auth.route('/wechat/login')
+@auth.route('/wechat/login', methods=['POST'])
 def wechat_login():
     if current_user.is_authenticated:
-        # return jsonify(errors.Already_logged_in)
-        return redirect('/')
-    code = request.args.get('code')
+        return jsonify(errors.Already_logged_in)
+    code = request.form.get('code')
     if not code:
         return jsonify(errors.Params_error)
     oauth2_url = 'https://api.weixin.qq.com/sns/oauth2/access_token?appid={0}&secret={1}&code={2}&' \
@@ -237,7 +254,7 @@ def wechat_login():
     oauth2_ret = json.loads(requests.get(oauth2_url).text)
     err_code = oauth2_ret.get('errcode')
     if err_code:
-        return jsonify(errors.error({'code': int(err_code), 'msg': oauth2_ret.get('errmsg')}))
+        return jsonify(errors.error({'code': int(err_code), 'msg': 'invalid wechat code'}))
     token = oauth2_ret.get('access_token')
     openid = oauth2_ret.get('openid')
 
@@ -251,8 +268,12 @@ def wechat_login():
         # data.update({'userInfo': user_info})
         # return jsonify(errors.error(data))
         headimgurl = user_info.get('headimgurl')
-        nickname = user_info.get('nickname')
-        return redirect("/#/login-wechat?headimgurl=%s&nickname=%s" % (headimgurl, nickname))
+        nickname = user_info.get('nickname').encode('ISO-8859-1').decode('utf-8')  # 要转码
+        return jsonify(errors.success({
+            'msg': '未绑定用户',
+            'headimgurl': headimgurl,
+            'nickname': nickname,
+        }))
     session['wx_token'] = oauth2_ret.get('access_token')
     session['wx_openid'] = oauth2_ret.get('openid')
     session['wx_nickname'] = user_info.get('nickname')
@@ -260,7 +281,11 @@ def wechat_login():
     check_user.last_login_time = datetime.datetime.utcnow()
     check_user.save()
     current_app.logger.info('login from wechat: %s, id: %s' % (check_user.name, check_user.id))
-    return redirect('/')
+    return jsonify(errors.success({
+        'msg': '已绑定用户，自动登录',
+        'uuid': str(check_user.id),
+        'name': str(check_user.name),
+    }))
 
 
 """
