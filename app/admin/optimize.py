@@ -17,7 +17,7 @@ def get_score_data():
     question_num = request.args.get('questionNum')
     force = util.str_to_bool(request.args.get('force'))
     if force:
-        question = QuestionModel.objects(q_id=question_num).first()
+        question = QuestionModel.objects.filter(q_id=question_num).first()
         analysis = Analysis()
         analysis.re_analysis(question)
     print("get_score_data: questionNum: " + str(question_num))
@@ -46,6 +46,7 @@ def get_weight_data():
     if not question:
         return jsonify(errors.Question_not_exist)
     data = __question2weight(question)
+    data['allHitTimes'] = len(AnalysisModel.objects(question_num=question_num))
     # return jsonify(errors.success(mock_data.weight_data))
     print(errors.success(data))
     return jsonify(errors.success(data))
@@ -110,6 +111,8 @@ def start_auto_optimize():
     analysis.re_analysis(question)
     # 根据击中向量优化参数
     analysis_list = AnalysisModel.objects(question_num=question_num).order_by('score_key')  # !!!从低到高排序
+    if len(analysis_list) == 0:
+        return jsonify(errors.success(OptimizeConfig.EMPTY_SCORE_DATA))
     key_hit_mat = []
     for a in analysis_list:
         key_hit_mat.append(a['key_hits'])
@@ -167,10 +170,8 @@ def __question2weight(question):
         'keyWords': question['wordbase']['keywords'],
         'keyWeight': question['weights']['key'],
         'keyHitTimes': question['weights']['key_hit_times'],
-        'keyAllHitTimes': sum(question['weights']['key_hit_times']),
         'detailWords': detail,
         'detailWeight': question['weights']['detail'],
-        'detailHitTimes': question['weights']['detail_hit_times'],
-        'detailAllHitTimes': sum(question['weights']['detail_hit_times'])
+        'detailHitTimes': question['weights']['detail_hit_times']
     }
     return res

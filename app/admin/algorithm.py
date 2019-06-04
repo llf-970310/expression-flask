@@ -1,7 +1,6 @@
 import numpy as np
 from scipy.special import erfinv
 
-
 from .admin_config import OptimizeConfig
 
 
@@ -10,12 +9,12 @@ class OptimizeAlgorithm(object):
     @staticmethod
     def get_gaussian_array(mu, sigma, n):
         """
-            获得一组符合正态分布的均匀数据
-            :param mu: 均值
-            :param sigma: 标准差
-            :param n: 数据个数
-            :return: 符合正态分布的n个均匀的数字
-            """
+        获得一组符合正态分布的均匀数据
+        :param mu: 均值
+        :param sigma: 标准差
+        :param n: 数据个数
+        :return: 符合正态分布的n个均匀的数字
+        """
         y_temp = list(map(lambda x: x / (n + 1), range(1, n + 1)))
         y = list(map(lambda x: mu + np.sqrt(2) * erfinv(2 * x - 1) * sigma, y_temp))
         return y
@@ -33,7 +32,6 @@ class OptimizeAlgorithm(object):
         sigma = np.std(np_score_array)
         difficulty = mean / full_score
         n = 1 if len(score_array) <= 2 else round(len(score_array) * OptimizeConfig.SCORE_GROUP_PERCENT)
-        # n = 1 if len(score_array) <= 2 else round(len(score_array) * 0.27)
         low, high = 0, 0
         for i in range(n):
             low += np_score_array[i]
@@ -71,21 +69,15 @@ class GradientDescent(OptimizeAlgorithm):
         :param settings: 配置，包括步长alpha，正则化参数lambda，迭代次数times，theta初始值（一维数组）
         :return: 迭代完成后得到的theta值和迭代过程中每次迭代的损失函数值
         """
-        alpha = settings['alpha']
-        lam = settings['lambda']
-        times = settings['times']
-        theta = settings['theta']
+        alpha, lam, times, theta = settings['alpha'], settings['lambda'], settings['times'], settings['theta']
         if not theta or len(theta) != len(x[0]) + 1:
             theta = list(map(lambda t: 0, range(len(x[0]) + 1)))
         # 首先将参数转成numpy矩阵
-        np_x = np.mat(list(map(lambda arr: [1] + arr, x)))  # 在最前面补1
-        np_y = np.mat(y)
-        np_theta = np.mat(theta)
+        np_x, np_y, np_theta = np.mat(list(map(lambda arr: [1] + arr, x))), np.mat(y), np.mat(theta)
         history_cost = []  # 存储历史损失函数值
         for i in range(times):
             cost, grad = self.__get_cost_and_grad(np_x, np_theta, lam, np_y)
             np_theta = np_theta - alpha * grad.T
-            # np_theta = (np.abs(np_theta) + np_theta) / 2
             history_cost.append(cost)
         np_theta = (np.abs(np_theta) + np_theta) / 2
         return np_theta.tolist()[0], history_cost
