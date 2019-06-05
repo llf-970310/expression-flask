@@ -61,17 +61,31 @@ import traceback
 @exam.route('/get-test-wav-info', methods=['POST'])
 def get_test_wav_info():
     user_id = session.get('user_id')
+    wav_test = WavTestModel()
+    wav_test['text'] = QuestionConfig.test_text['detail']
+    wav_test['user_id'] = user_id
+    wav_test.save()
+    return jsonify(errors.success({
+        "text": QuestionConfig.test_text,
+        "test_id": wav_test.id.__str__()
+    }))
+
+
+@exam.route('/get-test-wav-url', methods=['POST'])
+def get_test_wav_url():
+    test_id = request.form.get('test_id')
+    wav_test = WavTestModel.objects(id=test_id).first()
+    if not wav_test:
+        return jsonify(errors.success(errors.Test_not_exist))
+    user_id = session.get('user_id')
     file_dir = '/'.join((PathConfig.audio_test_basedir, get_date_str('-'), user_id))
     _temp_str = "%sr%s" % (int(time.time()), random.randint(100, 1000))
     file_name = "%s%s" % (_temp_str, PathConfig.audio_extension)
-    wav_test = WavTestModel()
-    wav_test['text'] = QuestionConfig.test_text
-    wav_test['user_id'] = user_id
     wav_test['wav_upload_url'] = file_dir + '/' + file_name
     wav_test['wav_file_location'] = 'BOS'
     wav_test.save()
     return jsonify(errors.success({
-        "fileLocation": "BOS", "wav_upload_url": wav_test['wav_upload_url'], "text": wav_test['text'],
+        "fileLocation": "BOS", "wav_upload_url": wav_test['wav_upload_url'],
         "test_id": wav_test.id.__str__()
     }))
 
