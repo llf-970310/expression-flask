@@ -22,8 +22,8 @@ class ExamConfig(object):
     answer_time_around = 10
     question_num_each_type = {1: 1, 2: 4, 3: 1}  # q_type:question_numbers
     question_allow_repeat = {1: True, 2: False, 3: True}  # q_type:True/False
-    question_limit_time = {1: 60, 2: 30, 3: 120}
-    question_prepare_time = {1: 5, 2: 60, 3: 60}
+    question_limit_time = {0: 15, 1: 60, 2: 30, 3: 120}
+    question_prepare_time = {0: 5, 1: 5, 2: 60, 3: 60}
     total_question_num = sum(question_num_each_type.values())
     total_question_type_num = len(question_num_each_type)
     key_percent = 0.7
@@ -41,6 +41,7 @@ class QuestionConfig(object):
     test_text = {
         'detail': '这是一段测试收音效果的文字，请朗读这段话',
         'tip': '为了保证测试准确性，请选择安静环境，并对准麦克风',
+        'content': '我们的祖国是花园，花园的花朵真鲜艳。'
     }
 
 
