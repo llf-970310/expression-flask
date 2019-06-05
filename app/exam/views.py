@@ -100,7 +100,7 @@ def upload_test_wav_success():
         return jsonify(errors.success(errors.Test_not_exist))
     wav_test['result']['status'] = 'handling'
     try:
-        ret = analysis_wav_test.apply_async(args=test_id, queue='q_pre_test', priority=20)
+        ret = analysis_wav_test.apply_async(args=[test_id], queue='q_pre_test', priority=20)
         current_app.logger.info("AsyncResult id: %s" % ret.id)
     except Exception as e:
         current_app.logger.error('upload_success_for_test: celery enqueue:\n%s' % traceback.format_exc())
