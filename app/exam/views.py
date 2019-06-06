@@ -4,8 +4,6 @@
 # Created by dylanchu on 19-2-25
 import random
 
-# from baidubce.services.bos import bos_client
-
 from app.exam.util import *
 from app.models.user import UserModel
 from . import exam
@@ -17,9 +15,6 @@ from flask_login import current_user
 from celery_tasks import analysis_main_12, analysis_main_3, analysis_wav_test
 import datetime
 import traceback
-
-
-# from baidubce.services.bos.bos_client import BosClient
 
 # @exam.route('/upload', methods=['POST'])
 # def upload_file():
@@ -66,7 +61,13 @@ def get_test_wav_info():
     wav_test['user_id'] = user_id
     wav_test.save()
     return jsonify(errors.success({
-        "text": QuestionConfig.test_text,
+        "questionLimitTime": ExamConfig.question_limit_time[0],
+        "readLimitTime": ExamConfig.question_prepare_time[0],
+        "questionContent": QuestionConfig.test_text['content'],
+        "questionInfo": {
+            "detail": QuestionConfig.test_text['detail'],
+            "tip": QuestionConfig.test_text['tip'],
+        },
         "test_id": wav_test.id.__str__()
     }))
 
@@ -85,7 +86,8 @@ def get_test_wav_url():
     wav_test['file_location'] = 'BOS'
     wav_test.save()
     return jsonify(errors.success({
-        "fileLocation": "BOS", "wav_upload_url": wav_test['wav_upload_url'],
+        "fileLocation": "BOS",
+        "url": wav_test['wav_upload_url'],
         "test_id": wav_test.id.__str__()
     }))
 
@@ -388,13 +390,3 @@ def question_dealer(question_num, test_id, user_id) -> dict:
     user.save()
 
     return context
-
-# @exam.route('/getwav')
-# def getwav():
-#     bucket_name='ise-expression-bos'
-#     object_key='audio/东京爱情故事高潮_铃声之家cnwav.wav'
-#     file_name='app'
-#     response = bos_client.list_objects(bucket_name)
-#     for object in response.contents:
-#         print(object.key)
-#     return jsonify(errors.success('chenggong'))
