@@ -82,7 +82,7 @@ def get_test_wav_url():
     _temp_str = "%sr%s" % (int(time.time()), random.randint(100, 1000))
     file_name = "%s%s" % (_temp_str, PathConfig.audio_extension)
     wav_test['wav_upload_url'] = file_dir + '/' + file_name
-    wav_test['wav_file_location'] = 'BOS'
+    wav_test['file_location'] = 'BOS'
     wav_test.save()
     return jsonify(errors.success({
         "fileLocation": "BOS", "wav_upload_url": wav_test['wav_upload_url'],
