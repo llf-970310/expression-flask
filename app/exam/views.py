@@ -101,6 +101,7 @@ def upload_test_wav_success():
     if not wav_test:
         return jsonify(errors.success(errors.Test_not_exist))
     wav_test['result']['status'] = 'handling'
+    wav_test.save()
     try:
         ret = analysis_wav_test.apply_async(args=[test_id], queue='q_pre_test', priority=20)
         current_app.logger.info("AsyncResult id: %s" % ret.id)
