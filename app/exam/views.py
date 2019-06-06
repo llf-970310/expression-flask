@@ -57,13 +57,13 @@ import traceback
 def get_test_wav_info():
     user_id = session.get('user_id')
     wav_test = WavTestModel()
-    wav_test['text'] = QuestionConfig.test_text['detail']
+    wav_test['text'] =  QuestionConfig.test_text['content']
     wav_test['user_id'] = user_id
     wav_test.save()
     return jsonify(errors.success({
         "questionLimitTime": ExamConfig.question_limit_time[0],
         "readLimitTime": ExamConfig.question_prepare_time[0],
-        "questionContent": QuestionConfig.test_text['content'],
+        "questionContent": wav_test['text'],
         "questionInfo": {
             "detail": QuestionConfig.test_text['detail'],
             "tip": QuestionConfig.test_text['tip'],
