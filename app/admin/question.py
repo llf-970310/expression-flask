@@ -9,6 +9,19 @@ from app.models.exam import *
 from app.models.origin import *
 from . import admin, util
 from . import mock_data
+from .question_generator import generator
+
+wordbase_generator = generator.WordbaseGenerator()
+
+
+@admin.route('/generate-keywords', methods=['POST'])
+def generate_wordbase_by_text():
+    """根据原文重新生成关键词
+
+    :return: 分析后的关键词
+    """
+    text = request.form.get('text')
+    return jsonify(errors.success(wordbase_generator.generate_wordbase(text)))
 
 
 @admin.route('/question-type-two', methods=['GET'])
@@ -83,7 +96,7 @@ def __get_page_and_size_from_request_args(args):
 
 @admin.route('/question/<id>', methods=['GET'])
 def get_question(id):
-    """获取问题详情 TODO
+    """获取问题详情
 
     :param id: 问题ID
     :return:  该问题详情
@@ -103,6 +116,24 @@ def get_question(id):
         "detailwords": result_question['wordbase']['detailwords'],
     }
     return jsonify(errors.success(context))
+
+
+@admin.route('/question/<id>', methods=['DELETE'])
+def del_question(id):
+    """删除特定问题
+
+    :param id: 问题ID
+    :return:  该问题详情
+    """
+    current_app.logger.info('q_id = ' + id)
+    to_delete_question = QuestionModel.objects(q_id=id).first()
+
+    # 要获取的题目不存在
+    if not to_delete_question:
+        return jsonify(errors.Question_not_exist)
+    else:
+        to_delete_question.delete()
+        return jsonify(errors.success())
 
 
 @admin.route('/question-from-pool', methods=['GET'])
