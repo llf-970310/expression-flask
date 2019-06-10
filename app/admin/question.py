@@ -2,6 +2,7 @@ import json
 from functools import reduce
 
 from flask import request, current_app, jsonify
+from flask_login import current_user
 
 from app import errors
 from app.admin.admin_config import PaginationConfig
@@ -20,6 +21,11 @@ def generate_wordbase_by_text():
 
     :return: 分析后的关键词
     """
+    if not current_user.is_authenticated:
+        return jsonify(errors.Authorize_needed)
+    if not current_user.is_admin():
+        return jsonify(errors.Admin_status_login)
+
     text = request.form.get('text')
     return jsonify(errors.success(wordbase_generator.generate_wordbase(text)))
 
@@ -125,6 +131,12 @@ def del_question(id):
     :param id: 问题ID
     :return:  该问题详情
     """
+    # 检验是否有权限申请邀请码
+    if not current_user.is_authenticated:
+        return jsonify(errors.Authorize_needed)
+    if not current_user.is_admin():
+        return jsonify(errors.Admin_status_login)
+
     current_app.logger.info('q_id = ' + id)
     to_delete_question = QuestionModel.objects(q_id=id).first()
 
@@ -163,6 +175,11 @@ def delete_specific_question_from_pool():
     """
     删除题库中题目
     """
+    if not current_user.is_authenticated:
+        return jsonify(errors.Authorize_needed)
+    if not current_user.is_admin():
+        return jsonify(errors.Admin_status_login)
+
     id = request.form.get('idInPool')
 
     origin_question = OriginTypeTwoQuestionModel.objects(q_id=id).first()
@@ -180,6 +197,11 @@ def post_new_question():
     :return:
     """
     # 提取参数
+    if not current_user.is_authenticated:
+        return jsonify(errors.Authorize_needed)
+    if not current_user.is_admin():
+        return jsonify(errors.Admin_status_login)
+
     is_from_pool = request.form.get('isFromPool')
     id_in_pool = request.form.get('idInPool')
     question_data_raw_text = request.form.get('data[rawText]')
@@ -227,6 +249,11 @@ def modify_question():
 
     :return:
     """
+    if not current_user.is_authenticated:
+        return jsonify(errors.Authorize_needed)
+    if not current_user.is_admin():
+        return jsonify(errors.Admin_status_login)
+
     id = request.form.get('id')
     question_data_raw_text = request.form.get('data[rawText]')
     question_wordbase = {
