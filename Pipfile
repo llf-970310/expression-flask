@@ -35,6 +35,8 @@ zhon = "*"
 pycrypto = "*"
 scipy = "*"
 Flask-APScheduler = "*"
+jieba = "*"
+synonyms = "*"
 
 [dev-packages]
 

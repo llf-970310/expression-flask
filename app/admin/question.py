@@ -2,6 +2,7 @@ import json
 from functools import reduce
 
 from flask import request, current_app, jsonify
+from flask_login import current_user
 
 from app import errors
 from app.admin.admin_config import PaginationConfig
@@ -9,6 +10,24 @@ from app.models.exam import *
 from app.models.origin import *
 from . import admin, util
 from . import mock_data
+from .question_generator import generator
+
+wordbase_generator = generator.WordbaseGenerator()
+
+
+@admin.route('/generate-keywords', methods=['POST'])
+def generate_wordbase_by_text():
+    """根据原文重新生成关键词
+
+    :return: 分析后的关键词
+    """
+    if not current_user.is_authenticated:
+        return jsonify(errors.Authorize_needed)
+    if not current_user.is_admin():
+        return jsonify(errors.Admin_status_login)
+
+    text = request.form.get('text')
+    return jsonify(errors.success(wordbase_generator.generate_wordbase(text)))
 
 
 @admin.route('/question-type-two', methods=['GET'])
@@ -83,7 +102,7 @@ def __get_page_and_size_from_request_args(args):
 
 @admin.route('/question/<id>', methods=['GET'])
 def get_question(id):
-    """获取问题详情 TODO
+    """获取问题详情
 
     :param id: 问题ID
     :return:  该问题详情
@@ -103,6 +122,30 @@ def get_question(id):
         "detailwords": result_question['wordbase']['detailwords'],
     }
     return jsonify(errors.success(context))
+
+
+@admin.route('/question/<id>', methods=['DELETE'])
+def del_question(id):
+    """删除特定问题
+
+    :param id: 问题ID
+    :return:  该问题详情
+    """
+    # 检验是否有权限申请邀请码
+    if not current_user.is_authenticated:
+        return jsonify(errors.Authorize_needed)
+    if not current_user.is_admin():
+        return jsonify(errors.Admin_status_login)
+
+    current_app.logger.info('q_id = ' + id)
+    to_delete_question = QuestionModel.objects(q_id=id).first()
+
+    # 要获取的题目不存在
+    if not to_delete_question:
+        return jsonify(errors.Question_not_exist)
+    else:
+        to_delete_question.delete()
+        return jsonify(errors.success())
 
 
 @admin.route('/question-from-pool', methods=['GET'])
@@ -132,6 +175,11 @@ def delete_specific_question_from_pool():
     """
     删除题库中题目
     """
+    if not current_user.is_authenticated:
+        return jsonify(errors.Authorize_needed)
+    if not current_user.is_admin():
+        return jsonify(errors.Admin_status_login)
+
     id = request.form.get('idInPool')
 
     origin_question = OriginTypeTwoQuestionModel.objects(q_id=id).first()
@@ -149,6 +197,11 @@ def post_new_question():
     :return:
     """
     # 提取参数
+    if not current_user.is_authenticated:
+        return jsonify(errors.Authorize_needed)
+    if not current_user.is_admin():
+        return jsonify(errors.Admin_status_login)
+
     is_from_pool = request.form.get('isFromPool')
     id_in_pool = request.form.get('idInPool')
     question_data_raw_text = request.form.get('data[rawText]')
@@ -196,6 +249,11 @@ def modify_question():
 
     :return:
     """
+    if not current_user.is_authenticated:
+        return jsonify(errors.Authorize_needed)
+    if not current_user.is_admin():
+        return jsonify(errors.Admin_status_login)
+
     id = request.form.get('id')
     question_data_raw_text = request.form.get('data[rawText]')
     question_wordbase = {
