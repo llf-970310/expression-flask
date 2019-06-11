@@ -29,10 +29,10 @@ class QuestionModel(db.DynamicDocument):
     used_times = db.IntField(min_value=0, default=0)
     wordbase = db.DictField(default={})
     weights = db.DictField(default={})
-    q_id = db.IntField(min_value=0)     # 题号，从0开始
-    in_optimize = db.BooleanField(default=False)    # 现在是否在优化中
-    last_optimize_time = db.DateTimeField(default=None)   # 最后优化时间
-    auto_optimized = db.BooleanField(default=False)    # 是否被自动优化过
+    q_id = db.IntField(min_value=0)  # 题号，从0开始
+    in_optimize = db.BooleanField(default=False)  # 现在是否在优化中
+    last_optimize_time = db.DateTimeField(default=None)  # 最后优化时间
+    auto_optimized = db.BooleanField(default=False)  # 是否被自动优化过
 
     meta = {'collection': 'questions'}
 
@@ -59,10 +59,10 @@ class CurrentQuestionEmbed(db.EmbeddedDocument):
     score = db.DictField(default={})  # score field may has a set of scores
     analysis_end_time = db.DateTimeField()
     stack = db.StringField(max_length=1024)
-    analysed = db.BooleanField()    # 这个回答是否被分析过
+    analysed = db.BooleanField()  # 这个回答是否被分析过
 
 
-class CurrentTestModel(db.Document):
+class CurrentTestModel(db.DynamicDocument):
     """
     current
     """
@@ -72,10 +72,26 @@ class CurrentTestModel(db.Document):
     current_q_num = db.IntField(min_value=1, default=1)
     total_score = db.FloatField(min_value=0.0, max_value=100.0, default=0.0)
     questions = db.DictField(default={})
-    all_analysed = db.BooleanField()    # 这个考试中的所有回答是否都被分析过
+    all_analysed = db.BooleanField()  # 这个考试中的所有回答是否都被分析过
     # make questions a dict rather than a list so as to be able update one question w/o affecting other questions
 
     meta = {'collection': 'current'}
+
+
+class HistoryTestModel(db.DynamicDocument):
+    """
+    history
+    """
+    current_id = db.StringField(max_length=32, default=None)
+    user_id = db.StringField(max_length=32, default=None)
+    test_start_time = db.DateTimeField()
+    paper_type = db.ListField()
+    current_q_num = db.IntField(min_value=1, default=1)
+    total_score = db.FloatField(min_value=0.0, max_value=100.0, default=0.0)
+    questions = db.DictField(default={})
+    all_analysed = db.BooleanField()  # 这个考试中的所有回答是否都被分析过
+
+    meta = {'collection': 'history'}
 
 
 class ApiAccountModel(db.DynamicDocument):

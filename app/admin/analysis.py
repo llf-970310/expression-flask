@@ -31,9 +31,9 @@ class Analysis(object):
             count += 1
 
         # 然后，将current中未被分析的部分分析一遍
-        currents = CurrentTestModel.objects(all_analysed=False)
-        print(len(currents))
-        for test in currents:
+        histories = HistoryTestModel.objects(all_analysed=False)
+        print(len(histories))
+        for test in histories:
             questions = test['questions']
             all_analysed = True
             for question in questions.values():
@@ -88,9 +88,9 @@ class Analysis(object):
         # 然后，将current中未被分析的部分分析一遍
         print('-----------------------')
         print('start to analyse question ', analysis_question['q_id'])
-        currents = CurrentTestModel.objects(all_analysed=False)
-        print(len(currents))
-        for test in currents:
+        histories = HistoryTestModel.objects(all_analysed=False)
+        print(len(histories))
+        for test in histories:
             questions = test['questions']
             all_analysed = True
             for question in questions.values():
@@ -111,10 +111,8 @@ class Analysis(object):
                     }
                     analysis['voice_features'] = voice_features
                     print('test_start_time: ' + test['test_start_time'].__str__())
-                    __compute_score_and_save(analysis, voice_features, analysis_question, test['test_start_time'])
+                    Analysis.__compute_score_and_save(analysis, voice_features, analysis_question, test['test_start_time'])
                     question['analysed'] = True
-                    total_key = analysis['score_key']
-                    total_detail = analysis['score_detail']
                 all_analysed = all_analysed and question['analysed']
             test['all_analysed'] = all_analysed
             test.save()

@@ -16,48 +16,12 @@ from celery_tasks import analysis_main_12, analysis_main_3, analysis_wav_test
 import datetime
 import traceback
 
-# @exam.route('/upload', methods=['POST'])
-# def upload_file():
-#     # get question number
-#     question_num = request.form.get("nowQuestionNum")
-#
-#     # # 如果重复上传，直接返回
-#     # if request.session.get("start_upload_" + str(question_num), False):
-#     #     print("upload_file: REPEAT UPLOAD!!!!!: question_num: " + str(question_num))
-#     #     return HttpResponse('{"status":"Success"}', content_type='application/json', charset='utf-8')
-#     # # 在session中说明开始上传，防止同一题目重复上传
-#     # request.session["start_upload_" + str(question_num)] = True
-#
-#     # get test
-#     test_id = session.get("test_id")
-#     test = CurrentTestModel.objects(id=test_id).first()
-#     if test is None:
-#         # print("[ERROR] upload_file ERROR: No Tests!, test_id: %s" % test_id)
-#         current_app.logger.error("upload_file ERROR: No Tests!, test_id: %s" % test_id)
-#         return jsonify(errors.Exam_not_exist)
-#
-#     # get question
-#     question = test.questions[question_num]
-#
-#     # get file name and dir
-#     file_dir = os.path.join(Setting.BASE_DIR, os.path.dirname(question.wav_upload_url))
-#     file_name = os.path.basename(question.wav_upload_url)
-#
-#     video = request.form.get("video")
-#     # print("[INFO] upload file start: dir: " + file_dir + ", name: " + file_name)
-#     current_app.logger.info("upload file start: dir: " + file_dir + ", name: " + file_name)
-#     save_file_to_path(video, file_name, file_dir)
-#     # print("[INFO] upload file end: dir: " + file_dir + ", name: " + file_name)
-#     current_app.logger.info("upload file end: dir: " + file_dir + ", name: " + file_name)
-#     resp = {"status": "Success"}
-#     return jsonify(errors.success(resp))
-
 
 @exam.route('/get-test-wav-info', methods=['POST'])
 def get_test_wav_info():
     user_id = session.get('user_id')
     wav_test = WavTestModel()
-    wav_test['text'] =  QuestionConfig.test_text['content']
+    wav_test['text'] = QuestionConfig.test_text['content']
     wav_test['user_id'] = user_id
     wav_test.save()
     return jsonify(errors.success({
@@ -121,7 +85,7 @@ def get_test_result():
         return jsonify(errors.success(errors.WIP))
     elif wav_test['result']['status'] == 'finished':
         return jsonify(errors.success({"qualityIsOk": len(wav_test['result']['feature']['rcg_text']) >= len(
-            QuestionConfig.test_text) * 0.6, "canRcg": True}))
+            wav_test['text']) * 0.6, "canRcg": True}))
     else:
         return jsonify(errors.success({"canRcg": False, "qualityIsOk": False}))
 
@@ -222,8 +186,10 @@ def get_result():
     current_test_id = session.get("test_id", DefaultValue.test_id)
     test = CurrentTestModel.objects(id=current_test_id).first()
     if test is None:
-        current_app.logger.error("upload_file ERROR: No Tests!, test_id: %s" % current_test_id)
-        return jsonify(errors.Exam_not_exist)
+        test = HistoryTestModel.objects(current_id=current_test_id).first()
+        if test is None:
+            current_app.logger.error("upload_file ERROR: No Tests!, test_id: %s" % current_test_id)
+            return jsonify(errors.Exam_not_exist)
     questions = test['questions']
     score = {}
     for i in range(ExamConfig.total_question_num, 0, -1):
@@ -231,8 +197,7 @@ def get_result():
         if questions[str(i)]['status'] == 'finished':
             score[i] = questions[str(i)]['score']
             current_app.logger.info("score" + str(score[i]))
-        elif questions[str(i)]['status'] != 'none' and questions[str(i)]['status'] != 'url_fetched' and \
-                questions[str(i)]['status'] != 'handling':
+        elif questions[str(i)]['status'] not in ['none', 'url_fetched', 'handling']:
             # return jsonify(errors.Process_audio_failed) 记0分
             score[i] = 0
             current_app.logger.info("！！记0分 score" + str(score[i]))
@@ -270,12 +235,14 @@ def get_result():
 def next_question():
     if not current_user.is_authenticated:
         return jsonify(errors.Authorize_needed)
-    # 关闭浏览器时session过期
-    # session.set_expiry(0)
-    # init question
+    # 首先判断是否有未做完的考试
+    question_left = find_left_exam(current_user.uuid)
+    if question_left:
+        return jsonify(errors.info("有没完成的考试", question_left))
+
     now_q_num = request.form.get("nowQuestionNum")
     current_app.logger.info('nowQuestionNum: %s' % now_q_num)
-    if now_q_num is None or now_q_num == '0' or now_q_num == 0:  # TODO: 仅根据前端请求判断不太合理
+    if now_q_num is None or int(now_q_num) == 0:
         now_q_num = 0
         # 生成当前题目
         current_app.logger.info('init exam...')
@@ -294,14 +261,32 @@ def next_question():
     # 如果超出最大题号，如用户多次刷新界面，则重定向到结果页面
     if next_question_num > ExamConfig.total_question_num:
         session["question_num"] = 0
-        session["new_test"] = True  # TODO: 这样不合理（重复请求时）,开始做题应单独作为一个接口请求,进行 init exam
+        session["new_test"] = True
         return jsonify(errors.Exam_finished)
-
     # 根据题号查找题目
     context = question_dealer(next_question_num, session["test_id"], session["user_id"])
     if not context:
         return jsonify(errors.Get_question_failed)
+    # 判断考试是否超时，若超时则返回错误
+    if context['examLeftTime'] <= 0:
+        return jsonify(errors.Test_time_out)
+
     return jsonify(errors.success(context))
+
+
+def find_left_exam(user_id):
+    left_exam = CurrentTestModel.objects(user_id=user_id).order_by('-test_start_time').first()
+    if not left_exam:
+        return False
+    in_process = ((datetime.datetime.utcnow() - left_exam["test_start_time"]).total_seconds() >=
+                  ExamConfig.exam_total_time)
+    if in_process:
+        # 查找到第一个未做的题目
+        for key, value in left_exam['questions'].items():
+            status = value['status']
+            if status in ['none', 'url_fetched']:
+                return question_dealer(key, left_exam.id, user_id)
+    return False
 
 
 def init_question(user_id):
@@ -375,7 +360,9 @@ def question_dealer(question_num, test_id, user_id) -> dict:
                "lastQuestion": question_num == ExamConfig.total_question_num,
                "readLimitTime": ExamConfig.question_prepare_time[question.q_type],
                "questionInfo": QuestionConfig.question_type_tip[question.q_type],
-               "questionContent": question.q_text
+               "questionContent": question.q_text,
+               "examLeftTime": ExamConfig.exam_total_time - (datetime.datetime.utcnow() - test[
+                   'test_start_time']).total_seconds()
                }
 
     # update and save

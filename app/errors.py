@@ -20,6 +20,17 @@ def success(x=None):
     return d
 
 
+def info(msg, x=None):
+    d = {'code': 2, 'msg': msg, 'data': {}}
+    if x:
+        for t in x:
+            if t == 'code' or t == 'msg':
+                d[t] = x[t]
+            else:
+                d['data'][t] = x[t]
+    return d
+
+
 def error(x=None):
     """
     :type x: dict or None
@@ -66,6 +77,7 @@ Params_error = {'code': 4000, 'msg': '请求参数错误'}
 Exam_not_exist = {'code': 4001, 'msg': '测试不存在'}
 Add_task_failed = {'code': 4101, 'msg': '添加任务失败'}
 Test_not_exist = {'code': 4002, 'msg': '考前测试不存在'}
+Test_time_out = {'code': 4003, 'msg': '考试超时'}
 
 Authorize_needed = {'code': 4300, 'msg': '需要登录'}
 Authorize_failed = {'code': 4301, 'msg': '账号或密码错误'}
@@ -86,7 +98,7 @@ Init_exam_failed = {'code': 5101, 'msg': '题目生成失败'}
 Get_question_failed = {'code': 5102, 'msg': '获取题目失败'}
 Process_audio_failed = {'code': 5103, 'msg': '获取题目失败'}
 Audio_process_failed = {'code': 5104, 'msg': '音频处理出错'}
-WIP = {'code': 5104, 'msg': '正在处理'}
+WIP = {'code': 5105, 'msg': '正在处理'}
 
 Question_not_exist = {'code': 4002, 'msg': '题目不存在'}
 Optimize_not_exist = {'code': 4003, 'msg': '该题目未进行过优化'}

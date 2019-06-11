@@ -2,6 +2,7 @@ import os
 import sys
 from app.models.exam import *
 from app.models.analysis import *
+from app.exam.exam_config import ExamConfig
 from app import scheduler
 
 # dir_name = '/Users/cuihua/Documents/workspace/mooctest/Expression/exp-docker/'
@@ -21,6 +22,36 @@ def test_db():
     pass
 
 
+def move_current_to_history():
+    """
+    将 current 表中超时且未在处理中的部分搬运到history
+    """
+    for current in CurrentTestModel.objects({}):
+        test_start_time = current['test_start_time']
+        now_time = datetime.datetime.utcnow()
+        delta_seconds = (now_time - test_start_time).total_seconds()
+        if delta_seconds >= ExamConfig.exam_total_time and question_not_handling(current['questions']):
+            print("remove %s" % current.id.__str__())
+            history = HistoryTestModel()
+            history['current_id'] = current.id.__str__()
+            history['user_id'] = current['user_id']
+            history['test_start_time'] = current['test_start_time']
+            history['paper_type'] = current['paper_type']
+            history['current_q_num'] = current['current_q_num']
+            history['total_score'] = current['total_score']
+            history['questions'] = current['questions']
+            history['all_analysed'] = current['all_analysed']
+            history.save()
+            current.delete()
+
+
+def question_not_handling(question_dict):
+    for value in question_dict.values():
+        if value['status'] == 'handling':
+            return False
+    return True
+
+
 def collect_current_to_analysis():
     """将 current 表中新出现的已评分分析的题目搬运到 analysis
     """
@@ -35,12 +66,12 @@ def collect(analysis_question):
 
     :param analysis_question: 要被分析的 question
     """
-    # 然后，将current中未被分析的部分分析一遍
+    # 然后，将history中未被分析的部分分析一遍
     print('-----------------------')
     print('start to analyse question ', analysis_question['q_id'])
-    currents = CurrentTestModel.objects(all_analysed=False)
-    print(len(currents))
-    for test in currents:
+    histories = HistoryTestModel.objects(all_analysed=False)
+    print(len(histories))
+    for test in histories:
         questions = test['questions']
         all_analysed = True
         for question in questions.values():
@@ -64,8 +95,6 @@ def collect(analysis_question):
                 print('test_start_time: ' + test['test_start_time'].__str__())
                 __compute_score_and_save(analysis, voice_features, analysis_question, test['test_start_time'])
                 question['analysed'] = True
-                total_key = analysis['score_key']
-                total_detail = analysis['score_detail']
             all_analysed = all_analysed and question['analysed']
         test['all_analysed'] = all_analysed
         test.save()

@@ -1,4 +1,4 @@
-from app.celery_manage.task import collect_current_to_analysis, test_db
+from app.celery_manage.task import collect_current_to_analysis, move_current_to_history
 
 
 class CeleryConfig():
@@ -13,9 +13,21 @@ class CeleryConfig():
                 'type': 'cron',
                 'day_of_week': "0-6",
                 'hour': '*',
-                'minute': '30'
+                'minute': '32'
             }
         },
+        {
+            'id': 'move_current_to_history',
+            'func': move_current_to_history,
+            'args': '',
+            'trigger': {
+                # 每小时的第 52 分钟同步一次
+                'type': 'cron',
+                'day_of_week': "0-6",
+                'hour': '*',
+                'minute': '52'
+            }
+        }
         # {
         #     'id': 'test_db',
         #     'func': test_db,
