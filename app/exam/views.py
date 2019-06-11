@@ -236,7 +236,7 @@ def next_question():
     if not current_user.is_authenticated:
         return jsonify(errors.Authorize_needed)
     # 首先判断是否有未做完的考试
-    question_left = find_left_exam(current_user.uuid)
+    question_left = find_left_exam(current_user.id.__str__())
     if question_left:
         return jsonify(errors.info("有没完成的考试", question_left))
 
