@@ -275,6 +275,7 @@ def next_question():
 
 
 def find_left_exam(user_id):
+    current_app.logger.info("find_left_exam: user id: %s" % user_id)
     left_exam = CurrentTestModel.objects(user_id=user_id).order_by('-test_start_time').first()
     if not left_exam:
         return False
