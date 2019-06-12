@@ -29,7 +29,8 @@ class ExamConfig(object):
     key_percent = 0.7
     detail_percent = 0.3
     full_score = 100
-    exam_total_time = 0.5 * 60 * 60 # 每场考试最长时间（秒）
+    exam_total_time = 0.5 * 60 * 60     # 每场考试最长时间（秒）
+    detect_left_exam = False            # 是否断点续作
 
 
 class QuestionConfig(object):

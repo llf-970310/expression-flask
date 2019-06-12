@@ -236,7 +236,7 @@ def next_question():
     if not current_user.is_authenticated:
         return jsonify(errors.Authorize_needed)
     # 首先判断是否有未做完的考试
-    question_left = find_left_exam(current_user.id.__str__())
+    question_left = find_left_exam(current_user.id.__str__()) if ExamConfig.detect_left_exam else False
     if question_left:
         return jsonify(errors.info("有没完成的考试", question_left))
 
@@ -279,7 +279,7 @@ def find_left_exam(user_id):
     left_exam = CurrentTestModel.objects(user_id=user_id).order_by('-test_start_time').first()
     if not left_exam:
         return False
-    in_process = ((datetime.datetime.utcnow() - left_exam["test_start_time"]).total_seconds() >=
+    in_process = ((datetime.datetime.utcnow() - left_exam["test_start_time"]).total_seconds() <
                   ExamConfig.exam_total_time)
     if in_process:
         # 查找到第一个未做的题目
