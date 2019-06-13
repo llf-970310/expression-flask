@@ -61,3 +61,4 @@ class DefaultValue(object):
 class Setting(object):
     BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     AUTO_REGISTER_IF_USER_NOT_EXISTS = False
+    LIMIT_EXAM_TIMES = False

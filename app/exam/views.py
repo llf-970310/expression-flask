@@ -235,14 +235,16 @@ def get_result():
 def next_question():
     if not current_user.is_authenticated:
         return jsonify(errors.Authorize_needed)
-    # 首先判断是否有未做完的考试
-    question_left = find_left_exam(current_user.id.__str__()) if ExamConfig.detect_left_exam else False
-    if question_left:
-        return jsonify(errors.info("有没完成的考试", question_left))
 
     now_q_num = request.form.get("nowQuestionNum")
     current_app.logger.info('nowQuestionNum: %s' % now_q_num)
+    # 判断是否有剩余考试次数
     if now_q_num is None or int(now_q_num) == 0:
+        if Setting.LIMIT_EXAM_TIMES and current_user.remaining_exam_num <= 0:
+            return jsonify(errors.No_exam_times)
+        elif Setting.LIMIT_EXAM_TIMES and current_user.remaining_exam_num > 0:
+            current_user.remaining_exam_num -= 1
+            current_user.save()
         now_q_num = 0
         # 生成当前题目
         current_app.logger.info('init exam...')
@@ -274,11 +276,14 @@ def next_question():
     return jsonify(errors.success(context))
 
 
-def find_left_exam(user_id):
+@exam.route('/find-left-exam', methods=['POST'])
+def find_left_exam():
+    # 首先判断是否有未做完的考试
+    user_id = current_user.id.__str__()
     current_app.logger.info("find_left_exam: user id: %s" % user_id)
     left_exam = CurrentTestModel.objects(user_id=user_id).order_by('-test_start_time').first()
     if not left_exam:
-        return False
+        return jsonify(errors.success({"info": "没有未完成的考试"}))
     in_process = ((datetime.datetime.utcnow() - left_exam["test_start_time"]).total_seconds() <
                   ExamConfig.exam_total_time)
     if in_process:
@@ -286,8 +291,8 @@ def find_left_exam(user_id):
         for key, value in left_exam['questions'].items():
             status = value['status']
             if status in ['none', 'url_fetched']:
-                return question_dealer(key, left_exam.id, user_id)
-    return False
+                return jsonify(errors.info("有未完成的考试", {"next_q_num": key}))
+    return jsonify(errors.success({"info": "没有未完成的考试"}))
 
 
 def init_question(user_id):
