@@ -3,18 +3,18 @@
 #
 # Created by dylanchu on 19-2-25
 import random
+import traceback
 
-from app.exam.util import *
-from app.models.user import UserModel
-from . import exam
-from app import errors
-from .exam_config import PathConfig, ExamConfig, QuestionConfig, DefaultValue, Setting
-from app.models.exam import *
 from flask import request, current_app, jsonify, session
 from flask_login import current_user
+
+from app import errors
+from app.exam.util import *
+from app.models.exam import *
+from app.models.user import UserModel
 from celery_tasks import analysis_main_12, analysis_main_3, analysis_wav_test
-import datetime
-import traceback
+from . import exam
+from .exam_config import PathConfig, ExamConfig, QuestionConfig, DefaultValue, Setting
 
 
 @exam.route('/get-test-wav-info', methods=['POST'])
@@ -278,21 +278,26 @@ def next_question():
 
 @exam.route('/find-left-exam', methods=['POST'])
 def find_left_exam():
-    # 首先判断是否有未做完的考试
-    user_id = current_user.id.__str__()
-    current_app.logger.info("find_left_exam: user id: %s" % user_id)
-    left_exam = CurrentTestModel.objects(user_id=user_id).order_by('-test_start_time').first()
-    if not left_exam:
+    # 判断断电续做功能是否开启
+    if ExamConfig.detect_left_exam:
+        # 首先判断是否有未做完的考试
+        user_id = current_user.id.__str__()
+        current_app.logger.info("find_left_exam: user id: %s" % user_id)
+        left_exam = CurrentTestModel.objects(user_id=user_id).order_by('-test_start_time').first()
+        if not left_exam:
+            return jsonify(errors.success({"info": "没有未完成的考试"}))
+        in_process = ((datetime.datetime.utcnow() - left_exam["test_start_time"]).total_seconds() <
+                      ExamConfig.exam_total_time)
+        if in_process:
+            # 查找到第一个未做的题目
+            for key, value in left_exam['questions'].items():
+                status = value['status']
+                if status in ['none', 'url_fetched']:
+                    return jsonify(errors.info("有未完成的考试", {"next_q_num": key}))
         return jsonify(errors.success({"info": "没有未完成的考试"}))
-    in_process = ((datetime.datetime.utcnow() - left_exam["test_start_time"]).total_seconds() <
-                  ExamConfig.exam_total_time)
-    if in_process:
-        # 查找到第一个未做的题目
-        for key, value in left_exam['questions'].items():
-            status = value['status']
-            if status in ['none', 'url_fetched']:
-                return jsonify(errors.info("有未完成的考试", {"next_q_num": key}))
-    return jsonify(errors.success({"info": "没有未完成的考试"}))
+    else:
+        return jsonify(errors.success({"info": "没有未完成的考试"}))
+
 
 
 def init_question(user_id):
