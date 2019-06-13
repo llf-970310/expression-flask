@@ -73,7 +73,7 @@ def get_score_of_all_users():
     for item in result:
         cur_user_id = item['userEmail']
         cur_user = UserModel.objects(id=cur_user_id).first()
-        cur_user_email = cur_user if cur_user else ScoreConfig.DEFAULT_USER_EMAIL + cur_user_id.__str__()
+        cur_user_email = cur_user if cur_user else cur_user_id.__str__() + ScoreConfig.DEFAULT_USER_EMAIL
         item['userEmail'] = cur_user_email
     return jsonify(errors.success({'result': result}))
 
