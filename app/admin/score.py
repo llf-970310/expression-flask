@@ -42,8 +42,16 @@ def get_score_of_specific_questions(id):
         return jsonify(errors.Score_no_data)
 
     mapper = DateMapper()
-    result = __generate_result_from_dict(mapper.map_answers(all_answers), 'date')
-    return jsonify(errors.success({'result': result}))
+    result_by_date = __generate_result_from_dict(mapper.map_answers(all_answers), 'date')
+
+    result_all = []
+    for answer in all_answers:
+        result_all.append(__generate_total_score(answer['score_key'], answer['score_detail']))
+
+    return jsonify(errors.success({
+        'resultByDate': result_by_date,
+        'allResult': result_all
+    }))
 
 
 @admin.route('/score/user', methods=['GET'])
@@ -79,17 +87,34 @@ def get_score_of_specific_users(user_email):
     """
     current_app.logger.info('get_score_of_specific_users   ' + user_email)
 
-    cur_user = UserModel.objects(email=user_email).first()
-    if not cur_user:
-        return jsonify(errors.User_not_exist)
+    if 'default@site.com' in user_email:
+        # 默认邮箱，通过主键查询
+        user_object_id = user_email[:-16]
+        all_answers = AnalysisModel.objects(user=user_object_id).order_by('date')
+    else:
+        cur_user = UserModel.objects(email=user_email).first()
+        if not cur_user:
+            return jsonify(errors.User_not_exist)
+        all_answers = AnalysisModel.objects(user=cur_user['id']).order_by('date')
 
-    all_answers = AnalysisModel.objects(user=cur_user['id']).order_by('date')
+
     if len(all_answers) == 0:
         return jsonify(errors.Score_no_data)
 
-    mapper = DateMapper()
-    result = __generate_result_from_dict(mapper.map_answers(all_answers), 'date')
-    return jsonify(errors.success({'result': result}))
+    date_mapper = DateMapper()
+    result_by_date = __generate_result_from_dict(date_mapper.map_answers(all_answers), 'date')
+
+    question_id_mapper = QuestionNumMapper()
+    result_by_qid = __generate_result_from_dict(question_id_mapper.map_answers(all_answers), 'questionId')
+
+    result_all = []
+    for answer in result_by_qid:
+        result_all.append({'questionId': answer['questionId'], 'totalScore': answer['totalScore']})
+
+    return jsonify(errors.success({
+        'resultByDate': result_by_date,
+        'allResult': result_all
+    }))
 
 
 class AbstractMapper(object):
@@ -178,7 +203,11 @@ def __generate_result_from_dict(dict, result_key_name):
             result_key_name: key,
             'mainScore': format(key_score, ScoreConfig.DEFAULT_NUM_FORMAT),
             'detailScore': format(detail_score, ScoreConfig.DEFAULT_NUM_FORMAT),
-            'totalScore': format(key_score * ExamConfig.key_percent + detail_score * ExamConfig.detail_percent,
-                                 ScoreConfig.DEFAULT_NUM_FORMAT)
+            'totalScore': __generate_total_score(key_score, detail_score)
         })
     return result
+
+
+def __generate_total_score(key_score, detail_score):
+    return format(key_score * ExamConfig.key_percent + detail_score * ExamConfig.detail_percent,
+                  ScoreConfig.DEFAULT_NUM_FORMAT)
