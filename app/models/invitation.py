@@ -14,6 +14,7 @@ class InvitationModel(db.Document):
     vip_end_time = db.DateTimeField(default=lambda: datetime.datetime.utcnow() + datetime.timedelta(days=1))
     remaining_exam_num = db.IntField(min_value=0, default=3)
     activate_users = db.ListField(db.StringField(max_length=32))  # name
+    create_time = db.DateTimeField(default=None)
 
     meta = {'collection': 'invitations', 'strict': False}
 

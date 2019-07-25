@@ -24,12 +24,13 @@ def accounts_invite():
         return jsonify(errors.Authorize_needed)
     if not current_user.is_admin():
         return jsonify(errors.Admin_status_login)
-    form, invitation = request.form, InvitationModel()
+    form = request.form
     try:
         vip_start_time = timestamp2datetime(float(form.get('vipStartTime').strip()))
         vip_end_time = timestamp2datetime(float(form.get('vipEndTime').strip()))
         remaining_exam_num = int(form.get('remainingExamNum').strip())
         available_times = int(form.get('availableTimes').strip())
+        code_num = int(form.get('codeNum').strip())
     except Exception:
         return jsonify(errors.Params_error)
     """
@@ -38,7 +39,8 @@ def accounts_invite():
         2. vipEndTime必须在现在之后
         3. remainingExamNum要大于0（可用考试次数）
         4. availableTimes要大于0（邀请码可用人数）
-        5. 各项不为空
+        5. codeNum要大于0（邀请码个数）
+        6. 各项不为空
     """
     if not vip_start_time and not vip_end_time and not remaining_exam_num and not available_times:
         return jsonify(errors.Params_error)
@@ -50,19 +52,26 @@ def accounts_invite():
         return jsonify(errors.Params_error)
     if available_times <= 0:  # rule 4
         return jsonify(errors.Params_error)
+    if code_num <= 0:
+        return jsonify(errors.Params_error)
 
-    invitation.creator = current_user.name
-    invitation.activate_users = []
-    invitation.vip_start_time = vip_start_time
-    invitation.vip_end_time = vip_end_time
-    invitation.remaining_exam_num = remaining_exam_num
-    invitation.available_times = available_times
-    invitation.code = generate_code(AccountsConfig.INVITATION_CODE_LEN)
-    current_app.logger.info('invitation info:%s' % invitation.__str__())
-    # 生成指定位数随机字符串为邀请码
-    invitation.save(invitation)
-    current_app.logger.info('invitation(id: %s)' % invitation.id)
-    return jsonify(errors.success({'msg': '生成邀请码成功', 'invitationCode': invitation.code}))
+    invitation_codes = []
+    for i in range(0, code_num):
+        invitation = InvitationModel()
+        invitation.creator = current_user.name
+        invitation.activate_users = []
+        invitation.vip_start_time = vip_start_time
+        invitation.vip_end_time = vip_end_time
+        invitation.remaining_exam_num = remaining_exam_num
+        invitation.available_times = available_times
+        invitation.code = generate_code(AccountsConfig.INVITATION_CODE_LEN)
+        invitation.create_time = datetime.datetime.utcnow()
+        current_app.logger.info('invitation info:%s' % invitation.__str__())
+        # 生成指定位数随机字符串为邀请码
+        invitation.save(invitation)
+        current_app.logger.info('invitation(id: %s)' % invitation.id)
+        invitation_codes.append(invitation.code)
+    return jsonify(errors.success({'msg': '生成邀请码成功', 'invitationCode': invitation_codes}))
 
 
 @admin.route('/accounts/invite', methods=['GET'])
@@ -75,6 +84,8 @@ def get_invitations():
         result.append({
             'code': invitation['code'],
             'creator': invitation['creator'],
+            # 邀请码创建时间
+            'create_time': convert_datetime_to_str(invitation['create_time']),
             # 邀请码剩余可用次数
             'available_times': invitation['available_times'],
             # 邀请码有效时间

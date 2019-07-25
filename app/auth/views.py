@@ -26,6 +26,7 @@ def datetime_toString(dt):
 @auth.route('/user/info', methods=['GET'])
 def user_info():
     current_app.logger.info('get user info request: %s' % request.form.__str__())
+    print(current_user)
     if current_user.is_authenticated:
         return jsonify(errors.success({
             'role': str(current_user.role.value),
@@ -137,9 +138,10 @@ def register():
     existing_invitation = InvitationModel.objects(code=code).first()
     if existing_invitation is None or existing_invitation.available_times <= 0:
         return jsonify(errors.Illegal_invitation_code)
+    print("email: " + email + " phone: " + phone)
     new_user = UserModel()
-    new_user.email = email.lower()
-    new_user.phone = phone
+    new_user.email = email.lower() if email != '' else None
+    new_user.phone = phone if phone != '' else None
     new_user.password = current_app.md5_hash(password)
     new_user.name = name
     new_user.last_login_time = datetime.datetime.utcnow()
