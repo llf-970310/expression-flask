@@ -1,11 +1,11 @@
 from app.celery_manage.task import collect_history_to_analysis, move_current_to_history
 
 
-class CeleryConfig():
+class CeleryConfig:
     SCHEDULER_API_ENABLED = True
     JOBS = [
         {
-            'id': 'collect_current_to_analysis',
+            'id': 'collect_history_to_analysis',
             'func': collect_history_to_analysis,
             'args': '',
             'trigger': {
@@ -13,7 +13,7 @@ class CeleryConfig():
                 'type': 'cron',
                 'day_of_week': "0-6",
                 'hour': '*',
-                'minute': '26'
+                'minute': '36'
             }
         },
         {
