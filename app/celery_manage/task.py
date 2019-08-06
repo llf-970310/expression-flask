@@ -31,9 +31,44 @@ def move_current_to_history():
             history['test_start_time'] = current['test_start_time']
             history['paper_type'] = current['paper_type']
             history['current_q_num'] = current['current_q_num']
-            history['total_score'] = current['total_score']
+            history['score_info'] = current['score_info']
             history['questions'] = current['questions']
             history['all_analysed'] = False
+            # 防止history中的总分还有未计算的
+            if not history['score_info']:
+                print("compute score in celery task...")
+                questions = history['questions']
+                score = {}
+                for i in range(ExamConfig.total_question_num, 0, -1):
+                    if questions[str(i)]['status'] == 'finished':
+                        if questions[str(i)]['score'].get("main", -1) != -1:
+                            questions[str(i)]['score'] = {'key': questions[str(i)]['score']['main'],
+                                                          'detail': questions[str(i)]['score']['detail']}
+                            history.save()
+                        score[i] = questions[str(i)]['score']
+                    else:
+                        score[i] = {"quality": 0, "key": 0, "detail": 0, "structure": 0, "logic": 0}
+                if len(score) == len(questions):
+                    print("compute score...")
+                    print(score)
+                    x = {
+                        "quality": round(score[1]['quality'], 6),
+                        "key": round(
+                            score[2]['key'] * 0.25 + score[3]['key'] * 0.25 + score[4]['key'] * 0.25 + score[5][
+                                'key'] * 0.25, 6),
+                        "detail": round(
+                            score[2]['detail'] * 0.25 + score[3]['detail'] * 0.25 + score[4]['detail'] * 0.25 +
+                            score[5]['detail'] * 0.25, 6),
+                        "structure": round(score[6]['structure'], 6),
+                        "logic": round(score[6]['logic'], 6)
+                    }
+                    x['total'] = round(x["quality"] * 0.3 + x["key"] * 0.35 + x["detail"] * 0.15
+                                       + x["structure"] * 0.1 + x["logic"] * 0.1, 6)
+                    data = {"音质": x['quality'], "结构": x['structure'], "逻辑": x['logic'],
+                            "细节": x['detail'], "主旨": x['key'], "total": x['total']}
+                    history['score_info'] = data
+                    history.save()
+                    print(history['score_info'])
             history.save()
             current.delete()
 
@@ -49,22 +84,24 @@ def collect_current_to_analysis():
     """将 current 表中新出现的已评分分析的题目搬运到 analysis
     """
     print('collect_current_to_analysis')
+    history_list = HistoryTestModel.objects()
+
     for question in QuestionModel.objects(q_type=2).order_by('q_id'):
-        collect(question)
+        collect(question, history_list)
     pass
 
 
-def collect(analysis_question):
+def collect(analysis_question, history_list):
     """对指定问题进行 analysis 表的初始化工作
 
     :param analysis_question: 要被分析的 question
+    :param history_list: 测试历史
     """
     # 然后，将history中未被分析的部分分析一遍
     print('-----------------------')
     print('start to analyse question ', analysis_question['q_id'])
-    histories = HistoryTestModel.objects()
-    print(len(histories))
-    for test in histories:
+    print(len(history_list))
+    for test in history_list:
         questions = test['questions']
         all_analysed = True
         for question in questions.values():

@@ -70,7 +70,7 @@ class CurrentTestModel(db.DynamicDocument):
     test_start_time = db.DateTimeField()
     paper_type = db.ListField()
     current_q_num = db.IntField(min_value=1, default=1)
-    total_score = db.FloatField(min_value=0.0, max_value=100.0, default=0.0)
+    score_info = db.DictField(default={})
     questions = db.DictField(default={})
     all_analysed = db.BooleanField()  # 这个考试中的所有回答是否都被分析过
     # make questions a dict rather than a list so as to be able update one question w/o affecting other questions
@@ -87,7 +87,7 @@ class HistoryTestModel(db.DynamicDocument):
     test_start_time = db.DateTimeField()
     paper_type = db.ListField()
     current_q_num = db.IntField(min_value=1, default=1)
-    total_score = db.FloatField(min_value=0.0, max_value=100.0, default=0.0)
+    score_info = db.DictField(default={})
     questions = db.DictField(default={})
     all_analysed = db.BooleanField(default=False)  # 这个考试中的所有回答是否都被分析过
 
