@@ -80,7 +80,7 @@ def question_not_handling(question_dict):
     return True
 
 
-def collect_current_to_analysis():
+def collect_history_to_analysis():
     """将 current 表中新出现的已评分分析的题目搬运到 analysis
     """
     print('collect_current_to_analysis')

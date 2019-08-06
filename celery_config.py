@@ -6,7 +6,7 @@ class CeleryConfig():
     JOBS = [
         {
             'id': 'collect_current_to_analysis',
-            'func': collect_current_to_analysis,
+            'func': collect_history_to_analysis,
             'args': '',
             'trigger': {
                 # 每小时的第 36 分钟同步一次
