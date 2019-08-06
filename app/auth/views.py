@@ -5,18 +5,20 @@
 
 import datetime
 import json
+
 import requests
 from flask import current_app, jsonify, request, session, url_for
 from flask_login import login_user, logout_user, current_user
 
-from app.models.exam import CurrentTestModel
-from app.models.user import UserModel
-from app.models.invitation import InvitationModel
-from app.auth.util import *
-from flask import redirect
-
-from . import auth
 from app import errors
+from app.admin.score import _generate_total_score
+from app.admin.util import convert_datetime_to_str
+from app.auth.util import *
+from app.models.analysis import AnalysisModel
+from app.models.exam import QuestionModel
+from app.models.invitation import InvitationModel
+from app.models.user import UserModel
+from . import auth
 
 
 def datetime_toString(dt):
@@ -48,13 +50,11 @@ def user_info():
 
 @auth.route('/update', methods=['POST'])
 def update():
-    if current_user.is_authenticated:
-        email = current_user.email
-    else:
+    if not current_user.is_authenticated:
         return jsonify(errors.Authorize_needed)
     password = request.form.get('password').strip()
     name = request.form.get('name').strip()
-    check_user = UserModel.objects(email=email).first()
+    check_user = __get_check_user_from_db(current_user)
     if not password:
         check_user.name = name
     else:
@@ -71,11 +71,9 @@ def update():
 
 @auth.route('/untying', methods=['POST'])
 def untying():
-    if current_user.is_authenticated:
-        email = current_user.email
-    else:
+    if not current_user.is_authenticated:
         return jsonify(errors.Authorize_needed)
-    check_user = UserModel.objects(email=email).first()
+    check_user = __get_check_user_from_db(current_user)
     if not check_user.wx_id:
         return jsonify(errors.Wechat_not_bind)
     check_user.wx_id = ''
@@ -89,16 +87,23 @@ def untying():
 
 @auth.route('/showscore', methods=['POST'])
 def showscore():
-    if current_user.is_authenticated:
-        email = current_user.email
-    else:
+    if not current_user.is_authenticated:
         return jsonify(errors.Authorize_needed)
-    check_user = UserModel.objects(email=email).first()
-    user_id = check_user.id
-    scorelist = CurrentTestModel.objects(user_id=user_id)
-    if scorelist.count() == 0:
+    check_user = __get_check_user_from_db(current_user)
+    scores_origin = AnalysisModel.objects(user=check_user['id'])
+    scores = []
+    for score in scores_origin:
+        cur_question = QuestionModel.objects(id=score['question_id']).first()
+        scores.append({
+            "test_start_time": convert_datetime_to_str(score["test_start_time"]),
+            "paper_type": cur_question["q_type"],
+            "current_q_num": score["question_num"],
+            "total_score": _generate_total_score(score["score_key"], score["score_detail"]),
+            "question": cur_question["text"],
+        })
+    if len(scores) == 0:
         return jsonify(errors.No_history)
-    return jsonify(errors.success(scorelist))
+    return jsonify(errors.success({"scores": scores}))
 
 
 @auth.route('/register', methods=['POST'])
@@ -139,6 +144,7 @@ def register():
     if existing_invitation is None or existing_invitation.available_times <= 0:
         return jsonify(errors.Illegal_invitation_code)
     print("email: " + email + " phone: " + phone)
+    print("passsword: " + password)
     new_user = UserModel()
     new_user.email = email.lower() if email != '' else None
     new_user.phone = phone if phone != '' else None
@@ -340,3 +346,18 @@ def wechat_bind():
         'uuid': str(check_user.id),
         'name': str(check_user.name),
     }))
+
+
+def __get_check_user_from_db(current_user):
+    """
+    根据登录的用户获取当前数据库中用户
+    :param email_or_phone: 当前登录用户
+    :return: 当前用户
+    """
+    email = current_user.email
+    if email is None:
+        phone = current_user.phone
+        check_user = UserModel.objects(phone=phone).first()
+    else:
+        check_user = UserModel.objects(email=email).first()
+    return check_user
