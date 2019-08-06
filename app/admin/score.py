@@ -46,7 +46,7 @@ def get_score_of_specific_questions(id):
 
     result_all = []
     for answer in all_answers:
-        result_all.append(__generate_total_score(answer['score_key'], answer['score_detail']))
+        result_all.append(_generate_total_score(answer['score_key'], answer['score_detail']))
 
     return jsonify(errors.success({
         'resultByDate': result_by_date,
@@ -203,11 +203,11 @@ def __generate_result_from_dict(dict, result_key_name):
             result_key_name: key,
             'mainScore': format(key_score, ScoreConfig.DEFAULT_NUM_FORMAT),
             'detailScore': format(detail_score, ScoreConfig.DEFAULT_NUM_FORMAT),
-            'totalScore': __generate_total_score(key_score, detail_score)
+            'totalScore': _generate_total_score(key_score, detail_score)
         })
     return result
 
 
-def __generate_total_score(key_score, detail_score):
+def _generate_total_score(key_score, detail_score):
     return format(key_score * ExamConfig.key_percent + detail_score * ExamConfig.detail_percent,
                   ScoreConfig.DEFAULT_NUM_FORMAT)

@@ -1,4 +1,4 @@
-from app.celery_manage.task import collect_current_to_analysis, move_current_to_history
+from app.celery_manage.task import collect_history_to_analysis, move_current_to_history
 
 
 class CeleryConfig():
@@ -9,7 +9,7 @@ class CeleryConfig():
             'func': collect_current_to_analysis,
             'args': '',
             'trigger': {
-                # 每小时的第 30 分钟同步一次
+                # 每小时的第 36 分钟同步一次
                 'type': 'cron',
                 'day_of_week': "0-6",
                 'hour': '*',
