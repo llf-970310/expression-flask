@@ -13,7 +13,7 @@ class CeleryConfig():
                 'type': 'cron',
                 'day_of_week': "0-6",
                 'hour': '*',
-                'minute': '32'
+                'minute': '36'
             }
         },
         {

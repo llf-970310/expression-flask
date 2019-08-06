@@ -2,9 +2,9 @@ import datetime
 
 from app import db
 
-
 # 参考资料：http://docs.mongoengine.org/guide/index.html , http://docs.mongoengine.org/apireference.html
 # 中文资料：https://segmentfault.com/a/1190000008025156#articleHeader8
+
 
 class WavTestModel(db.DynamicDocument):
     """
@@ -89,7 +89,7 @@ class HistoryTestModel(db.DynamicDocument):
     current_q_num = db.IntField(min_value=1, default=1)
     total_score = db.FloatField(min_value=0.0, max_value=100.0, default=0.0)
     questions = db.DictField(default={})
-    all_analysed = db.BooleanField()  # 这个考试中的所有回答是否都被分析过
+    all_analysed = db.BooleanField(default=False)  # 这个考试中的所有回答是否都被分析过
 
     meta = {'collection': 'history'}
 

@@ -15,13 +15,6 @@ sys.path.append(os.path.join(dir_name, 'model_test'))
 import expression.new_analysis as analysis_util
 
 
-def test_db():
-    print('test_db')
-    for question in QuestionModel.objects(q_type=2).order_by('q_id'):
-        print(question['q_id'])
-    pass
-
-
 def move_current_to_history():
     """
     将 current 表中超时且未在处理中的部分搬运到history
@@ -40,7 +33,7 @@ def move_current_to_history():
             history['current_q_num'] = current['current_q_num']
             history['total_score'] = current['total_score']
             history['questions'] = current['questions']
-            history['all_analysed'] = current['all_analysed']
+            history['all_analysed'] = False
             history.save()
             current.delete()
 
@@ -69,7 +62,7 @@ def collect(analysis_question):
     # 然后，将history中未被分析的部分分析一遍
     print('-----------------------')
     print('start to analyse question ', analysis_question['q_id'])
-    histories = HistoryTestModel.objects(all_analysed=False)
+    histories = HistoryTestModel.objects()
     print(len(histories))
     for test in histories:
         questions = test['questions']
@@ -115,3 +108,27 @@ def __compute_score_and_save(analysis, voice_features, question, test_start_time
     print('saved: ' + analysis['question_num'].__str__() + '        ' + analysis['user'].__str__() + '        ' +
           analysis['test_start_time'].__str__())
     pass
+
+
+# if __name__ == '__main__':
+#     from mongoengine import connect
+#
+#     MONGODB = {
+#         'NAME': 'expression_flask',
+#         'HOST': '47.98.174.59',
+#         'PORT': 27017,  # caution: integer here (unlike django default)
+#         'NEED_AUTH': True,
+#         'AUTH_MECHANISM': 'SCRAM-SHA-1',
+#         'USER': 'iselab',
+#         'PASSWORD': 'iselab###nju.cn'
+#     }
+#     connect(MONGODB['NAME'], host=MONGODB['HOST'], port=MONGODB['PORT'],
+#             username=MONGODB['USER'], password=MONGODB['PASSWORD'], authentication_source=MONGODB['NAME'],
+#             authentication_mechanism=MONGODB['AUTH_MECHANISM'])
+#     print(sys.path)
+#     print(analysis_util)
+#     questions = QuestionModel.objects(q_type=2).order_by('q_id')
+#     print(len(questions))
+#     for question in questions:
+#         print(question["q_id"])
+#         collect(question)

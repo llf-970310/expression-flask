@@ -88,7 +88,7 @@ class Analysis(object):
         # 然后，将current中未被分析的部分分析一遍
         print('-----------------------')
         print('start to analyse question ', analysis_question['q_id'])
-        histories = HistoryTestModel.objects(all_analysed=False)
+        histories = HistoryTestModel.objects()
         print(len(histories))
         for test in histories:
             questions = test['questions']
@@ -131,6 +131,9 @@ class Analysis(object):
         analysis.save()
         pass
 
+
 # if __name__ == '__main__':
 #     print(sys.path)
 #     print(analysis_util)
+#     analysis = Analysis()
+#     analysis.init_analysis()
