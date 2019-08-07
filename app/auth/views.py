@@ -214,13 +214,14 @@ def login():
     if not (username and password):
         return jsonify(errors.Params_error)
     check_user = None
-    # 邮箱登录
     if '@' in username:
+        # 邮箱登录
         email = username
         if not validate_email(email):
             return jsonify(errors.Params_error)
         check_user = UserModel.objects(email=email).first()
     else:
+        # 手机号登录
         phone = username
         check_user = UserModel.objects(phone=phone).first()
     if not check_user:
@@ -344,12 +345,22 @@ def wechat_bind():
     wx_union_id = session.get('wx_union_id')
     if not wx_union_id:
         return jsonify(errors.error())
-    email = request.form.get('username')
-    # phone = request.form.get('phone')  # todo:手机号
+    username = request.form.get('username')
     password = request.form.get('password')
-    if not (email and password):
+    if not (username and password):
         return jsonify(errors.Params_error)
-    check_user = UserModel.objects(email=email).first()
+
+    if '@' in username:
+        # 邮箱登录
+        email = username
+        if not validate_email(email):
+            return jsonify(errors.Params_error)
+        check_user = UserModel.objects(email=email).first()
+    else:
+        # 手机号登录
+        phone = username
+        check_user = UserModel.objects(phone=phone).first()
+
     if not check_user:
         return jsonify(errors.Authorize_failed)
     if (not current_app.config['IGNORE_LOGIN_PASSWORD']) and (check_user.password != current_app.md5_hash(password)):
