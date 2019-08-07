@@ -93,19 +93,34 @@ def showscore():
 
     history_scores = []
     for history in history_scores_origin:
-        history_scores.append({
-            "test_start_time": convert_datetime_to_str(history["test_start_time"]),
-            # "paper_type": history["paper_type"],
-            "score_info": {
-                "音质": format(history["score_info"]["音质"], ScoreConfig.DEFAULT_NUM_FORMAT),
-                "结构": format(history["score_info"]["结构"], ScoreConfig.DEFAULT_NUM_FORMAT),
-                "逻辑": format(history["score_info"]["逻辑"], ScoreConfig.DEFAULT_NUM_FORMAT),
-                "细节": format(history["score_info"]["细节"], ScoreConfig.DEFAULT_NUM_FORMAT),
-                "主旨": format(history["score_info"]["主旨"], ScoreConfig.DEFAULT_NUM_FORMAT),
-                "total": format(history["score_info"]["total"], ScoreConfig.DEFAULT_NUM_FORMAT),
-            },
-            "all_analysed": history["all_analysed"],
-        })
+        if history["score_info"]:
+            history_scores.append({
+                "test_start_time": convert_datetime_to_str(history["test_start_time"]),
+                # "paper_type": history["paper_type"],
+                "score_info": {
+                    "音质": format(history["score_info"]["音质"], ScoreConfig.DEFAULT_NUM_FORMAT),
+                    "结构": format(history["score_info"]["结构"], ScoreConfig.DEFAULT_NUM_FORMAT),
+                    "逻辑": format(history["score_info"]["逻辑"], ScoreConfig.DEFAULT_NUM_FORMAT),
+                    "细节": format(history["score_info"]["细节"], ScoreConfig.DEFAULT_NUM_FORMAT),
+                    "主旨": format(history["score_info"]["主旨"], ScoreConfig.DEFAULT_NUM_FORMAT),
+                    "total": format(history["score_info"]["total"], ScoreConfig.DEFAULT_NUM_FORMAT),
+                },
+                # "all_analysed": history["all_analysed"],
+            })
+        else:
+            history_scores.append({
+                "test_start_time": convert_datetime_to_str(history["test_start_time"]),
+                # "paper_type": history["paper_type"],
+                "score_info": {
+                    "音质": format(0, ScoreConfig.DEFAULT_NUM_FORMAT),
+                    "结构": format(0, ScoreConfig.DEFAULT_NUM_FORMAT),
+                    "逻辑": format(0, ScoreConfig.DEFAULT_NUM_FORMAT),
+                    "细节": format(0, ScoreConfig.DEFAULT_NUM_FORMAT),
+                    "主旨": format(0, ScoreConfig.DEFAULT_NUM_FORMAT),
+                    "total": format(0, ScoreConfig.DEFAULT_NUM_FORMAT),
+                },
+                # "all_analysed": history["all_analysed"],
+            })
 
     if len(history_scores) == 0:
         return jsonify(errors.No_history)
