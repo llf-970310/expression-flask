@@ -11,11 +11,10 @@ from flask import current_app, jsonify, request, session, url_for
 from flask_login import login_user, logout_user, current_user
 
 from app import errors
-from app.admin.score import _generate_total_score
+from app.admin.admin_config import ScoreConfig
 from app.admin.util import convert_datetime_to_str
 from app.auth.util import *
-from app.models.analysis import AnalysisModel
-from app.models.exam import QuestionModel
+from app.models.exam import HistoryTestModel
 from app.models.invitation import InvitationModel
 from app.models.user import UserModel
 from . import auth
@@ -90,20 +89,42 @@ def showscore():
     if not current_user.is_authenticated:
         return jsonify(errors.Authorize_needed)
     check_user = __get_check_user_from_db(current_user)
-    scores_origin = AnalysisModel.objects(user=check_user['id'])
-    scores = []
-    for score in scores_origin:
-        cur_question = QuestionModel.objects(id=score['question_id']).first()
-        scores.append({
-            "test_start_time": convert_datetime_to_str(score["test_start_time"]),
-            "paper_type": cur_question["q_type"],
-            "current_q_num": score["question_num"],
-            "total_score": _generate_total_score(score["score_key"], score["score_detail"]),
-            "question": cur_question["text"],
-        })
-    if len(scores) == 0:
+    history_scores_origin = HistoryTestModel.objects(user_id=str(check_user['id']))
+
+    history_scores = []
+    for history in history_scores_origin:
+        if history["score_info"]:
+            history_scores.append({
+                "test_start_time": convert_datetime_to_str(history["test_start_time"]),
+                # "paper_type": history["paper_type"],
+                "score_info": {
+                    "音质": format(history["score_info"]["音质"], ScoreConfig.DEFAULT_NUM_FORMAT),
+                    "结构": format(history["score_info"]["结构"], ScoreConfig.DEFAULT_NUM_FORMAT),
+                    "逻辑": format(history["score_info"]["逻辑"], ScoreConfig.DEFAULT_NUM_FORMAT),
+                    "细节": format(history["score_info"]["细节"], ScoreConfig.DEFAULT_NUM_FORMAT),
+                    "主旨": format(history["score_info"]["主旨"], ScoreConfig.DEFAULT_NUM_FORMAT),
+                    "total": format(history["score_info"]["total"], ScoreConfig.DEFAULT_NUM_FORMAT),
+                },
+                # "all_analysed": history["all_analysed"],
+            })
+        else:
+            history_scores.append({
+                "test_start_time": convert_datetime_to_str(history["test_start_time"]),
+                # "paper_type": history["paper_type"],
+                "score_info": {
+                    "音质": format(0, ScoreConfig.DEFAULT_NUM_FORMAT),
+                    "结构": format(0, ScoreConfig.DEFAULT_NUM_FORMAT),
+                    "逻辑": format(0, ScoreConfig.DEFAULT_NUM_FORMAT),
+                    "细节": format(0, ScoreConfig.DEFAULT_NUM_FORMAT),
+                    "主旨": format(0, ScoreConfig.DEFAULT_NUM_FORMAT),
+                    "total": format(0, ScoreConfig.DEFAULT_NUM_FORMAT),
+                },
+                # "all_analysed": history["all_analysed"],
+            })
+
+    if len(history_scores) == 0:
         return jsonify(errors.No_history)
-    return jsonify(errors.success({"scores": scores}))
+    return jsonify(errors.success({"history": history_scores}))
 
 
 @auth.route('/register', methods=['POST'])
@@ -193,13 +214,14 @@ def login():
     if not (username and password):
         return jsonify(errors.Params_error)
     check_user = None
-    # 邮箱登录
     if '@' in username:
+        # 邮箱登录
         email = username
         if not validate_email(email):
             return jsonify(errors.Params_error)
         check_user = UserModel.objects(email=email).first()
     else:
+        # 手机号登录
         phone = username
         check_user = UserModel.objects(phone=phone).first()
     if not check_user:
@@ -323,12 +345,22 @@ def wechat_bind():
     wx_union_id = session.get('wx_union_id')
     if not wx_union_id:
         return jsonify(errors.error())
-    email = request.form.get('username')
-    # phone = request.form.get('phone')  # todo:手机号
+    username = request.form.get('username')
     password = request.form.get('password')
-    if not (email and password):
+    if not (username and password):
         return jsonify(errors.Params_error)
-    check_user = UserModel.objects(email=email).first()
+
+    if '@' in username:
+        # 邮箱登录
+        email = username
+        if not validate_email(email):
+            return jsonify(errors.Params_error)
+        check_user = UserModel.objects(email=email).first()
+    else:
+        # 手机号登录
+        phone = username
+        check_user = UserModel.objects(phone=phone).first()
+
     if not check_user:
         return jsonify(errors.Authorize_failed)
     if (not current_app.config['IGNORE_LOGIN_PASSWORD']) and (check_user.password != current_app.md5_hash(password)):
