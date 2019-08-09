@@ -246,7 +246,8 @@ def next_question():
     now_q_num = request.form.get("nowQuestionNum")
     current_app.logger.info('nowQuestionNum: %s' % now_q_num)
     # 判断是否有剩余考试次数
-    if now_q_num is None or int(now_q_num) == 0:
+    # now_q_num = -1 表示是新的考试
+    if now_q_num is None or int(now_q_num) == -1:
         if Setting.LIMIT_EXAM_TIMES and current_user.remaining_exam_num <= 0:
             return jsonify(errors.No_exam_times)
         elif Setting.LIMIT_EXAM_TIMES and current_user.remaining_exam_num > 0:
@@ -262,8 +263,8 @@ def next_question():
             session["test_id"] = test_id
         session["init_done"] = True
         session["new_test"] = False
-    # 获得下一题号
-    next_question_num = int(now_q_num) + 1  # 不能转换时怎么处理,如'aaa'
+    # 获得下一题号 此时now_q_num最小是0
+    next_question_num = int(now_q_num) + 1
     session["question_num"] = next_question_num
     current_app.logger.info("api next-question: username: %s, next_question_num: %s" % (
         current_user.name, next_question_num))
@@ -304,7 +305,6 @@ def find_left_exam():
         return jsonify(errors.success({"info": "没有未完成的考试"}))
     else:
         return jsonify(errors.success({"info": "没有未完成的考试"}))
-
 
 
 def init_question(user_id):
