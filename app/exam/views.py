@@ -209,8 +209,9 @@ def get_result():
     # 判断该测试是否超时
     in_process = ((datetime.datetime.utcnow() - test["test_start_time"]).total_seconds() <
                   ExamConfig.exam_total_time)
+    current_app.logger.info("in_process: %s" % str(in_process))
     # 如果回答完问题或超时但已处理完，则计算得分，否则返回正在处理
-    if len(score) == len(questions) or (in_process and not has_handling):
+    if len(score) == len(questions) or (not in_process and not has_handling):
         # final score:
         if not test['score_info']:
             current_app.logger.info("first compute score...")
