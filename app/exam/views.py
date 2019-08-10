@@ -205,7 +205,7 @@ def get_result():
         else:
             has_handling = has_handling | (questions[str(i)]['status'] == 'handling')
             current_app.logger.info(str(i))
-            break
+
     # 判断该测试是否超时
     in_process = ((datetime.datetime.utcnow() - test["test_start_time"]).total_seconds() <
                   ExamConfig.exam_total_time)
