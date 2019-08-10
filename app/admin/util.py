@@ -2,6 +2,7 @@
 # Time       : 2019/3/18 11:43
 # Author     : tangdaye
 # Description: admin util
+from datetime import timedelta
 
 _characters = '1234567890abcdefghijklmnopqrstuvwxyz'
 
@@ -27,13 +28,14 @@ def convert_date_to_str(date, separator='-') -> str:
     return date.strftime("%%Y%s%%m%s%%d" % (separator, separator))
 
 
-def convert_datetime_to_str(date, date_separator='-') -> str:
+def convert_datetime_to_str(utc_time, date_separator='-') -> str:
     """
     Desc:   获得当前日期格式化字符串，可指定分隔符，如: 20181009(默认), 2018-10-31(输入为-), 2018===10===31(输入为===)
     """
-    if not date:
+    if not utc_time:
         return ''
-    return date.strftime("%%Y%s%%m%s%%d %%H:%%M:%%S" % (date_separator, date_separator))
+    cur_time = utc_time + timedelta(hours=8)
+    return cur_time.strftime("%%Y%s%%m%s%%d %%H:%%M:%%S" % (date_separator, date_separator))
 
 
 def str_to_bool(str):

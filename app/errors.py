@@ -106,3 +106,4 @@ Optimize_not_exist = {'code': 4003, 'msg': '该题目未进行过优化'}
 
 Score_no_data = {'code': 4701, 'msg': '暂无数据'}
 Origin_question_no_more = {'code': 4702, 'msg': '题库中暂无题目'}
+Score_criteria_not_exist = {'code': 4703, 'msg': '成绩管理要搜索的条件不存在'}

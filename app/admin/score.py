@@ -8,6 +8,7 @@ from app.auth.util import validate_email
 from app.exam.exam_config import ExamConfig
 from app.models.analysis import *
 from app.models.user import UserModel
+from app.models.exam import QuestionModel
 from . import admin, util
 from .algorithm import OptimizeAlgorithm
 
@@ -37,6 +38,10 @@ def get_score_of_specific_questions(id):
     :return: 该问题的成绩情况
     """
     current_app.logger.info('get_score_of_specific_questions   ' + id)
+
+    cur_question = QuestionModel.objects(q_id=id).first()
+    if not cur_question:
+        return jsonify(errors.Score_criteria_not_exist)
 
     all_answers = AnalysisModel.objects(question_num=id).order_by('date')
     if len(all_answers) == 0:
@@ -106,13 +111,13 @@ def get_score_of_specific_users(username):
             # 真实邮箱
             cur_user = UserModel.objects(email=username).first()
             if not cur_user:
-                return jsonify(errors.User_not_exist)
+                return jsonify(errors.Score_criteria_not_exist)
             all_answers = AnalysisModel.objects(user=cur_user['id']).order_by('date')
     else:
         # 手机号登录
         cur_user = UserModel.objects(phone=username).first()
         if not cur_user:
-            return jsonify(errors.User_not_exist)
+            return jsonify(errors.Score_criteria_not_exist)
         all_answers = AnalysisModel.objects(user=cur_user['id']).order_by('date')
 
     if len(all_answers) == 0:
