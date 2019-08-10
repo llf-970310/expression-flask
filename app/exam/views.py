@@ -192,6 +192,7 @@ def get_result():
             return jsonify(errors.Exam_not_exist)
     questions = test['questions']
     score = {}
+    has_handling = False
     for i in range(ExamConfig.total_question_num, 0, -1):
         current_app.logger.info(questions[str(i)]['status'])
         if questions[str(i)]['status'] == 'finished':
@@ -202,10 +203,14 @@ def get_result():
             score[i] = {"quality": 0, "key": 0, "detail": 0, "structure": 0, "logic": 0}
             current_app.logger.info("！！记0分 score" + str(score[i]))
         else:
+            has_handling = has_handling | questions[str(i)]['status'] == 'handling'
             current_app.logger.info(str(i))
             break
-
-    if len(score) == len(questions):
+    # 判断该测试是否超时
+    in_process = ((datetime.datetime.utcnow() - test["test_start_time"]).total_seconds() <
+                  ExamConfig.exam_total_time)
+    # 如果回答完问题或超时但已处理完，则计算得分，否则返回正在处理
+    if len(score) == len(questions) or (in_process and not has_handling):
         # final score:
         if not test['score_info']:
             current_app.logger.info("first compute score...")
