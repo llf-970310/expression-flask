@@ -197,6 +197,7 @@ def register():
 @auth.route('/login', methods=['POST'])
 def login():
     current_app.logger.info('login request: %s' % request.form.__str__())
+    current_app.logger.info('login request current user: %s' % current_user.__str__())
     if current_user.is_authenticated:
         return jsonify(errors.Already_logged_in)
     username = request.form.get('username')
