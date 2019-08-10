@@ -3,6 +3,7 @@ import sys
 from app.models.exam import *
 from app.models.analysis import *
 from app.exam.exam_config import ExamConfig
+from app.exam.util import *
 from app import scheduler
 
 # dir_name = '/Users/cuihua/Documents/workspace/mooctest/Expression/exp-docker/'
@@ -48,27 +49,11 @@ def move_current_to_history():
                         score[i] = questions[str(i)]['score']
                     else:
                         score[i] = {"quality": 0, "key": 0, "detail": 0, "structure": 0, "logic": 0}
-                if len(score) == len(questions):
-                    print("compute score...")
-                    print(score)
-                    x = {
-                        "quality": round(score[1]['quality'], 6),
-                        "key": round(
-                            score[2]['key'] * 0.25 + score[3]['key'] * 0.25 + score[4]['key'] * 0.25 + score[5][
-                                'key'] * 0.25, 6),
-                        "detail": round(
-                            score[2]['detail'] * 0.25 + score[3]['detail'] * 0.25 + score[4]['detail'] * 0.25 +
-                            score[5]['detail'] * 0.25, 6),
-                        "structure": round(score[6]['structure'], 6),
-                        "logic": round(score[6]['logic'], 6)
-                    }
-                    x['total'] = round(x["quality"] * 0.3 + x["key"] * 0.35 + x["detail"] * 0.15
-                                       + x["structure"] * 0.1 + x["logic"] * 0.1, 6)
-                    data = {"音质": x['quality'], "结构": x['structure'], "逻辑": x['logic'],
-                            "细节": x['detail'], "主旨": x['key'], "total": x['total']}
-                    history['score_info'] = data
-                    history.save()
-                    print(history['score_info'])
+                print("compute score...")
+                print(score)
+                history['score_info'] = compute_exam_score(score)
+                history.save()
+                print(history['score_info'])
             history.save()
             current.delete()
 

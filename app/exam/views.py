@@ -203,7 +203,7 @@ def get_result():
             score[i] = {"quality": 0, "key": 0, "detail": 0, "structure": 0, "logic": 0}
             current_app.logger.info("！！记0分 score" + str(score[i]))
         else:
-            has_handling = has_handling | questions[str(i)]['status'] == 'handling'
+            has_handling = has_handling | (questions[str(i)]['status'] == 'handling')
             current_app.logger.info(str(i))
             break
     # 判断该测试是否超时
@@ -214,22 +214,9 @@ def get_result():
         # final score:
         if not test['score_info']:
             current_app.logger.info("first compute score...")
-            x = {
-                "quality": round(score[1]['quality'], 6),
-                "key": round(score[2]['key'] * 0.25 + score[3]['key'] * 0.25 + score[4]['key'] * 0.25 + score[5][
-                    'key'] * 0.25, 6),
-                "detail": round(score[2]['detail'] * 0.25 + score[3]['detail'] * 0.25 + score[4]['detail'] * 0.25 +
-                                score[5]['detail'] * 0.25, 6),
-                "structure": round(score[6]['structure'], 6),
-                "logic": round(score[6]['logic'], 6)
-            }
-            x['total'] = round(x["quality"] * 0.3 + x["key"] * 0.35 + x["detail"] * 0.15
-                               + x["structure"] * 0.1 + x["logic"] * 0.1, 6)
-            data = {"音质": x['quality'], "结构": x['structure'], "逻辑": x['logic'],
-                    "细节": x['detail'], "主旨": x['key'], "total": x['total']}
-            test['score_info'] = data
+            test['score_info'] = compute_exam_score(score)
             test.save()
-            result = {"status": "Success", "totalScore": x['total'], "data": data}
+            result = {"status": "Success", "totalScore": test['score_info']['total'], "data": test['score_info']}
         else:
             current_app.logger.info("use computed score!")
             result = {"status": "Success", "totalScore": test['score_info']['total'], "data": test['score_info']}
