@@ -240,7 +240,7 @@ def next_question():
     current_app.logger.info('nowQuestionNum: %s' % now_q_num)
     # 判断是否有剩余考试次数
     # now_q_num = -1 表示是新的考试
-    if now_q_num is None or int(now_q_num) == -1:
+    if (now_q_num is None) or (int(now_q_num) == -1) or (not session.get("test_id")):
         if Setting.LIMIT_EXAM_TIMES and current_user.remaining_exam_num <= 0:
             return jsonify(errors.No_exam_times)
         elif Setting.LIMIT_EXAM_TIMES and current_user.remaining_exam_num > 0:

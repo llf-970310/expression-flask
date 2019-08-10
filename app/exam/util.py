@@ -3,7 +3,7 @@
 import time
 import os
 import json
-from .exam_config import ApiConfig
+from .exam_config import ApiConfig, ExamConfig
 
 
 def compute_exam_score(score):
@@ -12,6 +12,9 @@ def compute_exam_score(score):
     :param score: 考试各题成绩数组
     :return: 考试个维度成绩和总成绩
     """
+    for i in range(ExamConfig.total_question_num, 0, -1):
+        if not score.get(i):
+            score[i] = {"quality": 0, "key": 0, "detail": 0, "structure": 0, "logic": 0}
     x = {
         "quality": round(score[1]['quality'], 6),
         "key": round(score[2]['key'] * 0.25 + score[3]['key'] * 0.25 + score[4]['key'] * 0.25 + score[5][
