@@ -385,7 +385,8 @@ def question_dealer(question_num, test_id, user_id) -> dict:
                "questionInfo": QuestionConfig.question_type_tip[question.q_type],
                "questionContent": question.q_text,
                "examLeftTime": ExamConfig.exam_total_time - (datetime.datetime.utcnow() - test[
-                   'test_start_time']).total_seconds()
+                   'test_start_time']).total_seconds(),
+               "examTime": ExamConfig.exam_total_time
                }
 
     # update and save
