@@ -42,10 +42,6 @@ def move_current_to_history():
                 score = {}
                 for i in range(ExamConfig.total_question_num, 0, -1):
                     if questions[str(i)]['status'] == 'finished':
-                        if questions[str(i)]['score'].get("main", -1) != -1:
-                            questions[str(i)]['score'] = {'key': questions[str(i)]['score']['main'],
-                                                          'detail': questions[str(i)]['score']['detail']}
-                            history.save()
                         score[i] = questions[str(i)]['score']
                     else:
                         score[i] = {"quality": 0, "key": 0, "detail": 0, "structure": 0, "logic": 0}

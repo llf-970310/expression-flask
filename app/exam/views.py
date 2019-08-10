@@ -70,7 +70,7 @@ def upload_test_wav_success():
         ret = analysis_wav_test.apply_async(args=[test_id], queue='q_pre_test', priority=20)
         current_app.logger.info("AsyncResult id: %s" % ret.id)
     except Exception as e:
-        current_app.logger.error('upload_success_for_test: celery enqueue:\n%s' % traceback.format_exc())
+        current_app.logger.error('upload_test_wav_success: celery enqueue:\n%s' % traceback.format_exc())
         return jsonify(errors.exception({'Exception': str(e)}))
     return jsonify(errors.success())
 
@@ -171,7 +171,7 @@ def upload_success():
             # todo: store ret.id in redis for status query
         current_app.logger.info("AsyncResult id: %s" % ret.id)
     except Exception as e:
-        current_app.logger.error('upload_success_for_test: celery enqueue:\n%s' % traceback.format_exc())
+        current_app.logger.error('upload_success: celery enqueue:\n%s' % traceback.format_exc())
         return jsonify(errors.exception({'Exception': str(e)}))
     resp = {"status": "Success", "desc": "添加任务成功，等待服务器处理", "dataID": current_test.id.__str__(), "taskID": ret.id}
     return jsonify(errors.success(resp))
