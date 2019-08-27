@@ -9,10 +9,10 @@ class CeleryConfig:
             'func': collect_history_to_analysis,
             'args': '',
             'trigger': {
-                # 每小时的第 36 分钟同步一次
+                # 5:36 分钟同步一次
                 'type': 'cron',
                 'day_of_week': "0-6",
-                'hour': '*',
+                'hour': '5',
                 'minute': '36'
             }
         },
@@ -21,10 +21,10 @@ class CeleryConfig:
             'func': move_current_to_history,
             'args': '',
             'trigger': {
-                # 每小时的第 52 分钟同步一次
+                # 3:52 分钟同步一次
                 'type': 'cron',
                 'day_of_week': "0-6",
-                'hour': '*',
+                'hour': '3',
                 'minute': '52'
             }
         }
