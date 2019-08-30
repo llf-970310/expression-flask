@@ -20,6 +20,7 @@ def move_current_to_history():
     """
     将 current 表中超时且未在处理中的部分搬运到history
     """
+    print('move_current_to_history')
     for current in CurrentTestModel.objects({}):
         test_start_time = current['test_start_time']
         now_time = datetime.datetime.utcnow()
@@ -64,7 +65,7 @@ def question_not_handling(question_dict):
 def collect_history_to_analysis():
     """将 current 表中新出现的已评分分析的题目搬运到 analysis
     """
-    print('collect_current_to_analysis')
+    print('collect_history_to_analysis')
     history_list = HistoryTestModel.objects()
 
     for question in QuestionModel.objects(q_type=2).order_by('q_id'):
