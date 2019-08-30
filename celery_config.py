@@ -13,7 +13,7 @@ class CeleryConfig:
                 'type': 'cron',
                 'day_of_week': "0-6",
                 'hour': 5,
-                'minute': '36'
+                'minute': 36
             }
         },
         {
@@ -24,8 +24,8 @@ class CeleryConfig:
                 # 3:52 分钟同步一次
                 'type': 'cron',
                 'day_of_week': "0-6",
-                'hour': 23,
-                'minute': '20'
+                'hour': 3,
+                'minute': 20
             }
         }
         # {
