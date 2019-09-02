@@ -41,6 +41,7 @@ def get_test_wav_url():
     test_id = request.form.get('test_id')
     wav_test = WavTestModel.objects(id=test_id).first()
     if not wav_test:
+        current_app.logger.info("get_test_wav_url: no such test! test id: %s" % test_id)
         return jsonify(errors.success(errors.Test_not_exist))
     user_id = session.get('user_id')
     file_dir = '/'.join((PathConfig.audio_test_basedir, get_date_str('-'), user_id))
@@ -49,6 +50,7 @@ def get_test_wav_url():
     wav_test['wav_upload_url'] = file_dir + '/' + file_name
     wav_test['file_location'] = 'BOS'
     wav_test.save()
+    current_app.logger.info("get_test_wav_url: return data! test id: %s, url: %s" % (test_id, wav_test['wav_upload_url']))
     return jsonify(errors.success({
         "fileLocation": "BOS",
         "url": wav_test['wav_upload_url'],
@@ -63,6 +65,7 @@ def upload_test_wav_success():
     test_id = request.form.get('test_id')
     wav_test = WavTestModel.objects(id=test_id).first()
     if not wav_test:
+        current_app.logger.info("upload_test_wav_success: no such test! test id: %s" % test_id)
         return jsonify(errors.success(errors.Test_not_exist))
     wav_test['result']['status'] = 'handling'
     wav_test.save()
