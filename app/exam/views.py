@@ -150,14 +150,14 @@ def upload_success():
         current_app.logger.error("upload_success: user not authenticated! user name: %s" % current_user.name)
         return jsonify(errors.Authorize_needed)
     q_num = request.form.get("nowQuestionNum")
-    current_app.logger.info("upload_success: now_question_num: %s, user_name: %s" %(str(q_num), current_user.name))
+    current_app.logger.info("upload_success: now_question_num: %s, user_name: %s" % (str(q_num), current_user.name))
 
     test_id = session.get("test_id")  # for production
     # test_id = request.form.get("test_id")  # just for unittest
 
     current_test = CurrentTestModel.objects(id=test_id).first()
     if current_test is None:
-        current_app.logger.error("upload_success: CRITICAL: Test Not Exists!! - test_id: %s, user name" %
+        current_app.logger.error("upload_success: CRITICAL: Test Not Exists!! - test_id: %s, user name: %s" %
                                  (test_id, current_user.name))
         return jsonify(errors.Exam_not_exist)
 
@@ -206,7 +206,6 @@ def get_result():
     score = {}
     has_handling = False
     for i in range(ExamConfig.total_question_num, 0, -1):
-        current_app.logger.info(questions[str(i)]['status'])
         if questions[str(i)]['status'] == 'finished':
             score[i] = questions[str(i)]['score']
             current_app.logger.info("get_result: status is finished! index: %s, score: %s, test_id: %s, user name: %s"
