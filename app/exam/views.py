@@ -24,6 +24,8 @@ def get_test_wav_info():
     wav_test['text'] = QuestionConfig.test_text['content']
     wav_test['user_id'] = user_id
     wav_test.save()
+    current_app.logger.info("get_test_wav_info: return data! test id: %s, user name: %s" % (wav_test.id.__str__(),
+                                                                                            current_user.name))
     return jsonify(errors.success({
         "questionLimitTime": ExamConfig.question_limit_time[0],
         "readLimitTime": ExamConfig.question_prepare_time[0],
@@ -41,7 +43,8 @@ def get_test_wav_url():
     test_id = request.form.get('test_id')
     wav_test = WavTestModel.objects(id=test_id).first()
     if not wav_test:
-        current_app.logger.info("get_test_wav_url: no such test! test id: %s" % test_id)
+        current_app.logger.info("get_test_wav_url: no such test! test id: %s, user name: %s" %
+                                (test_id, current_user.name))
         return jsonify(errors.success(errors.Test_not_exist))
     user_id = session.get('user_id')
     file_dir = '/'.join((PathConfig.audio_test_basedir, get_date_str('-'), user_id))
@@ -50,7 +53,8 @@ def get_test_wav_url():
     wav_test['wav_upload_url'] = file_dir + '/' + file_name
     wav_test['file_location'] = 'BOS'
     wav_test.save()
-    current_app.logger.info("get_test_wav_url: return data! test id: %s, url: %s" % (test_id, wav_test['wav_upload_url']))
+    current_app.logger.info("get_test_wav_url: return data! test id: %s, url: %s, user name: %s" %
+                            (test_id, wav_test['wav_upload_url'], current_user.name))
     return jsonify(errors.success({
         "fileLocation": "BOS",
         "url": wav_test['wav_upload_url'],
@@ -61,11 +65,13 @@ def get_test_wav_url():
 @exam.route('/upload-test-wav-success', methods=['POST'])
 def upload_test_wav_success():
     if not current_user.is_authenticated:
+        current_app.logger.error("upload_test_wav_success: user not authenticated! user name: %s" % current_user.name)
         return jsonify(errors.Authorize_needed)
     test_id = request.form.get('test_id')
     wav_test = WavTestModel.objects(id=test_id).first()
     if not wav_test:
-        current_app.logger.info("upload_test_wav_success: no such test! test id: %s" % test_id)
+        current_app.logger.error("upload_test_wav_success: no such test! test id: %s, user name: %s" %
+                                 (test_id, current_user.name))
         return jsonify(errors.success(errors.Test_not_exist))
     wav_test['result']['status'] = 'handling'
     wav_test.save()
@@ -73,24 +79,30 @@ def upload_test_wav_success():
         ret = analysis_wav_test.apply_async(args=[test_id], queue='q_pre_test', priority=20)
         current_app.logger.info("AsyncResult id: %s" % ret.id)
     except Exception as e:
-        current_app.logger.error('upload_test_wav_success: celery enqueue:\n%s' % traceback.format_exc())
+        current_app.logger.error('upload_test_wav_success: ERROR! celery enqueue:\n%s' % traceback.format_exc())
         return jsonify(errors.exception({'Exception': str(e)}))
+    current_app.logger.info("upload_test_wav_success: return data! test id: %s, user name: %s" %
+                            (test_id, current_user.name))
     return jsonify(errors.success())
 
 
 @exam.route('/get_test_result', methods=['POST'])
 def get_test_result():
-    # time.sleep(1)
     test_id = request.form.get('test_id')
     wav_test = WavTestModel.objects(id=test_id).first()
     if not wav_test:
+        current_app.logger.error("get_test_result: no test test_id: %s, user name: %s" % (test_id, current_user.name))
         return jsonify(errors.success(errors.Test_not_exist))
     if wav_test['result']['status'] == 'handling':
+        current_app.logger.info("get_test_result: handling test_id: %s, user name: %s" % (test_id, current_user.name))
         return jsonify(errors.success(errors.WIP))
     elif wav_test['result']['status'] == 'finished':
+        current_app.logger.info("get_test_result: success test_id: %s, user name: %s" % (test_id, current_user.name))
         return jsonify(errors.success({"qualityIsOk": len(wav_test['result']['feature']['rcg_text']) >= len(
             wav_test['text']) * 0.6, "canRcg": True}))
     else:
+        current_app.logger.info("get_test_result: bad quality test_id: %s, user name: %s" %
+                                (test_id, current_user.name))
         return jsonify(errors.success({"canRcg": False, "qualityIsOk": False}))
 
 
@@ -102,17 +114,13 @@ def get_upload_url():
     test_id = session.get("test_id", DefaultValue.test_id)
     current_test = CurrentTestModel.objects(id=test_id).first()
     if current_test is None:
-        # print("[ERROR] get_upload_url ERROR: No Tests!, test_id: %s" % test_id)
         current_app.logger.error("get_upload_url ERROR: No Tests!, test_id: %s" % test_id)
         return jsonify(errors.Exam_not_exist)
 
     # get question
     user_id = session.get("user_id")
     # 这里不能用session存储题号，由于是异步处理，因此session记录到下一题的时候上一题可能还没处理完
-    # print("[INFO] get_upload_url: question_num: " + str(question_num) + ", user_name: " +
-    #       request.session.get("user_name", "NO USER"))
-    current_app.logger.info("get_upload_url: question_num: %s, user_name: %s" % (
-        str(question_num), current_user.name))
+    current_app.logger.info("get_upload_url: question_num: %s, user_name: %s" % (str(question_num), current_user.name))
     question = current_test.questions[str(question_num)]
 
     """generate file path
@@ -129,7 +137,7 @@ def get_upload_url():
         question.wav_upload_url = file_dir + '/' + file_name
         question.file_location = 'BOS'
         current_test.save()
-        current_app.logger.info("get_upload_url:newly assigned: %s" % question.wav_upload_url)
+        current_app.logger.info("get_upload_url: newly assigned: %s" % question.wav_upload_url)
 
     context = {"fileLocation": "BOS", "url": question.wav_upload_url}
     current_app.logger.info("get_upload_url: url: " + question.wav_upload_url)
@@ -138,26 +146,24 @@ def get_upload_url():
 
 @exam.route('/upload-success', methods=['POST'])
 def upload_success():
-    if not current_user.is_authenticated:  # todo: 进一步检查是否有做题权限
+    if not current_user.is_authenticated:
+        current_app.logger.error("upload_success: user not authenticated! user name: %s" % current_user.name)
         return jsonify(errors.Authorize_needed)
     q_num = request.form.get("nowQuestionNum")
-    current_app.logger.info("upload_success: now_question_num: %s, user_name: %s" %
-                            (str(q_num), current_user.name))
+    current_app.logger.info("upload_success: now_question_num: %s, user_name: %s" %(str(q_num), current_user.name))
 
     test_id = session.get("test_id")  # for production
     # test_id = request.form.get("test_id")  # just for unittest
 
     current_test = CurrentTestModel.objects(id=test_id).first()
     if current_test is None:
-        current_app.logger.error("upload_success: CRITICAL: Test Not Exists!! - test_id: %s" % test_id)
+        current_app.logger.error("upload_success: CRITICAL: Test Not Exists!! - test_id: %s, user name" %
+                                 (test_id, current_user.name))
         return jsonify(errors.Exam_not_exist)
 
-    # print(current_test.id)  # the model has no field '_id', use .id instead
     questions = current_test['questions']
-    # print(questions)
 
     upload_url = questions[q_num]['wav_upload_url']
-    # print("[INFO] upload_success: upload_url: " + upload_url)
     current_app.logger.info("upload_success: upload_url: " + upload_url)
 
     # change question status to handling
@@ -165,7 +171,7 @@ def upload_success():
     q.status = 'handling'
     q['analysis_start_time'] = datetime.datetime.utcnow()
     current_test.save()
-    # time.sleep(1)
+
     try:
         if q.q_type == 3 or q.q_type == '3':
             ret = analysis_main_3.apply_async(args=(str(current_test.id), str(q_num)), queue='q_type3', priority=10)
@@ -177,14 +183,16 @@ def upload_success():
     except Exception as e:
         current_app.logger.error('upload_success: celery enqueue:\n%s' % traceback.format_exc())
         return jsonify(errors.exception({'Exception': str(e)}))
+    current_app.logger.info("upload_success: success return! dataID: %s, user name: %s" %
+                            (current_test.id.__str__(), current_user.name))
     resp = {"status": "Success", "desc": "添加任务成功，等待服务器处理", "dataID": current_test.id.__str__(), "taskID": ret.id}
     return jsonify(errors.success(resp))
 
 
 @exam.route('/get-result', methods=['POST'])
 def get_result():
-    # time.sleep(1)
     if not current_user.is_authenticated:
+        current_app.logger.error("get_result: user not authenticated! user name: %s" % current_user.name)
         return jsonify(errors.Authorize_needed)
     current_app.logger.info("get_result: user_name: " + current_user.name)
     current_test_id = session.get("test_id", DefaultValue.test_id)
@@ -201,48 +209,54 @@ def get_result():
         current_app.logger.info(questions[str(i)]['status'])
         if questions[str(i)]['status'] == 'finished':
             score[i] = questions[str(i)]['score']
-            current_app.logger.info("score" + str(score[i]))
+            current_app.logger.info("get_result: status is finished! index: %s, score: %s, test_id: %s, user name: %s"
+                                    % (str(i), str(score[i]), current_test_id, current_user.name))
         elif questions[str(i)]['status'] not in ['none', 'url_fetched', 'handling']:
-            # return jsonify(errors.Process_audio_failed) 记0分
             score[i] = {"quality": 0, "key": 0, "detail": 0, "structure": 0, "logic": 0}
-            current_app.logger.info("！！记0分 score" + str(score[i]))
+            current_app.logger.info("get_result: ZERO score! index: %s, score: %s, test_id: %s, user name: %s"
+                                    % (str(i), str(score[i]), current_test_id, current_user.name))
         else:
             has_handling = has_handling | (questions[str(i)]['status'] == 'handling')
-            current_app.logger.info(str(i))
+            current_app.logger.info("get_result: status is handling! index: %s , test_id: %s, user name: %s"
+                                    % (str(i), current_test_id, current_user.name))
 
     # 判断该测试是否超时
-    in_process = ((datetime.datetime.utcnow() - test["test_start_time"]).total_seconds() <
-                  ExamConfig.exam_total_time)
-    current_app.logger.info("in_process: %s" % str(in_process))
+    in_process = ((datetime.datetime.utcnow() - test["test_start_time"]).total_seconds() < ExamConfig.exam_total_time)
+    current_app.logger.info("get_result: in_process: %s, test_id: %s, user name: %s" %
+                            (str(in_process), current_test_id, current_user.name))
     # 如果回答完问题或超时但已处理完，则计算得分，否则返回正在处理
     if (len(score) == len(questions)) or (not in_process and not has_handling):
         # final score:
         if not test['score_info']:
-            current_app.logger.info("first compute score...")
+            current_app.logger.info("get_result: first compute score... test_id: %s, user name: %s" %
+                                    (current_test_id, current_user.name))
             test['score_info'] = compute_exam_score(score)
             test.save()
             result = {"status": "Success", "totalScore": test['score_info']['total'], "data": test['score_info']}
         else:
-            current_app.logger.info("use computed score!")
+            current_app.logger.info("get_result: use computed score! test_id: %s, user name: %s" %
+                                    (current_test_id, current_user.name))
             result = {"status": "Success", "totalScore": test['score_info']['total'], "data": test['score_info']}
             session['tryTimes'] = 0
+        current_app.logger.info("get_result: return data! test_id: %s, user name: %s, result: %s" %
+                                (current_test_id, current_user.name, str(result)))
         return jsonify(errors.success(result))
     else:
         try_times = session.get("tryTimes", 0) + 1
         session['tryTimes'] = try_times
-        # print("try times: " + str(try_times))
-        current_app.logger.info("try times: " + str(try_times))
-        current_app.logger.info("lenscore: " + str(len(score)) + "lenquestion" + str(len(questions)))
+        current_app.logger.info("get_result: handling!!! try times: %s, test_id: %s, user name: %s" %
+                                (str(try_times), current_test_id, current_user.name))
         return jsonify(errors.WIP)
 
 
 @exam.route('/next-question', methods=['POST'])
 def next_question():
     if not current_user.is_authenticated:
+        current_app.logger.error("next_question: user not authenticated! user name: %s" % current_user.name)
         return jsonify(errors.Authorize_needed)
 
     now_q_num = request.form.get("nowQuestionNum")
-    current_app.logger.info('nowQuestionNum: %s' % now_q_num)
+    current_app.logger.info('next_question: nowQuestionNum: %s, user_name: %s' % (now_q_num, current_user.name))
     # 判断是否有剩余考试次数
     # now_q_num = -1 表示是新的考试
     if (now_q_num is None) or (int(now_q_num) == -1) or (not session.get("test_id")):
@@ -264,8 +278,7 @@ def next_question():
     # 获得下一题号 此时now_q_num最小是0
     next_question_num = int(now_q_num) + 1
     session["question_num"] = next_question_num
-    current_app.logger.info("api next-question: username: %s, next_question_num: %s" % (
-        current_user.name, next_question_num))
+    current_app.logger.info("next-question: username: %s, next_question_num: %s" % (current_user.name, next_question_num))
     # 如果超出最大题号，如用户多次刷新界面，则重定向到结果页面
     if next_question_num > ExamConfig.total_question_num:
         session["question_num"] = 0
@@ -278,7 +291,7 @@ def next_question():
     # 判断考试是否超时，若超时则返回错误
     if context['examLeftTime'] <= 0:
         return jsonify(errors.Test_time_out)
-
+    current_app.logger.info("next_question: return data: %s, user name: %s" % (str(context), current_user.name))
     return jsonify(errors.success(context))
 
 
@@ -291,6 +304,7 @@ def find_left_exam():
         current_app.logger.info("find_left_exam: user id: %s" % user_id)
         left_exam = CurrentTestModel.objects(user_id=user_id).order_by('-test_start_time').first()
         if not left_exam:
+            current_app.logger.info("find_left_exam: no left exam, user name: %s" % current_user.name)
             return jsonify(errors.success({"info": "没有未完成的考试"}))
         in_process = ((datetime.datetime.utcnow() - left_exam["test_start_time"]).total_seconds() <
                       ExamConfig.exam_total_time)
@@ -299,9 +313,13 @@ def find_left_exam():
             for key, value in left_exam['questions'].items():
                 status = value['status']
                 if status in ['none', 'url_fetched']:
+                    current_app.logger.info("find_left_exam: HAS left exam, user name: %s, test_id: %s" %
+                                            (current_user.name, left_exam.id.__str__()))
                     return jsonify(errors.info("有未完成的考试", {"next_q_num": key}))
+        current_app.logger.info("find_left_exam: no left exam, user name: %s" % current_user.name)
         return jsonify(errors.success({"info": "没有未完成的考试"}))
     else:
+        current_app.logger.info("find_left_exam: no left exam, user name: %s" % current_user.name)
         return jsonify(errors.success({"info": "没有未完成的考试"}))
 
 
