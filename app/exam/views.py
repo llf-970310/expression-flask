@@ -77,6 +77,7 @@ def upload_test_wav_success():
 
 @exam.route('/get_test_result', methods=['POST'])
 def get_test_result():
+    # time.sleep(1)
     test_id = request.form.get('test_id')
     wav_test = WavTestModel.objects(id=test_id).first()
     if not wav_test:
@@ -108,7 +109,7 @@ def get_upload_url():
     # print("[INFO] get_upload_url: question_num: " + str(question_num) + ", user_name: " +
     #       request.session.get("user_name", "NO USER"))
     current_app.logger.info("get_upload_url: question_num: %s, user_name: %s" % (
-        str(question_num), session.get("user_name", "NO USER")))
+        str(question_num), current_user.name))
     question = current_test.questions[str(question_num)]
 
     """generate file path
@@ -138,7 +139,7 @@ def upload_success():
         return jsonify(errors.Authorize_needed)
     q_num = request.form.get("nowQuestionNum")
     current_app.logger.info("upload_success: now_question_num: %s, user_name: %s" %
-                            (str(q_num), session.get("user_name", "NO USER")))
+                            (str(q_num), current_user.name))
 
     test_id = session.get("test_id")  # for production
     # test_id = request.form.get("test_id")  # just for unittest
@@ -161,7 +162,7 @@ def upload_success():
     q.status = 'handling'
     q['analysis_start_time'] = datetime.datetime.utcnow()
     current_test.save()
-    time.sleep(1)
+    # time.sleep(1)
     try:
         if q.q_type == 3 or q.q_type == '3':
             ret = analysis_main_3.apply_async(args=(str(current_test.id), str(q_num)), queue='q_type3', priority=10)
@@ -179,10 +180,10 @@ def upload_success():
 
 @exam.route('/get-result', methods=['POST'])
 def get_result():
-    time.sleep(10)
+    # time.sleep(1)
     if not current_user.is_authenticated:
         return jsonify(errors.Authorize_needed)
-    current_app.logger.info("get_result: user_name: " + session.get("user_name", "NO USER"))
+    current_app.logger.info("get_result: user_name: " + current_user.name)
     current_test_id = session.get("test_id", DefaultValue.test_id)
     test = CurrentTestModel.objects(id=current_test_id).first()
     if test is None:
@@ -221,6 +222,7 @@ def get_result():
         else:
             current_app.logger.info("use computed score!")
             result = {"status": "Success", "totalScore": test['score_info']['total'], "data": test['score_info']}
+            session['tryTimes'] = 0
         return jsonify(errors.success(result))
     else:
         try_times = session.get("tryTimes", 0) + 1
