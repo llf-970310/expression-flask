@@ -117,12 +117,11 @@ def __compute_score_and_save(analysis, voice_features, question, test_start_time
     feature_result = analysis_util.analysis_features(None, question['wordbase'], voice_features=voice_features)
     score = analysis_util.compute_score(feature_result['key_hits'], feature_result['detail_hits'],
                                         question['weights']['key'], question['weights']['detail'])
-    analysis['score_key'] = score['key']
-    analysis['score_detail'] = score['detail']
+    analysis['score_key'] = float(score['key'])
+    analysis['score_detail'] = float(score['detail'])
     analysis['key_hits'] = feature_result['key_hits']
     analysis['detail_hits'] = feature_result['detail_hits']
     analysis['test_start_time'] = test_start_time
-    print(score)
     analysis.save()
     print('saved: ' + analysis['question_num'].__str__() + '        ' + analysis['user'].__str__() + '        ' +
           analysis['test_start_time'].__str__())

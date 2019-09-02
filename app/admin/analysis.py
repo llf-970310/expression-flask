@@ -111,7 +111,8 @@ class Analysis(object):
                     }
                     analysis['voice_features'] = voice_features
                     print('test_start_time: ' + test['test_start_time'].__str__())
-                    Analysis.__compute_score_and_save(analysis, voice_features, analysis_question, test['test_start_time'])
+                    Analysis.__compute_score_and_save(analysis, voice_features, analysis_question,
+                                                      test['test_start_time'])
                     question['analysed'] = True
                 all_analysed = all_analysed and question['analysed']
             test['all_analysed'] = all_analysed
@@ -123,14 +124,13 @@ class Analysis(object):
         feature_result = analysis_util.analysis_features(None, question['wordbase'], voice_features=voice_features)
         score = analysis_util.compute_score(feature_result['key_hits'], feature_result['detail_hits'],
                                             question['weights']['key'], question['weights']['detail'])
-        analysis['score_key'] = score['key']
-        analysis['score_detail'] = score['detail']
+        analysis['score_key'] = float(score['key'])
+        analysis['score_detail'] = float(score['detail'])
         analysis['key_hits'] = feature_result['key_hits']
         analysis['detail_hits'] = feature_result['detail_hits']
         analysis['test_start_time'] = test_start_time
         analysis.save()
         pass
-
 
 # if __name__ == '__main__':
 #     print(sys.path)
