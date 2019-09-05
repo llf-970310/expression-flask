@@ -236,7 +236,7 @@ def get_result():
             current_app.logger.info("get_result: use computed score! test_id: %s, user name: %s" %
                                     (current_test_id, current_user.name))
             result = {"status": "Success", "totalScore": test['score_info']['total'], "data": test['score_info']}
-            session['tryTimes'] = 0
+        session['tryTimes'] = 0
         current_app.logger.info("get_result: return data! test_id: %s, user name: %s, result: %s" %
                                 (current_test_id, current_user.name, str(result)))
         return jsonify(errors.success(result))
