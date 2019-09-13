@@ -178,7 +178,7 @@ def register():
     current_app.logger.info('user(id = %s) has been saved' % new_user.id)
 
     # 修改这个邀请码
-    existing_invitation.activate_users.append(name)
+    existing_invitation.activate_users.append(email if email != '' else phone)
     existing_invitation.available_times -= 1
     current_app.logger.info('invitation info: %s' % existing_invitation.__str__())
     existing_invitation.save()
