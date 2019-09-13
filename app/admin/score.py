@@ -223,6 +223,7 @@ def __generate_result_from_dict(dict, result_key_name):
         detail_score = algorithm.analysis_score(detail_scores, ExamConfig.full_score)['mean']
         result.append({
             result_key_name: key,
+            'times': len(cur_answers),
             'mainScore': format(key_score, ScoreConfig.DEFAULT_NUM_FORMAT),
             'detailScore': format(detail_score, ScoreConfig.DEFAULT_NUM_FORMAT),
             'totalScore': _generate_total_score(key_score, detail_score)
