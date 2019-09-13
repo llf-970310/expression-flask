@@ -7,8 +7,8 @@ from app.admin.admin_config import ScoreConfig
 from app.auth.util import validate_email
 from app.exam.exam_config import ExamConfig
 from app.models.analysis import *
-from app.models.user import UserModel
 from app.models.exam import QuestionModel
+from app.models.user import UserModel
 from . import admin, util
 from .algorithm import OptimizeAlgorithm
 
@@ -128,6 +128,8 @@ def get_score_of_specific_users(username):
 
     question_id_mapper = QuestionNumMapper()
     result_by_qid = __generate_result_from_dict(question_id_mapper.map_answers(all_answers), 'questionId')
+    # 按照 q_id 排序
+    result_by_qid.sort(key=__sort_by_question_id)
 
     result_all = []
     for answer in result_by_qid:
@@ -229,6 +231,10 @@ def __generate_result_from_dict(dict, result_key_name):
             'totalScore': _generate_total_score(key_score, detail_score)
         })
     return result
+
+
+def __sort_by_question_id(array_item):
+    return array_item['questionId']
 
 
 def _generate_total_score(key_score, detail_score):
