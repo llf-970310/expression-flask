@@ -1,0 +1,3 @@
+[submodule "analysis-docker"]
+	path = analysis-docker
+	url = git@git.mooctest.net:Expressiveness/analysis-docker.git
