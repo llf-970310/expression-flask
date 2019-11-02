@@ -128,7 +128,7 @@ def __compute_score_and_save(analysis, voice_features, question, test_start_time
 #
 #     MONGODB = {
 #         'NAME': 'expression_flask',
-#         'HOST': '47.98.174.59',
+#         'HOST': 'mongo-server.expression.hosts',
 #         'PORT': 27017,  # caution: integer here (unlike django default)
 #         'NEED_AUTH': True,
 #         'AUTH_MECHANISM': 'SCRAM-SHA-1',

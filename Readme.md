@@ -52,3 +52,19 @@ git push
 git submodule update
 ```
 
+
+
+
+
+## Hosts 配置
+
+`expression-flask` 代码中使用助记符号代替ip地址，为保证正常解析，应在系统hosts文件添加如下内容：
+
+(注意：下面仅为示例，需要修改ip为实际部署相应服务的服务器ip)
+
+```
+47.98.174.59  redis-server.expression.hosts
+47.98.174.59  mongo-server.expression.hosts
+47.98.174.59  flask-server.expression.hosts
+```
+

@@ -252,22 +252,6 @@ def wechat_callback():
     return ''
 
 
-@auth.route('/wechat/params', methods=['GET', 'POST'])
-def wechat_params():  # todo: as api
-    redirect_url = 'https://expression.iselab.cn%s' % url_for('auth.wechat_login')
-    data = {'appId': current_app.config['WX_APPID'], 'redirectUrl': redirect_url}
-    return str(data) + '<br>' \
-                       '<a href="https://open.weixin.qq.com/connect/qrconnect?appid={0}&redirect_uri={1}' \
-                       '&response_type=code&scope=snsapi_login&state=zidingyineirong#wechat_redirect">微信登录</a> ' \
-                       '（请把这个嵌入前端页面,使用ajax获取二维码并展示）<br>' \
-                       '（详见：https://open.weixin.qq.com/cgi-bin/showdocument?' \
-                       'action=dir_list&t=resource/res_list&verify=1&id=open1419316505&token=&lang=zh_CN ' \
-                       '示例部分）'.format(current_app.config['WX_APPID'], redirect_url)
-    return jsonify(errors.success(data))
-    # 扫描并确认后浏览器被重定向到:
-    # https://expression.iselab.cn/api/auth/login/wechat?code=061gOGry17jDx90iRjty16tBry1gOGrZ&state=zidingyineirong
-
-
 @auth.route('/wechat/login', methods=['POST'])
 def wechat_login():
     if current_user.is_authenticated:

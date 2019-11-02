@@ -6,8 +6,7 @@
 from celery import Celery
 
 pw = 'ise_expression'
-# celery_broker = 'amqp://ise:ise_expression@expression.iselab.cn:5672//'
-celery_broker = 'redis://:%s@expression.iselab.cn:6379/0' % pw
+celery_broker = 'redis://:%s@redis-server.expression.hosts:6379/0' % pw
 celery_backend = celery_broker
 
 app = Celery('tasks', broker=celery_broker, backend=celery_backend)
