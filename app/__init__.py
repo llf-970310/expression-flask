@@ -9,6 +9,12 @@ from flask_login import LoginManager
 from flask_mongoengine import MongoEngine
 from flask_apscheduler import APScheduler as _BaseAPScheduler
 
+import os
+import sys
+prj_folder = os.path.abspath(__file__).split('/app/__init__.py')[0]
+analysis_docker_folder = (os.path.join(prj_folder, 'analysis-docker'))
+sys.path.append(analysis_docker_folder)
+
 
 class APScheduler(_BaseAPScheduler):
     def run_job(self, id, jobstore=None):

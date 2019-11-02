@@ -6,14 +6,9 @@ from app.exam.exam_config import ExamConfig
 from app.exam.util import *
 from app import scheduler
 
-# dir_name = '/Users/cuihua/Documents/workspace/mooctest/Expression/exp-docker/'
-dir_name = '/home/ise/docker/exp-docker/'
-# dir_name = '/Users/gyue/Programs/exp-docker/'
-sys.path.append(dir_name)
-sys.path.append(os.path.join(dir_name, 'expression'))
-sys.path.append(os.path.join(dir_name, 'model_test'))
-
 import expression.new_analysis as analysis_util
+
+# todo: remove redundant codes
 
 
 def move_current_to_history():
