@@ -14,6 +14,7 @@ import sys
 prj_folder = os.path.abspath(__file__).split('/app/__init__.py')[0]
 analysis_docker_folder = (os.path.join(prj_folder, 'analysis-docker'))
 sys.path.append(analysis_docker_folder)
+sys.path.append(os.path.join(analysis_docker_folder, 'expression'))
 
 
 class APScheduler(_BaseAPScheduler):
