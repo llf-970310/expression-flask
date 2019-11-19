@@ -38,10 +38,10 @@ def upload_success_for_test():
 
     try:
         if q.q_type == 3 or q.q_type == '3':
-            ret = analysis_main_3.apply_async(args=(str(current_test.id), '1'), queue='for_q_type3', priority=10)
+            ret = analysis_main_3.apply_async(args=(str(current_test.id), '1'), queue='q_type3', priority=10)
             # todo: store ret.id in redis for status query
         else:
-            ret = analysis_main_12.apply_async(args=(str(current_test.id), '1'), queue='for_q_type12', priority=2)
+            ret = analysis_main_12.apply_async(args=(str(current_test.id), '1'), queue='q_type12', priority=2)
             # todo: store ret.id in redis for status query
         current_app.logger.info("AsyncResult id: %s" % ret.id)
     except Exception as e:
