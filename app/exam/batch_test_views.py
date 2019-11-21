@@ -15,7 +15,7 @@ import traceback
 @exam.route('/upload-success-for-test', methods=['POST'])
 def upload_success_for_test():
     upload_url = request.form.get("uploadUrl")
-    q_type = int(request.form.get("questionType"))
+    q_type = request.form.get("questionType")
     if not upload_url or not q_type:
         return jsonify(errors.Params_error)
 
@@ -41,7 +41,7 @@ def upload_success_for_test():
         # 新建一个current
         current_test = CurrentTestModel()
         current_test.test_start_time = datetime.datetime.utcnow()
-        q = QuestionModel.objects(q_type=q_type).order_by('used_times')[0]
+        q = QuestionModel.objects(q_type=int(q_type)).order_by('used_times')[0]
         q_current = CurrentQuestionEmbed(q_id=q.id.__str__(), q_type=q.q_type, q_text=q.text, wav_upload_url='')
         current_test.questions = {"1": q_current}
         current_test.save()
