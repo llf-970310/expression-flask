@@ -82,7 +82,7 @@ def get_result_for_test():
         try:
             result = the_test['result']
             status = result['status']
-            start = result['analysis_start_time']
+            start = the_test.test_time
             end = result['analysis_end_time']
             if status != 'error':
                 msg = {"status": status, "analysis_start_time": str(start),
