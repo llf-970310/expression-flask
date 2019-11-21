@@ -27,6 +27,7 @@ def upload_success_for_test():
         wav_test['result']['analysis_start_time'] = datetime.datetime.utcnow()
         wav_test['wav_upload_url'] = upload_url.lstrip('/expression')
         wav_test['file_location'] = 'BOS'
+        wav_test['text'] = '表达力测试将用15分钟的时间，数据化您的表达能力。'
         wav_test.save()
 
         try:
