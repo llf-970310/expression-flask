@@ -13,10 +13,14 @@ import expression.new_analysis as analysis_util
 
 def move_current_to_history():
     """
-    将 current 表中超时且未在处理中的部分搬运到history
+    1. 删除 current 表中 user_id 为空 或为 'batchtest' 的记录
+    2. 将 current 表中超时且未在处理中的部分搬运到history
     """
     print('move_current_to_history')
     for current in CurrentTestModel.objects({}):
+        if current.user_id == '' or current.user_id == 'batchtest':
+            current.delete()
+            continue
         test_start_time = current['test_start_time']
         now_time = datetime.datetime.utcnow()
         delta_seconds = (now_time - test_start_time).total_seconds()
