@@ -18,7 +18,7 @@ def move_current_to_history():
     """
     print('move_current_to_history')
     for current in CurrentTestModel.objects({}):
-        if current.user_id == '' or current.user_id == 'batchtest':
+        if current.user_id in [None, '', 'batchtest']:
             current.delete()
             continue
         test_start_time = current['test_start_time']
