@@ -7,8 +7,4 @@ from flask import Blueprint
 
 admin = Blueprint('admin', __name__)
 
-from . import accounts
-from . import exam
-from . import optimize
-from . import question
-from . import score
+from . import views_accounts, views_exam, views_optimize, views_question, views_score

@@ -3,45 +3,20 @@
 #
 # Created by dylanchu on 19-2-26
 
-from . import admin
-from app.exam.util import *
-from app.models.user import UserModel
+import datetime
+import json
+
+from app.auth.util import admin_login_required
 from app import errors
-from app.models.exam import *
+from app.models.exam import QuestionModel, CurrentTestModel, CurrentQuestionEmbed
 from flask import request, current_app, jsonify, session
 from app.exam.exam_config import ExamConfig, QuestionConfig
-import datetime
-
-
-# @admin.route('/admin-login', methods=['POST'])
-# def admin_login():
-#     user_name = request.form.get("adminName")
-#     password = request.form.get("adminPassword")
-#     users = UserModel.objects(Q(student_id=user_name) & Q(password=password))
-#     if len(users) == 0:
-#         msg = {"needDisplay": True, "tip": "用户名或密码错误"}
-#         return jsonify(errors.error(msg))
-#     user = users[0]
-#     user.last_login_time = datetime.datetime.utcnow()
-#     # 设置session
-#     session["user_name"] = user_name
-#     session["student_id"] = user_name
-#     session["question_num"] = 0
-#     session["new_test"] = True
-#     session["user_id"] = user.id.__str__()
-#     session["test_id"] = DefaultValue.test_id
-#     session["admin_login"] = True
-#     current_app.logger.info("[INFO] admin login, name: %s, password: %s." % (user_name, password))
-#     # print("[INFO] admin login, name: %s, password: %s." % (user_name, password))
-#     resp = {"status": "Success"}
-#     return jsonify(errors.success(resp))
+from . import admin
 
 
 @admin.route('/admin-get-question', methods=['POST'])
+@admin_login_required
 def admin_get_question():
-    if not session.get("admin_login"):
-        resp = {"needDisplay": True, "tip": "请以管理员身份登陆"}
-        return jsonify(errors.error(resp))
     question_id = int(request.form.get("questionId"))
     questions = QuestionModel.objects(q_id=question_id)
     if len(questions) == 0:
@@ -79,21 +54,17 @@ def admin_get_question():
 
 
 @admin.route('/admin-get-result', methods=['POST'])
+@admin_login_required
 def admin_get_result():
-    if not session.get("admin_login"):
-        return jsonify(errors.Admin_login_required)
-    # print("[INFO] admin_get_result: user_name: " + request.session.get("user_name", "NO USER"))
     current_app.logger.info("admin_get_result: user_name: " + session.get("user_name", "NO USER"))
     current_test_id = session.get("test_id")
     tests = CurrentTestModel.objects(id=current_test_id)
     if len(tests) == 0:
-        # print("[ERROR] upload_file ERROR: No Tests!, test_id: %s" % current_test_id)
         current_app.logger.error("upload_file ERROR: No Tests!, test_id: %s" % current_test_id)
         return jsonify(errors.Exam_not_exist)
     questions = tests[0]['questions']
 
     if len(questions) == 0:
-        # print("[ERROR] upload_file ERROR: No Questions!, test_id: %s" % current_test_id)
         current_app.logger.error("upload_file ERROR: No Questions!, test_id: %s" % current_test_id)
         return jsonify(errors.Exam_not_exist)
 
@@ -119,27 +90,4 @@ def admin_get_result():
     else:
         result = json.dumps({"status": "InProcess"})
 
-    return jsonify(errors.success(result))
-
-
-@admin.route('/admin-get-result-stub', methods=['POST'])
-def admin_get_result_stub():
-    if not session.get("admin_login"):
-        return jsonify(errors.Admin_login_required)
-    question = CurrentTestModel.objects(id="5c0cdeafdd626279845e0560")[0]["questions"]["1"]
-    score = question["score"]
-    raw_question = QuestionModel.objects(id=question.q_id)[0]
-    context = {"main": score["main"],
-               "detail": score["detail"],
-               "total": score["main"] * 0.7 + score["detail"] * 0.3,
-               "rcgText": question["feature"]["rcg_text"],
-               "text": question["q_text"],
-               "rcgKeyWords": question["feature"]["keywords"],
-               "keyWords": raw_question["wordbase"]["keywords"],
-               "rcgMainWords": question["feature"]["mainwords"],
-               "mainWords": raw_question["wordbase"]["mainwords"],
-               "rcgDetailWords": question["feature"]["detailwords"],
-               "detailWords": raw_question["wordbase"]["detailwords"]
-               }
-    result = json.dumps({"status": "Success", "result": context})
     return jsonify(errors.success(result))
