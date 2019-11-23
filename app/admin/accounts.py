@@ -4,15 +4,13 @@
 # Created by dylanchu on 19-3-17
 
 # 该文件存放面向管理员的accounts相关views,与view无关的具体功能的实现请写在app/accounts/utils.py中,在此尽量只作引用
-from flask import request, current_app, jsonify, session
+import json
+from flask import request, current_app, jsonify
 from flask_login import current_user
 from app.admin.admin_config import AccountsConfig
 from app.admin.util import *
 from app.auth.util import admin_login_required
 from app.models.invitation import *
-
-from flask import jsonify
-
 from app import errors
 from . import admin
 
@@ -29,7 +27,8 @@ def accounts_invite():
         remaining_exam_num = int(form.get('remainingExamNum').strip())
         available_times = int(form.get('availableTimes').strip())
         code_num = int(form.get('codeNum').strip())
-    except Exception:
+    except Exception as e:
+        current_app.logger.error('Params_error:POST admin/accounts/invite: %s' % e)
         return jsonify(errors.Params_error)
     """
         form 校验规则
@@ -75,7 +74,56 @@ def accounts_invite():
 @admin.route('/accounts/invite', methods=['GET'])
 @admin_login_required
 def get_invitations():
-    invitations = InvitationModel.objects()
+    """ 传入参数 request.args 格式:
+    "currentPage": int,  默认 1
+    "pageSize": int,     默认 10
+    "conditions": {      可选
+        "code": str,
+        "createTimeFrom": "2019-11-20 00:00:00",
+        "createTimeTo": "2019-11-22 00:00:00",
+        "availableTimes": int
+    }
+    返回：
+        {
+          "code": xx,
+          "msg": xx,
+          "data": {
+            "totalCount": int,
+            "invitationCodes": []
+          }
+        }
+    """
+    try:
+        conditions = json.loads(request.args.get('conditions'))
+        create_time_from = conditions.get('createTimeFrom')
+        create_time_to = conditions.get('createTimeTo')
+        available_times = conditions.get('availableTimes')
+        specify_code = conditions.get('code')
+        cp = int(request.args.get('currentPage', 1))
+        ps = int(request.args.get('pageSize', 10))
+        if cp < 1:
+            cp = 1
+        if ps < 0:
+            ps = 10
+        n_from = ps * (cp - 1)
+        n_to = n_from + ps
+        d = {}
+        time_limits = {}
+        if create_time_from:
+            time_limits.update({'$gte': datetime.datetime.fromisoformat(create_time_from)})
+        if create_time_to:
+            time_limits.update({'$lte': datetime.datetime.fromisoformat(create_time_to)})
+        d.update({'create_time': time_limits})
+        if available_times:
+            d.update({'available_times': available_times})
+        if specify_code:
+            d.update({'code': specify_code})
+    except Exception as e:
+        current_app.logger.error('Params_error:GET admin/accounts/invite: %s' % e)
+        return jsonify(errors.Params_error)
+    set_manager = InvitationModel.objects(__raw__=d)
+    invitations = set_manager[n_from:n_to]
+    total_count = set_manager.count()
 
     # wrap invitations
     result = []
@@ -95,4 +143,7 @@ def get_invitations():
             # 使用此邀请码的用户
             'activate_users': array2str(invitation['activate_users'], 1)
         })
-    return jsonify(errors.success({'result': result}))
+    return jsonify(errors.success({
+        'totalCount': total_count,
+        'invitationCodes': result
+    }))
