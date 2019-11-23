@@ -87,6 +87,8 @@ User_already_exist = {'code': 4303, 'msg': '用户已存在'}
 Already_logged_in = {'code': 4304, 'msg': '用户已经登录'}
 Register_not_allowed = {'code': 4305, 'msg': '当前不允许注册'}
 Admin_login_required = {'code': 4306, 'msg': '请以管理员身份登录'}
+Invitation_code_invalid = {'code': 4307, 'msg': '邀请码无效'}
+
 Student_id_short = {'code': 4037, 'msg': '学号不能少于6位，不足6位请在前面加0补足！'}
 Student_id_space = {'code': 4038, 'msg': '学号中间不能有空格！'}
 Illegal_invitation_code = {'code': 4039, 'msg': '无效的邀请码'}

@@ -192,6 +192,8 @@ def register():
 
     # 修改这个邀请码
     existing_invitation.activate_users.append(email if email != '' else phone)
+    if existing_invitation.available_times <= 0:
+        return jsonify(errors.Invitation_code_invalid)
     existing_invitation.available_times -= 1
     current_app.logger.info('invitation info: %s' % existing_invitation.__str__())
     existing_invitation.save()
