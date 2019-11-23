@@ -113,7 +113,8 @@ def get_invitations():
             time_limits.update({'$gte': datetime.datetime.fromisoformat(create_time_from)})
         if create_time_to:
             time_limits.update({'$lte': datetime.datetime.fromisoformat(create_time_to)})
-        d.update({'create_time': time_limits})
+        if time_limits != {}:
+            d.update({'create_time': time_limits})
         if available_times:
             d.update({'available_times': available_times})
         if specify_code:
