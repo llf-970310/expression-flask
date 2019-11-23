@@ -8,6 +8,7 @@ from flask import request, current_app, jsonify, session
 from flask_login import current_user
 from app.admin.admin_config import AccountsConfig
 from app.admin.util import *
+from app.auth.util import admin_login_required
 from app.models.invitation import *
 
 from flask import jsonify
@@ -17,13 +18,10 @@ from . import admin
 
 
 @admin.route('/accounts/invite', methods=['POST'])  # url will be .../admin/accounts/test
+@admin_login_required
 def accounts_invite():
     current_app.logger.info('create invitation request: %s' % request.form.__str__())
     # 检验是否有权限申请邀请码
-    if not current_user.is_authenticated:
-        return jsonify(errors.Authorize_needed)
-    if not current_user.is_admin():
-        return jsonify(errors.Admin_status_login)
     form = request.form
     try:
         vip_start_time = timestamp2datetime(float(form.get('vipStartTime').strip()))
@@ -75,6 +73,7 @@ def accounts_invite():
 
 
 @admin.route('/accounts/invite', methods=['GET'])
+@admin_login_required
 def get_invitations():
     invitations = InvitationModel.objects()
 

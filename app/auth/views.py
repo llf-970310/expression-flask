@@ -7,46 +7,44 @@ import datetime
 import json
 
 import requests
-from flask import current_app, jsonify, request, session, url_for
-from flask_login import login_user, logout_user, current_user
+from flask import current_app, jsonify, request, session
+from flask_login import login_user, logout_user, current_user, login_required
 
 from app import errors
 from app.admin.admin_config import ScoreConfig
 from app.admin.util import convert_datetime_to_str
-from app.auth.util import *
-from app.models.exam import HistoryTestModel,CurrentTestModel
+from app.auth.util import validate_email
+from app.models.exam import HistoryTestModel, CurrentTestModel
 from app.models.invitation import InvitationModel
 from app.models.user import UserModel
 from . import auth
 
 
 @auth.route('/user/info', methods=['GET'])
+@login_required
 def user_info():
     current_app.logger.info('get user info request: %s' % request.form.__str__())
     print(current_user)
-    if current_user.is_authenticated:
-        return jsonify(errors.success({
-            'role': str(current_user.role.value),
-            'name': current_user.name,
-            'email': current_user.email,
-            'password': current_user.password,
-            'register_time': convert_datetime_to_str(current_user.register_time),
-            'last_login_time': convert_datetime_to_str(current_user.last_login_time),
-            'questions_history': current_user.questions_history,
-            'wx_id': current_user.wx_id,
-            'vip_start_time': convert_datetime_to_str(current_user.vip_start_time),
-            'vip_end_time': convert_datetime_to_str(current_user.vip_end_time),
-            'remaining_exam_num': current_user.remaining_exam_num
+    return jsonify(errors.success({
+        'role': str(current_user.role.value),
+        'name': current_user.name,
+        'email': current_user.email,
+        'password': current_user.password,
+        'register_time': convert_datetime_to_str(current_user.register_time),
+        'last_login_time': convert_datetime_to_str(current_user.last_login_time),
+        'questions_history': current_user.questions_history,
+        'wx_id': current_user.wx_id,
+        'vip_start_time': convert_datetime_to_str(current_user.vip_start_time),
+        'vip_end_time': convert_datetime_to_str(current_user.vip_end_time),
+        'remaining_exam_num': current_user.remaining_exam_num
 
-        }))
-    else:
-        return jsonify(errors.Authorize_needed)
+    }))
 
 
 @auth.route('/update', methods=['POST'])
 def update():
     if not current_user.is_authenticated:
-        return jsonify(errors.Authorize_needed)
+        return jsonify(errors.Login_required)
     password = request.form.get('password').strip()
     name = request.form.get('name').strip()
     check_user = __get_check_user_from_db(current_user)
@@ -67,7 +65,7 @@ def update():
 @auth.route('/untying', methods=['POST'])
 def untying():
     if not current_user.is_authenticated:
-        return jsonify(errors.Authorize_needed)
+        return jsonify(errors.Login_required)
     check_user = __get_check_user_from_db(current_user)
     if not check_user.wx_id:
         return jsonify(errors.Wechat_not_bind)
@@ -83,7 +81,7 @@ def untying():
 @auth.route('/showscore', methods=['POST'])
 def showscore():
     if not current_user.is_authenticated:
-        return jsonify(errors.Authorize_needed)
+        return jsonify(errors.Login_required)
     check_user = __get_check_user_from_db(current_user)
     history_scores_origin = HistoryTestModel.objects(user_id=str(check_user['id']))
     current_scores_origin = CurrentTestModel.objects(user_id=str(check_user['id']))
@@ -120,7 +118,7 @@ def showscore():
 
     for current in current_scores_origin:
         questions = current['questions']
-        if __question_all_finished(questions): # 全部结束才录入history
+        if __question_all_finished(questions):  # 全部结束才录入history
             history_scores.append({
                 "test_start_time": convert_datetime_to_str(current["test_start_time"]),
                 "score_info": {
@@ -132,7 +130,6 @@ def showscore():
                     "total": format(current["score_info"]["total"], ScoreConfig.DEFAULT_NUM_FORMAT),
                 },
             })
-
 
     if len(history_scores) == 0:
         return jsonify(errors.No_history)
@@ -226,7 +223,6 @@ def login():
 
     if not (username and password):
         return jsonify(errors.Params_error)
-    check_user = None
     if '@' in username:
         # 邮箱登录
         email = username
@@ -258,9 +254,7 @@ def logout():
     if current_user.is_authenticated:
         current_app.logger.info('user(id:%s) logout' % current_user.id)
         logout_user()
-        return jsonify(errors.success())
-    else:
-        return jsonify(errors.Authorize_needed)
+    return jsonify(errors.success())
 
 
 @auth.route('/wechat-login')  # callback预留接口，已在微信开放平台登记
@@ -390,6 +384,7 @@ def __get_check_user_from_db(current_user):
     else:
         check_user = UserModel.objects(email=email).first()
     return check_user
+
 
 def __question_all_finished(question_dict):
     for value in question_dict.values():

@@ -81,7 +81,7 @@ def admin_get_question():
 @admin.route('/admin-get-result', methods=['POST'])
 def admin_get_result():
     if not session.get("admin_login"):
-        return jsonify(errors.Admin_status_login)
+        return jsonify(errors.Admin_login_required)
     # print("[INFO] admin_get_result: user_name: " + request.session.get("user_name", "NO USER"))
     current_app.logger.info("admin_get_result: user_name: " + session.get("user_name", "NO USER"))
     current_test_id = session.get("test_id")
@@ -125,7 +125,7 @@ def admin_get_result():
 @admin.route('/admin-get-result-stub', methods=['POST'])
 def admin_get_result_stub():
     if not session.get("admin_login"):
-        return jsonify(errors.Admin_status_login)
+        return jsonify(errors.Admin_login_required)
     question = CurrentTestModel.objects(id="5c0cdeafdd626279845e0560")[0]["questions"]["1"]
     score = question["score"]
     raw_question = QuestionModel.objects(id=question.q_id)[0]

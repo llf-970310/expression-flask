@@ -66,7 +66,7 @@ def get_test_wav_url():
 def upload_test_wav_success():
     if not current_user.is_authenticated:
         current_app.logger.error("upload_test_wav_success: user not authenticated! user name: %s" % current_user.name)
-        return jsonify(errors.Authorize_needed)
+        return jsonify(errors.Login_required)
     test_id = request.form.get('test_id')
     wav_test = WavTestModel.objects(id=test_id).first()
     if not wav_test:
@@ -148,7 +148,7 @@ def get_upload_url():
 def upload_success():
     if not current_user.is_authenticated:
         current_app.logger.error("upload_success: user not authenticated! user name: %s" % current_user.name)
-        return jsonify(errors.Authorize_needed)
+        return jsonify(errors.Login_required)
     q_num = request.form.get("nowQuestionNum")
     current_app.logger.info("upload_success: now_question_num: %s, user_name: %s" % (str(q_num), current_user.name))
 
@@ -193,7 +193,7 @@ def upload_success():
 def get_result():
     if not current_user.is_authenticated:
         current_app.logger.error("get_result: user not authenticated! user name: %s" % current_user.name)
-        return jsonify(errors.Authorize_needed)
+        return jsonify(errors.Login_required)
     current_app.logger.info("get_result: user_name: " + current_user.name)
     current_test_id = session.get("test_id", DefaultValue.test_id)
     test = CurrentTestModel.objects(id=current_test_id).first()
@@ -252,7 +252,7 @@ def get_result():
 def next_question():
     if not current_user.is_authenticated:
         current_app.logger.error("next_question: user not authenticated! user name: %s" % current_user.name)
-        return jsonify(errors.Authorize_needed)
+        return jsonify(errors.Login_required)
 
     now_q_num = request.form.get("nowQuestionNum")
     current_app.logger.info('next_question: nowQuestionNum: %s, user_name: %s' % (now_q_num, current_user.name))

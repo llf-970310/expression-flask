@@ -22,9 +22,9 @@ def generate_wordbase_by_text():
     :return: 分析后的关键词
     """
     if not current_user.is_authenticated:
-        return jsonify(errors.Authorize_needed)
+        return jsonify(errors.Login_required)
     if not current_user.is_admin():
-        return jsonify(errors.Admin_status_login)
+        return jsonify(errors.Admin_login_required)
 
     text = request.form.get('text')
     return jsonify(errors.success(wordbase_generator.generate_wordbase(text)))
@@ -133,9 +133,9 @@ def del_question(id):
     """
     # 检验是否有权限申请邀请码
     if not current_user.is_authenticated:
-        return jsonify(errors.Authorize_needed)
+        return jsonify(errors.Login_required)
     if not current_user.is_admin():
-        return jsonify(errors.Admin_status_login)
+        return jsonify(errors.Admin_login_required)
 
     current_app.logger.info('q_id = ' + id)
     to_delete_question = QuestionModel.objects(q_id=id).first()
@@ -176,9 +176,9 @@ def delete_specific_question_from_pool():
     删除题库中题目
     """
     if not current_user.is_authenticated:
-        return jsonify(errors.Authorize_needed)
+        return jsonify(errors.Login_required)
     if not current_user.is_admin():
-        return jsonify(errors.Admin_status_login)
+        return jsonify(errors.Admin_login_required)
 
     id = request.form.get('idInPool')
 
@@ -198,9 +198,9 @@ def post_new_question():
     """
     # 提取参数
     if not current_user.is_authenticated:
-        return jsonify(errors.Authorize_needed)
+        return jsonify(errors.Login_required)
     if not current_user.is_admin():
-        return jsonify(errors.Admin_status_login)
+        return jsonify(errors.Admin_login_required)
 
     is_from_pool = request.form.get('isFromPool')
     id_in_pool = request.form.get('idInPool')
@@ -250,9 +250,9 @@ def modify_question():
     :return:
     """
     if not current_user.is_authenticated:
-        return jsonify(errors.Authorize_needed)
+        return jsonify(errors.Login_required)
     if not current_user.is_admin():
-        return jsonify(errors.Admin_status_login)
+        return jsonify(errors.Admin_login_required)
 
     id = request.form.get('id')
     question_data_raw_text = request.form.get('data[rawText]')

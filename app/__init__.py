@@ -3,8 +3,9 @@
 #
 # Created by dylanchu on 19-2-15
 
+from app import errors
 from app_config import DevelopmentConfig
-from flask import Flask
+from flask import Flask, jsonify
 from flask_login import LoginManager
 from flask_mongoengine import MongoEngine
 from flask_apscheduler import APScheduler as _BaseAPScheduler
@@ -27,7 +28,7 @@ db = MongoEngine()
 scheduler = APScheduler()
 login_manager = LoginManager()
 login_manager.session_protection = 'strong'
-login_manager.login_view = 'auth.login'
+login_manager.unauthorized = lambda: jsonify(errors.Login_required)
 
 
 def create_app():

@@ -80,13 +80,13 @@ Test_not_exist = {'code': 4002, 'msg': '考前测试不存在'}
 Test_time_out = {'code': 4003, 'msg': '考试超时'}
 No_exam_times = {'code': 4004, 'msg': '没有剩余考试次数'}
 
-Authorize_needed = {'code': 4300, 'msg': '需要登录'}
+Login_required = {'code': 4300, 'msg': '需要登录'}
 Authorize_failed = {'code': 4301, 'msg': '账号或密码错误'}
 User_not_exist = {'code': 4302, 'msg': '用户不存在'}
 User_already_exist = {'code': 4303, 'msg': '用户已存在'}
 Already_logged_in = {'code': 4304, 'msg': '用户已经登录'}
 Register_not_allowed = {'code': 4305, 'msg': '当前不允许注册'}
-Admin_status_login = {'code': 4306, 'msg': '请以管理员身份登录'}
+Admin_login_required = {'code': 4306, 'msg': '请以管理员身份登录'}
 Student_id_short = {'code': 4037, 'msg': '学号不能少于6位，不足6位请在前面加0补足！'}
 Student_id_space = {'code': 4038, 'msg': '学号中间不能有空格！'}
 Illegal_invitation_code = {'code': 4039, 'msg': '无效的邀请码'}
