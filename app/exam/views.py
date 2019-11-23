@@ -136,6 +136,7 @@ def get_upload_url():
         file_name = "%s%s" % (_temp_str, PathConfig.audio_extension)
         question.wav_upload_url = file_dir + '/' + file_name
         question.file_location = 'BOS'
+        question.status = 'url_fetched'
         current_test.save()
         current_app.logger.info("get_upload_url: newly assigned: %s" % question.wav_upload_url)
 
@@ -210,7 +211,7 @@ def get_result():
             score[i] = questions[str(i)]['score']
             current_app.logger.info("get_result: status is finished! index: %s, score: %s, test_id: %s, user name: %s"
                                     % (str(i), str(score[i]), current_test_id, current_user.name))
-        elif questions[str(i)]['status'] not in ['none', 'url_fetched', 'handling']:
+        elif questions[str(i)]['status'] not in ['none', 'question_fetched', 'url_fetched', 'handling']:
             score[i] = {"quality": 0, "key": 0, "detail": 0, "structure": 0, "logic": 0}
             current_app.logger.info("get_result: ZERO score! index: %s, score: %s, test_id: %s, user name: %s"
                                     % (str(i), str(score[i]), current_test_id, current_user.name))
@@ -311,7 +312,7 @@ def find_left_exam():
             # 查找到第一个未做的题目
             for key, value in left_exam['questions'].items():
                 status = value['status']
-                if status in ['none', 'url_fetched']:
+                if status in ['none', 'question_fetched', 'url_fetched']:
                     current_app.logger.info("find_left_exam: HAS left exam, user name: %s, test_id: %s" %
                                             (current_user.name, left_exam.id.__str__()))
                     return jsonify(errors.info("有未完成的考试", {"next_q_num": key}))
@@ -400,7 +401,7 @@ def question_dealer(question_num, test_id, user_id) -> dict:
                }
 
     # update and save
-    question.status = 'url_fetched'
+    question.status = 'question_fetched'
     test.current_q_num = question_num
     test.save()
 
