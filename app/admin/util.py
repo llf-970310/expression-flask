@@ -34,8 +34,7 @@ def convert_datetime_to_str(utc_time, date_separator='-') -> str:
     """
     if not utc_time:
         return ''
-    cur_time = utc_time + timedelta(hours=8)
-    return cur_time.strftime("%%Y%s%%m%s%%d %%H:%%M:%%S" % (date_separator, date_separator))
+    return utc_time.strftime("%%Y%s%%m%s%%d %%H:%%M:%%S" % (date_separator, date_separator))
 
 
 def str_to_bool(str):
