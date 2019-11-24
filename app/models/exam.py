@@ -99,3 +99,11 @@ class ApiAccountModel(db.DynamicDocument):
     meta = {'collection': 'api_accounts'}
     type = db.StringField(max_length=32)
     accounts = db.ListField()
+
+
+class CurrentStatisticsModel(db.Document):
+    meta = {'collection': 'current_stat'}
+    stat_time = db.DateTimeField(default=lambda: datetime.datetime.utcnow())
+    total_cnt = db.IntField(default=0)
+    user_test_cnt = db.IntField(default=0)
+    batch_test_cnt = db.IntField(default=0)

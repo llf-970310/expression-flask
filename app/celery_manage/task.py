@@ -11,6 +11,7 @@ from app import scheduler
 
 import expression.new_analysis as analysis_util
 
+
 # todo: remove redundant codes
 
 
@@ -20,23 +21,29 @@ def move_current_to_history():
     2. 将 current 表中超时且未在处理中的部分搬运到history
     """
     print('move_current_to_history')
-    for current in CurrentTestModel.objects({}):
-        if current.user_id in [None, '', 'batchtest']:
-            current.delete()
-            continue
-        test_start_time = current['test_start_time']
+    stat = CurrentStatisticsModel()
+    stat.total_cnt = CurrentTestModel.objects().count()
+    bt_tests = CurrentTestModel.objects(__raw__={
+        '$or': [{'user_id': 'null'}, {'user_id': ''}, {'user_id': 'batchtest'}]
+    })
+    stat.batch_test_cnt = bt_tests.count()
+    bt_tests.delete()
+    stat.user_test_cnt = CurrentTestModel.objects().count()
+    stat.save()
+    for document in CurrentTestModel.objects:
+        test_start_time = document['test_start_time']
         now_time = datetime.datetime.utcnow()
         delta_seconds = (now_time - test_start_time).total_seconds()
-        if delta_seconds >= ExamConfig.exam_total_time and question_not_handling(current['questions']):
-            print("remove %s" % current.id.__str__())
+        if delta_seconds >= ExamConfig.exam_total_time and question_not_handling(document['questions']):
+            print("remove %s" % document.id.__str__())
             history = HistoryTestModel()
-            history['current_id'] = current.id.__str__()
-            history['user_id'] = current['user_id']
-            history['test_start_time'] = current['test_start_time']
-            history['paper_type'] = current['paper_type']
-            history['current_q_num'] = current['current_q_num']
-            history['score_info'] = current['score_info']
-            history['questions'] = current['questions']
+            history['current_id'] = document.id.__str__()
+            history['user_id'] = document['user_id']
+            history['test_start_time'] = document['test_start_time']
+            history['paper_type'] = document['paper_type']
+            history['current_q_num'] = document['current_q_num']
+            history['score_info'] = document['score_info']
+            history['questions'] = document['questions']
             history['all_analysed'] = False
             # 防止history中的总分还有未计算的
             if not history['score_info']:
@@ -54,7 +61,7 @@ def move_current_to_history():
                 history.save()
                 print(history['score_info'])
             history.save()
-            current.delete()
+            document.delete()
 
 
 def question_not_handling(question_dict):
@@ -128,7 +135,6 @@ def __compute_score_and_save(analysis, voice_features, question, test_start_time
     print('saved: ' + analysis['question_num'].__str__() + '        ' + analysis['user'].__str__() + '        ' +
           analysis['test_start_time'].__str__())
     pass
-
 
 # if __name__ == '__main__':
 #     from mongoengine import connect
