@@ -222,23 +222,9 @@ def login():
         1. email符合规范
         2. 各项不为空
     """
-
-    if not (username and password):
-        return jsonify(errors.Params_error)
-    if '@' in username:
-        # 邮箱登录
-        email = username
-        if not validate_email(email):
-            return jsonify(errors.Params_error)
-        check_user = UserModel.objects(email=email).first()
-    else:
-        # 手机号登录
-        phone = username
-        check_user = UserModel.objects(phone=phone).first()
-    if not check_user:
-        return jsonify(errors.Authorize_failed)
-    if (not current_app.config['IGNORE_LOGIN_PASSWORD']) and (check_user.password != current_app.md5_hash(password)):
-        return jsonify(errors.Authorize_failed)
+    err, check_user = __authorize(username, password)
+    if err is not None:
+        return jsonify(err)
     login_user(check_user)
     current_app.logger.info('login user: %s, id: %s' % (check_user.name, check_user.id))
     check_user.last_login_time = datetime.datetime.utcnow()
@@ -340,24 +326,9 @@ def wechat_bind():
         return jsonify(errors.error())
     username = request.form.get('username')
     password = request.form.get('password')
-    if not (username and password):
-        return jsonify(errors.Params_error)
-
-    if '@' in username:
-        # 邮箱登录
-        email = username
-        if not validate_email(email):
-            return jsonify(errors.Params_error)
-        check_user = UserModel.objects(email=email).first()
-    else:
-        # 手机号登录
-        phone = username
-        check_user = UserModel.objects(phone=phone).first()
-
-    if not check_user:
-        return jsonify(errors.Authorize_failed)
-    if (not current_app.config['IGNORE_LOGIN_PASSWORD']) and (check_user.password != current_app.md5_hash(password)):
-        return jsonify(errors.Authorize_failed)
+    err, check_user = __authorize(username, password)
+    if err is not None:
+        return jsonify(err)
     if check_user.wx_id:
         return jsonify(errors.Wechat_already_bind)
     current_app.logger.info('login user: %s, id: %s' % (check_user.name, check_user.id))
@@ -393,3 +364,33 @@ def __question_all_finished(question_dict):
         if value['status'] != 'finished':
             return False
     return True
+
+
+def __authorize(username, password):
+    """
+    使用 username 和 password 验证用户
+    :type username: str
+    :type password: str
+    :return: 返回一个tuple： (err, check_user)
+        err 为 errors 中定义的错误类型（dict）
+        check_user 为数据库中检索到的用户对象
+        若通过, err 为 None
+        若验证不通过, check_user 为 None
+    """
+    if not (username and password):
+        return errors.Params_error, None
+    if '@' in username:
+        # 邮箱登录
+        email = username
+        if not validate_email(email):
+            return errors.Params_error, None
+        check_user = UserModel.objects(email=email).first()
+    else:
+        # 手机号登录
+        phone = username
+        check_user = UserModel.objects(phone=phone).first()
+    if not check_user:
+        return errors.Authorize_failed, None
+    if (not current_app.config['IGNORE_LOGIN_PASSWORD']) and (check_user.password != current_app.md5_hash(password)):
+        return errors.Authorize_failed, None
+    return None, check_user
