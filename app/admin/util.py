@@ -2,16 +2,15 @@
 # Time       : 2019/3/18 11:43
 # Author     : tangdaye
 # Description: admin util
-from datetime import timedelta
 
-_characters = '1234567890abcdefghijklmnopqrstuvwxyz'
+al_num = '1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
 
 
 def generate_random_code(length=4):
     import random
     s = ''
     for i in range(length):
-        s += _characters[int(random.random() * 36)]
+        s += random.choice(al_num)
     return s
 
 
