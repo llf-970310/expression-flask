@@ -5,11 +5,6 @@
 import os
 
 
-class ApiConfig(object):
-    name = 'api'
-    backup_prefix = 'backup'
-
-
 class PathConfig(object):
     parent_abs_path = '/expression'
     audio_save_basedir = 'audio'
