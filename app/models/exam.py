@@ -95,12 +95,6 @@ class HistoryTestModel(db.DynamicDocument):
     meta = {'collection': 'history'}
 
 
-class ApiAccountModel(db.DynamicDocument):
-    meta = {'collection': 'api_accounts'}
-    type = db.StringField(max_length=32)
-    accounts = db.ListField()
-
-
 class CurrentStatisticsModel(db.Document):
     meta = {'collection': 'current_stat'}
     stat_time = db.DateTimeField(default=lambda: datetime.datetime.utcnow())
