@@ -1,18 +1,12 @@
 #!/usr/bin/env python3
 # coding: utf-8
 
-import os
-import sys
-from app.models.exam import *
-from app.models.analysis import *
+import datetime
+from app.models.exam import CurrentStatisticsModel, CurrentTestModel, HistoryTestModel, QuestionModel
+from app.admin.analysis import Analysis
 from app.exam.exam_config import ExamConfig
-from app.exam.util import *
+from app.exam.util import compute_exam_score
 from app import scheduler
-
-import expression.new_analysis as analysis_util
-
-
-# todo: remove redundant codes
 
 
 def move_current_to_history():
@@ -98,43 +92,14 @@ def collect(analysis_question, history_list):
         for question in questions.values():
             if question['q_id'] == analysis_question['id'].__str__() and question['status'] == 'finished' and \
                     not question['analysed']:
-                print("analysis inner", analysis_question['q_id'], test['test_start_time'])
-                analysis = AnalysisModel()
-                analysis['exam_id'] = test['id'].__str__()
-                analysis['user'] = test['user_id']
-                analysis['question_id'] = question['q_id'].__str__()
-                analysis['question_num'] = analysis_question['q_id']
-                voice_features = {
-                    'rcg_text': question['feature']['rcg_text'],
-                    'last_time': question['feature']['last_time'],
-                    'interval_num': question['feature']['interval_num'],
-                    'interval_ratio': question['feature']['interval_ratio'],
-                    'volumes': question['feature']['volumes'],
-                    'speeds': question['feature']['speeds'],
-                }
-                analysis['voice_features'] = voice_features
-                print('test_start_time: ' + test['test_start_time'].__str__())
-                __compute_score_and_save(analysis, voice_features, analysis_question, test['test_start_time'])
+                analysis = Analysis.compute_score_and_save(test, analysis_question['q_id'], analysis_question,
+                                                           test['test_start_time'])
+                print('saved: ' + str(analysis['question_num']) + '        ' + str(analysis['user']) + '        ' +
+                      str(analysis.test_start_time))
                 question['analysed'] = True
             all_analysed = all_analysed and question['analysed']
         test['all_analysed'] = all_analysed
         test.save()
-    pass
-
-
-def __compute_score_and_save(analysis, voice_features, question, test_start_time):
-    feature_result = analysis_util.analysis_features(None, question['wordbase'], voice_features=voice_features)
-    score = analysis_util.compute_score(feature_result['key_hits'], feature_result['detail_hits'],
-                                        question['weights']['key'], question['weights']['detail'])
-    analysis['score_key'] = float(score['key'])
-    analysis['score_detail'] = float(score['detail'])
-    analysis['key_hits'] = feature_result['key_hits']
-    analysis['detail_hits'] = feature_result['detail_hits']
-    analysis['test_start_time'] = test_start_time
-    analysis.save()
-    print('saved: ' + analysis['question_num'].__str__() + '        ' + analysis['user'].__str__() + '        ' +
-          analysis['test_start_time'].__str__())
-    pass
 
 # if __name__ == '__main__':
 #     from mongoengine import connect
