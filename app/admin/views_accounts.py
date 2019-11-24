@@ -10,9 +10,11 @@ from flask_login import current_user
 from app.admin.admin_config import AccountsConfig
 from app.admin.util import *
 from app.auth.util import admin_login_required
-from app.models.invitation import *
+from app.models.invitation import InvitationModel
 from app import errors
 from . import admin
+import datetime
+from app.utils.datetime import datetime_fromisoformat  # for py3.6
 
 
 @admin.route('/accounts/invite', methods=['POST'])  # url will be .../admin/accounts/test
@@ -22,8 +24,8 @@ def accounts_invite():
     # 检验是否有权限申请邀请码
     form = request.form
     try:
-        vip_start_time = timestamp2datetime(float(form.get('vipStartTime').strip()))
-        vip_end_time = timestamp2datetime(float(form.get('vipEndTime').strip()))
+        vip_start_time = datetime.datetime.utcfromtimestamp(float(form.get('vipStartTime').strip()))
+        vip_end_time = datetime.datetime.utcfromtimestamp(float(form.get('vipEndTime').strip()))
         remaining_exam_num = int(form.get('remainingExamNum').strip())
         available_times = int(form.get('availableTimes').strip())
         code_num = int(form.get('codeNum').strip())
@@ -110,9 +112,9 @@ def get_invitations():
         d = {}
         time_limits = {}
         if create_time_from:
-            time_limits.update({'$gte': datetime.datetime.fromisoformat(create_time_from)})
+            time_limits.update({'$gte': datetime_fromisoformat(create_time_from)})
         if create_time_to:
-            time_limits.update({'$lte': datetime.datetime.fromisoformat(create_time_to)})
+            time_limits.update({'$lte': datetime_fromisoformat(create_time_to)})
         if time_limits != {}:
             d.update({'create_time': time_limits})
         if available_times not in [None, '']:
