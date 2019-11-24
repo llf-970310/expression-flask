@@ -377,6 +377,8 @@ def __authorize(username, password):
         若通过, err 为 None
         若验证不通过, check_user 为 None
     """
+    username = username.strip().lower()
+    password = password.strip()
     if not (username and password):
         return errors.Params_error, None
     if '@' in username:
