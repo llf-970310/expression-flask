@@ -63,7 +63,7 @@ def accounts_invite():
         invitation.vip_end_time = vip_end_time
         invitation.remaining_exam_num = remaining_exam_num
         invitation.available_times = available_times
-        invitation.code = generate_code(AccountsConfig.INVITATION_CODE_LEN)
+        invitation.code = generate_random_code(AccountsConfig.INVITATION_CODE_LEN)
         invitation.create_time = datetime.datetime.utcnow()
         current_app.logger.info('invitation info:%s' % invitation.__str__())
         # 生成指定位数随机字符串为邀请码

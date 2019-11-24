@@ -47,7 +47,7 @@ def get_test_wav_url():
                                 (test_id, current_user.name))
         return jsonify(errors.success(errors.Test_not_exist))
     user_id = session.get('user_id')
-    file_dir = '/'.join((PathConfig.audio_test_basedir, get_date_str('-'), user_id))
+    file_dir = '/'.join((PathConfig.audio_test_basedir, get_server_date_str('-'), user_id))
     _temp_str = "%sr%s" % (int(time.time()), random.randint(100, 1000))
     file_name = "%s%s" % (_temp_str, PathConfig.audio_extension)
     wav_test['wav_upload_url'] = file_dir + '/' + file_name
@@ -131,7 +131,7 @@ def get_upload_url():
     # 如果数据库没有该题的url，创建url，存数据库 ，然后返回
     # 如果数据库里已经有这题的url，说明是重复请求，不用再创建
     if not question.wav_upload_url:
-        file_dir = '/'.join((PathConfig.audio_save_basedir, get_date_str('-'), user_id))
+        file_dir = '/'.join((PathConfig.audio_save_basedir, get_server_date_str('-'), user_id))
         _temp_str = "%sr%s" % (int(time.time()), random.randint(100, 1000))
         file_name = "%s%s" % (_temp_str, PathConfig.audio_extension)
         question.wav_upload_url = file_dir + '/' + file_name

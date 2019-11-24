@@ -7,7 +7,7 @@ from datetime import timedelta
 _characters = '1234567890abcdefghijklmnopqrstuvwxyz'
 
 
-def generate_code(length=4):
+def generate_random_code(length=4):
     import random
     s = ''
     for i in range(length):

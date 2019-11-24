@@ -34,7 +34,7 @@ def compute_exam_score(score):
     return data
 
 
-def get_date_str(separator='') -> str:
+def get_server_date_str(separator='') -> str:
     """
     Desc:   获得当前日期格式化字符串，可指定分隔符，如: 20181009(默认), 2018-10-31(输入为-), 2018===10===31(输入为===)
     """
