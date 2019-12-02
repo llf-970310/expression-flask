@@ -9,6 +9,6 @@ import logging
 app = create_app()
 
 if __name__ == '__main__':
-    handler = logging.FileHandler('flask.log')
-    app.logger.addHandler(handler)
+    # handler = logging.FileHandler('flask.log')
+    # app.logger.addHandler(handler)
     app.run()
