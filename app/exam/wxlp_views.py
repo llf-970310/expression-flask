@@ -93,8 +93,8 @@ def wx_get_questions():
         return jsonify(errors.Params_error)
     current_app.logger.info('wx_get_questions: nickname: %s, code: %s, ' % (nickname, code))
     # 使用 code 获取用户的 openid
-    # err_code, _, openid = wxlp_get_sessionkey_openid(code, appid=WxConfig.appid, secret=WxConfig.secret)
-    err_code, openid = 0, 'xxx'
+    err_code, _, openid = wxlp_get_sessionkey_openid(code, appid=WxConfig.appid, secret=WxConfig.secret)
+    # err_code, openid = 0, 'xxx'
     if err_code:
         d = {'err_code': err_code, 'msg': '获取openid出错'}
         return jsonify(errors.error(d))
