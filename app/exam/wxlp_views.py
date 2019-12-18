@@ -22,6 +22,7 @@ from app.auth.util import wxlp_get_sessionkey_openid
 
 class WxConfig(object):
     """ 小程序账号相关配置 """
+    audio_extension = '.m4a'
     appid = 'wx23f0c43d3ca9ed9d'
     secret = '3d791d2ef69556abb746da30df4aa8e6'
 
@@ -30,13 +31,13 @@ def wx_gen_upload_url(openid, q_unm):
     openid = str(openid)
 
     """generate file path
-    upload file path: 相对目录(audio)/日期/用户id/时间戳+后缀(.aac)
+    upload file path: 相对目录(audio)/日期/用户id/时间戳+后缀
     temp path for copy: 相对目录(temp_audio)/用户id/文件名(同上)
     """
 
     file_dir = '/'.join((PathConfig.audio_save_basedir, 'christmas2019', get_server_date_str('-'), openid))
     _temp_str = "%sr%s" % (int(time.time()), random.randint(100, 1000))
-    file_name = "%s-%s.aac" % (q_unm, _temp_str)  # .aac 音频文件
+    file_name = "%s-%s%s" % (q_unm, _temp_str, WxConfig.audio_extension)
     wav_upload_url = file_dir + '/' + file_name
     return wav_upload_url
 
@@ -169,6 +170,7 @@ def question_dealer(the_exam) -> dict:  # 包装题目,将current记录对象转
         else:
             tmp = {'type': q.q_type,
                    'content': q.q_text,
+                   'path': q.wav_upload_url,
                    'index': i + 1}
             ret['questions'].update(tmp)
     return ret
