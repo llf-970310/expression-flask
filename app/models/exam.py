@@ -30,6 +30,7 @@ class QuestionModel(db.DynamicDocument):
     used_times = db.IntField(min_value=0, default=0)
     wordbase = db.DictField(default={})
     weights = db.DictField(default={})
+    questions = db.ListField(default=None)  # 选择题集合可以包含若干选择题
     q_id = db.IntField(min_value=0)  # 题号，从0开始
     in_optimize = db.BooleanField(default=False)  # 现在是否在优化中
     last_optimize_time = db.DateTimeField(default=None)  # 最后优化时间
@@ -68,6 +69,7 @@ class CurrentTestModel(db.DynamicDocument):
     current
     """
     user_id = db.StringField(max_length=32, default=None)
+    openid = db.StringField(max_length=64, default=None)  # wx_christmas2019活动使用
     test_start_time = db.DateTimeField()
     paper_type = db.ListField()
     current_q_num = db.IntField(min_value=1, default=1)
