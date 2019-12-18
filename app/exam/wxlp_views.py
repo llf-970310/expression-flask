@@ -92,7 +92,10 @@ def wx_get_questions():
     if nickname == '' or code == '':
         return jsonify(errors.Params_error)
     # 使用 code 获取用户的 openid
-    _, openid = wxlp_get_sessionkey_openid(code, appid=WxConfig.appid, secret=WxConfig.secret)
+    err_code, _, openid = wxlp_get_sessionkey_openid(code, appid=WxConfig.appid, secret=WxConfig.secret)
+    if err_code:
+        d = {'code': err_code, 'msg': '获取openid出错'}
+        return jsonify(errors.error(d))
     current_app.logger.info('wx_get_questions: openid: %s, nickname: %s' % (openid, nickname))
 
     the_exam = CurrentTestModel.objects(openid=openid).first()  # 因为可能是重复请求
