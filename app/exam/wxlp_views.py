@@ -161,16 +161,16 @@ def wx_init_question(openid: str):
 def question_dealer(the_exam) -> dict:  # 包装题目,将current记录对象转为前端需要格式
     ret = {
         'testID': str(the_exam.id),
-        'questions': {}
+        'questions': []
     }
     for i, n in enumerate(the_exam.questions):
         q = the_exam.questions[n]
         if i < 7:  # 前7题是选择题，已经包装好存在current里
-            ret['questions'].update({str(i + 1): q})
+            ret['questions'].append(q)
         else:
             tmp = {'type': q.q_type,
                    'content': q.q_text,
                    'path': q.wav_upload_url,
                    'index': i + 1}
-            ret['questions'].update({str(i): tmp})
+            ret['questions'].append(tmp)
     return ret
