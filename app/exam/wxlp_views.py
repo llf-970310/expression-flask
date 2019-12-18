@@ -43,8 +43,14 @@ def wx_gen_upload_url(openid, q_unm):
 
 @exam.route('/wx/upload-success', methods=['POST'])
 def wx_upload_success():
+    """
+    请求参数：questionNum, testID （form）
+    上传音频完成，告知后端可以进行处理
+    """
     q_num = request.form.get("questionNum")
     test_id = request.form.get("testID")
+    if q_num is None or test_id is None:
+        return jsonify(errors.Params_error)
     current_app.logger.info("wx:upload_success:question_num: %s, current_id: %s" % (str(q_num), test_id))
 
     current_test = CurrentTestModel.objects(id=test_id).first()
@@ -53,7 +59,7 @@ def wx_upload_success():
                                  (test_id, current_user.name))
         return jsonify(errors.Exam_not_exist)
 
-    questions = current_test['questions']
+    questions = current_test.questions
 
     upload_url = questions[q_num]['wav_upload_url']
     current_app.logger.info("upload_success: upload_url: " + upload_url)
