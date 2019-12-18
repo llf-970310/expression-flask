@@ -172,5 +172,5 @@ def question_dealer(the_exam) -> dict:  # 包装题目,将current记录对象转
                    'content': q.q_text,
                    'path': q.wav_upload_url,
                    'index': i + 1}
-            ret['questions'].update(tmp)
+            ret['questions'].update({str(i): tmp})
     return ret
