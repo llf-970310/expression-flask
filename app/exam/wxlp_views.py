@@ -124,7 +124,8 @@ def wx_init_question(openid: str):
     current_test.questions = {}
     xuanzeti = QuestionModel.objects(q_id=10001).first()
     i = 1
-    for t in xuanzeti.questions:
+    for x in xuanzeti.questions:
+        t = xuanzeti.questions[x]
         tmp = {
             "type": 4,
             "content": t.text,
