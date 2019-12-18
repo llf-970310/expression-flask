@@ -91,8 +91,10 @@ def wx_get_questions():
     code = request.args.get("code")
     if nickname in ['', None] or code in ['', None]:
         return jsonify(errors.Params_error)
+    current_app.logger.info('wx_get_questions: nickname: %s, code: %s, ' % (nickname, code))
     # 使用 code 获取用户的 openid
-    err_code, _, openid = wxlp_get_sessionkey_openid(code, appid=WxConfig.appid, secret=WxConfig.secret)
+    # err_code, _, openid = wxlp_get_sessionkey_openid(code, appid=WxConfig.appid, secret=WxConfig.secret)
+    err_code, openid = 0, 'xxx'
     if err_code:
         d = {'err_code': err_code, 'msg': '获取openid出错'}
         return jsonify(errors.error(d))
@@ -124,12 +126,11 @@ def wx_init_question(openid: str):
     current_test.questions = {}
     xuanzeti = QuestionModel.objects(q_id=10001).first()
     i = 1
-    for x in xuanzeti.questions:
-        t = xuanzeti.questions[x]
+    for t in xuanzeti.questions:
         tmp = {
             "type": 4,
-            "content": t.text,
-            "options": [{"key": a, "value": b} for a, b in t.options.items()],
+            "content": t['text'],
+            "options": [{"key": a, "value": b} for a, b in t['options'].items()],
             "index": i
         }
         current_test.questions.update({str(i): tmp})
@@ -155,12 +156,13 @@ def question_dealer(the_exam) -> dict:  # 包装题目,将current记录对象转
         'testID': str(the_exam.id),
         'questions': {}
     }
-    for i, q in enumerate(the_exam.questions):
+    for i, n in enumerate(the_exam.questions):
+        q = the_exam.questions[n]
         if i < 7:  # 前7题是选择题，已经包装好存在current里
             ret['questions'].update({str(i + 1): q})
         else:
             tmp = {'type': q.q_type,
-                   'content': q.text,
+                   'content': q.q_text,
                    'index': i + 1}
             ret['questions'].update(tmp)
     return ret
