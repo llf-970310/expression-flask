@@ -2,6 +2,7 @@
 # coding: utf-8
 #
 # Created by dylanchu on 2019/12/16
+# 微信小程序 christmas2019
 
 import random
 import traceback
