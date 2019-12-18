@@ -335,7 +335,8 @@ def init_question(user_id):
     for t in ExamConfig.question_num_each_type.keys():
         temp_q_lst = []
         question_num_needed = ExamConfig.question_num_each_type[t]
-        questions = QuestionModel.objects(q_type=t).order_by('used_times')  # 按使用次数倒序获得questions
+        d = {'q_type': t, 'q_id': {'$lte': 10000}}  # 题号<=10000, (大于10000的题目用作其他用途)
+        questions = QuestionModel.objects(__raw__=d).order_by('used_times')  # 按使用次数倒序获得questions
         if ExamConfig.question_allow_repeat[t]:
             for q in questions:
                 temp_q_lst.append(q)
