@@ -9,7 +9,6 @@ import traceback
 import time
 
 from flask import request, current_app, jsonify
-from flask_login import current_user
 
 from app import errors
 from app.exam.util import get_server_date_str
@@ -48,25 +47,24 @@ def wx_upload_success():
     请求参数：questionNum, testID （json）
     上传音频完成，告知后端可以进行处理
     """
-    q_num = request.json.get("questionNum")
-    test_id = request.json.get("testID")
+    q_num = str(request.json.get("questionNum"))
+    test_id = str(request.json.get("testID"))
     if q_num is None or test_id is None:
         return jsonify(errors.Params_error)
     current_app.logger.info("wx:upload_success:question_num: %s, current_id: %s" % (str(q_num), test_id))
 
     current_test = CurrentTestModel.objects(id=test_id).first()
     if current_test is None:
-        current_app.logger.error("upload_success: ERROR: Test Not Exists!! - test_id: %s, user name: %s" %
-                                 (test_id, current_user.name))
+        current_app.logger.error("upload_success: ERROR: Test Not Exists!! - test_id: %s" % test_id)
         return jsonify(errors.Exam_not_exist)
 
-    questions = current_test.questions
-
-    upload_url = questions[q_num]['wav_upload_url']
+    q = current_test.questions.get(q_num)
+    if q is None:
+        return jsonify(errors.error({'msg': '题号无效'}))
+    upload_url = q['wav_upload_url']
     current_app.logger.info("upload_success: upload_url: " + upload_url)
 
     # change question status to handling
-    q = current_test.questions[q_num]
     q.status = 'handling'
     q['analysis_start_time'] = datetime.datetime.utcnow()
     current_test.save()
@@ -82,8 +80,7 @@ def wx_upload_success():
     except Exception as e:
         current_app.logger.error('upload_success: celery enqueue:\n%s' % traceback.format_exc())
         return jsonify(errors.exception({'Exception': str(e)}))
-    current_app.logger.info("upload_success: success return! dataID: %s, user name: %s" %
-                            (current_test.id.__str__(), current_user.name))
+    current_app.logger.info("upload_success: success return! dataID: %s" % str(current_test.id))
     resp = {"status": "Success", "desc": "添加任务成功，等待服务器处理", "dataID": current_test.id.__str__(), "taskID": ret.id}
     return jsonify(errors.success(resp))
 
