@@ -145,8 +145,9 @@ def wx_init_question(openid: str):
     q1 = QuestionModel.objects(q_id=10002).first()
     q2 = QuestionModel.objects(q_id=10003).first()
     for q in (q1, q2):
+        _upload_url = wx_gen_upload_url(openid, i)
         q_current = CurrentQuestionEmbed(q_id=str(q.id), q_type=q.q_type, q_text=q.text,
-                                         wav_upload_url=wx_gen_upload_url(openid, i),
+                                         wav_upload_url=_upload_url,
                                          file_location='BOS',
                                          status='url_fetched')
         current_test.questions.update({str(i): q_current})
