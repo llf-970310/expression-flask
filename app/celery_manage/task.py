@@ -28,16 +28,20 @@ def move_current_to_history():
         test_start_time = document['test_start_time']
         now_time = datetime.datetime.utcnow()
         delta_seconds = (now_time - test_start_time).total_seconds()
-        if delta_seconds >= ExamConfig.exam_total_time and question_not_handling(document['questions']):
-            print("remove %s" % document.id.__str__())
+        if delta_seconds >= ExamConfig.exam_total_time and question_process_finished(document['questions']):
+            print("remove %s" % str(document.id))
             history = HistoryTestModel()
-            history['current_id'] = document.id.__str__()
+            history['current_id'] = str(document.id)
             history['user_id'] = document['user_id']
             history['test_start_time'] = document['test_start_time']
             history['paper_type'] = document['paper_type']
             history['current_q_num'] = document['current_q_num']
             history['score_info'] = document['score_info']
-            history['questions'] = document['questions']
+            history['questions'] = {}
+            for i, q in document['questions'].items():
+                _type = q.get('type')
+                if _type in [1, 2, 3, '1', '2', '3']:
+                    history.update({i: q})
             history['all_analysed'] = False
             # 防止history中的总分还有未计算的
             if not history['score_info']:
@@ -58,11 +62,13 @@ def move_current_to_history():
             document.delete()
 
 
-def question_not_handling(question_dict):
+def question_process_finished(question_dict):
     for value in question_dict.values():
-        if value['status'] == 'handling':
-            return False
-    return True
+        _type = value.get('type')
+        if _type in [1, 2, 3, '1', '2', '3']:
+            if value.get('status') == 'finished':
+                return True
+    return False
 
 
 def collect_history_to_analysis():
