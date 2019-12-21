@@ -22,8 +22,13 @@ from app.auth.util import wxlp_get_sessionkey_openid
 class WxConfig(object):
     """ 小程序账号相关配置 """
     audio_extension = '.m4a'
-    appid = 'wx23f0c43d3ca9ed9d'
-    secret = '3d791d2ef69556abb746da30df4aa8e6'
+    # appid = 'wx23f0c43d3ca9ed9d'  # tangdaye
+    # secret = '3d791d2ef69556abb746da30df4aa8e6'
+    appid = 'wxdd39ae16bc3a45e3'  # parclab
+    secret = 'b7efb9c654b8050eb9af7a13e33dace5'
+    xuanzeti_q_id = 10001
+    q8_q_id = 10002
+    q9_q_id = 10003
 
 
 def wx_gen_upload_url(openid, q_unm):
@@ -73,9 +78,11 @@ def wx_upload_success():
         if q.q_type == 3 or q.q_type == '3':
             ret = analysis_main_3.apply_async(args=(str(current_test.id), str(q_num)), queue='q_type3', priority=10)
             # todo: store ret.id in redis for status query
-        else:
+        elif q.q_type in [1, 2, '1', '2']:
             ret = analysis_main_12.apply_async(args=(str(current_test.id), str(q_num)), queue='q_type12', priority=2)
             # todo: store ret.id in redis for status query
+        else:
+            return jsonify(errors.exception({'msg': '不能处理该题目类型:%s' % q.q_type}))
         current_app.logger.info("AsyncResult id: %s" % ret.id)
     except Exception as e:
         current_app.logger.error('upload_success: celery enqueue:\n%s' % traceback.format_exc())
@@ -128,7 +135,7 @@ def wx_init_question(openid: str):
     current_test.test_start_time = datetime.datetime.utcnow()
 
     current_test.questions = {}
-    xuanzeti = QuestionModel.objects(q_id=10001).first()
+    xuanzeti = QuestionModel.objects(q_id=WxConfig.xuanzeti_q_id).first()
     i = 1
     for t in xuanzeti.questions:
         tmp = {
@@ -139,8 +146,8 @@ def wx_init_question(openid: str):
         }
         current_test.questions.update({str(i): tmp})
         i += 1
-    q1 = QuestionModel.objects(q_id=10002).first()
-    q2 = QuestionModel.objects(q_id=10003).first()
+    q1 = QuestionModel.objects(q_id=WxConfig.q8_q_id).first()
+    q2 = QuestionModel.objects(q_id=WxConfig.q9_q_id).first()
     for q in (q1, q2):
         _upload_url = wx_gen_upload_url(openid, i)
         q_current = CurrentQuestionEmbed(q_id=str(q.id), q_type=q.q_type, q_text=q.text,
