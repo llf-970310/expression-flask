@@ -123,6 +123,35 @@ def wx_get_questions():
     return jsonify(errors.success(context))
 
 
+@exam.route('/wx/get-result', methods=['GET'])
+def wx_get_result():
+    """
+    请求参数： questionNums(list), testID(str) （json格式）
+    获取指定current记录的音频题打分
+    """
+    questions_nums = [str(s) for s in request.json.get("questionNums")]
+    test_id = str(request.json.get("testID"))
+    if test_id is None:
+        return jsonify(errors.Params_error)
+    current_app.logger.info("wx:get_result:current_id: %s" % test_id)
+
+    current_test = CurrentTestModel.objects(id=test_id).first()
+    if current_test is None:
+        current_app.logger.error("upload_success: ERROR: Test Not Exists!! - test_id: %s" % test_id)
+        return jsonify(errors.Exam_not_exist)
+
+    ret = {'questions': {}}
+    for q_num in questions_nums:
+        try:
+            q = current_test.questions.get(q_num)
+            status = q.get("status")
+        except Exception as e:
+            current_app.logger.error(e)
+            return jsonify(errors.error({'msg': '题号无效: %s' % q_num}))
+        ret['scores'].update({'q_num': {'status': status, 'scores': q.score}})
+    return jsonify(errors.success(ret))
+
+
 def wx_init_question(openid: str):
     """
     生成一个current记录, 返回current对象本身
