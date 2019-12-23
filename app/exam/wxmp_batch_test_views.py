@@ -11,10 +11,9 @@ import datetime
 
 from flask import request, current_app, jsonify
 
-from app import errors
+from app import errors, db
 from app.exam.util import get_server_date_str
 from app.models.exam import CurrentQuestionEmbed, QuestionModel
-from app.models.exam import CurrentTestModel as BtCurrentTestModel
 from celery_tasks import analysis_main_12, analysis_main_3
 from . import exam
 from .exam_config import PathConfig
@@ -22,7 +21,22 @@ from app.auth.util import wxlp_get_sessionkey_openid
 from app.admin.util import generate_random_code
 
 
-BtCurrentTestModel.meta = {'collection': 'bt_current'}
+# Model
+class BtCurrentTestModel(db.DynamicDocument):
+    """
+    bt_current
+    """
+    user_id = db.StringField(max_length=32, default=None)
+    openid = db.StringField(max_length=64, default=None)  # wx_christmas2019活动使用
+    test_start_time = db.DateTimeField()
+    paper_type = db.ListField()
+    current_q_num = db.IntField(min_value=1, default=1)
+    score_info = db.DictField(default={})
+    questions = db.DictField(default={})
+    all_analysed = db.BooleanField()  # 这个考试中的所有回答是否都被分析过
+    # make questions a dict rather than a list so as to be able update one question w/o affecting other questions
+
+    meta = {'collection': 'bt_current'}
 
 
 class WxBtConfig(object):
