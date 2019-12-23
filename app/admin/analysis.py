@@ -33,6 +33,8 @@ class Analysis(object):
                         not question['analysed']:
                     analysis = self.compute_score_and_save(test, analysis_question['q_id'], analysis_question,
                                                            test['test_start_time'])
+                    if analysis is None:
+                        continue
                     question['analysed'] = True
                     total_key = analysis['score_key']
                     total_detail = analysis['score_detail']
@@ -83,32 +85,39 @@ class Analysis(object):
 
     @staticmethod
     def compute_score_and_save(test, q_id, question, test_start_time):
-        print("analysis inner", q_id, test['test_start_time'])
-        analysis = AnalysisModel()
-        analysis['exam_id'] = test['id'].__str__()
-        analysis['user'] = test['user_id']
-        analysis['question_id'] = question['q_id'].__str__()
-        analysis['question_num'] = q_id
-        voice_features = {
-            'rcg_text': question['feature']['rcg_text'],
-            'last_time': question['feature']['last_time'],
-            'interval_num': question['feature']['interval_num'],
-            'interval_ratio': question['feature']['interval_ratio'],
-            'volumes': question['feature']['volumes'],
-            'speeds': question['feature']['speeds'],
-        }
-        analysis['voice_features'] = voice_features
-        print('test_start_time: ' + test['test_start_time'].__str__())
-        feature_result = analysis_util.analysis_features(None, question['wordbase'], voice_features=voice_features)
-        score = analysis_util.compute_score(feature_result['key_hits'], feature_result['detail_hits'],
-                                            question['weights']['key'], question['weights']['detail'])
-        analysis['score_key'] = float(score['key'])
-        analysis['score_detail'] = float(score['detail'])
-        analysis['key_hits'] = feature_result['key_hits']
-        analysis['detail_hits'] = feature_result['detail_hits']
-        analysis['test_start_time'] = test_start_time
-        analysis.save()
-        return analysis
+        print("analysis inner:compute_score_and_save:q_id: %s, test_start_time: %s"
+              % (q_id, test['test_start_time']))
+        try:
+            analysis = AnalysisModel()
+            analysis['exam_id'] = test['id'].__str__()
+            analysis['user'] = test['user_id']
+            analysis['question_id'] = question['q_id'].__str__()
+            analysis['question_num'] = q_id
+            features = question['feature']
+            voice_features = {
+                'rcg_text': features['rcg_text'],
+                'last_time': features['last_time'],
+                'interval_num': features['interval_num'],
+                'interval_ratio': features['interval_ratio'],
+                'volumes': features['volumes'],
+                'speeds': features['speeds'],
+            }
+            analysis['voice_features'] = voice_features
+            print('test_start_time: ' + test['test_start_time'].__str__())
+            feature_result = analysis_util.analysis_features(None, question['wordbase'], voice_features=voice_features)
+            score = analysis_util.compute_score(feature_result['key_hits'], feature_result['detail_hits'],
+                                                question['weights']['key'], question['weights']['detail'])
+            analysis['score_key'] = float(score['key'])
+            analysis['score_detail'] = float(score['detail'])
+            analysis['key_hits'] = feature_result['key_hits']
+            analysis['detail_hits'] = feature_result['detail_hits']
+            analysis['test_start_time'] = test_start_time
+            analysis.save()
+            return analysis
+        except Exception as e:
+            print('################')
+            print('ERROR:compute_score_and_save: test.id: %s, q_id: %s -->' % (test.id, q_id))
+            print(e)
 
 
 # if __name__ == '__main__':

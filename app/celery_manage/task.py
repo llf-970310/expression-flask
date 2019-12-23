@@ -33,6 +33,9 @@ def move_current_to_history():
             history = HistoryTestModel()
             history['current_id'] = str(document.id)
             history['user_id'] = document['user_id']
+            openid = document.get('openid')
+            if openid:
+                history['openid'] = openid
             history['test_start_time'] = document['test_start_time']
             history['paper_type'] = document['paper_type']
             history['current_q_num'] = document['current_q_num']
@@ -100,6 +103,8 @@ def collect(analysis_question, history_list):
                     not question['analysed']:
                 analysis = Analysis.compute_score_and_save(test, analysis_question['q_id'], analysis_question,
                                                            test['test_start_time'])
+                if analysis is None:
+                    continue
                 print('saved: ' + str(analysis['question_num']) + '        ' + str(analysis['user']) + '        ' +
                       str(analysis.test_start_time))
                 question['analysed'] = True

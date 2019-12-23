@@ -87,6 +87,7 @@ class HistoryTestModel(db.DynamicDocument):
     """
     current_id = db.StringField(max_length=32, default=None)
     user_id = db.StringField(max_length=32, default=None)
+    openid = db.StringField(default=None)
     test_start_time = db.DateTimeField()
     paper_type = db.ListField()
     current_q_num = db.IntField(min_value=1, default=1)
