@@ -10,3 +10,4 @@ exam = Blueprint('exam', __name__)
 from . import views
 from . import batch_test_views
 from . import wxmp_views
+from . import wxmp_batch_test_views
