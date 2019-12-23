@@ -25,7 +25,7 @@ from app.admin.util import generate_random_code
 BtCurrentTestModel.meta = {'collection': 'bt_current'}
 
 
-class WxConfig(object):
+class WxBtConfig(object):
     """ 小程序账号相关配置 """
     audio_extension = '.m4a'
     # appid = 'wx23f0c43d3ca9ed9d'  # tangdaye
@@ -38,7 +38,7 @@ class WxConfig(object):
     q9_q_id = 10003
 
 
-def wx_gen_upload_url(openid, q_unm):
+def wxbt_gen_upload_url(openid, q_unm):
     openid = str(openid)
 
     """generate file path
@@ -48,13 +48,13 @@ def wx_gen_upload_url(openid, q_unm):
 
     file_dir = '/'.join((PathConfig.audio_save_basedir, '0-bt-christmas2019', get_server_date_str('-'), openid))
     _temp_str = "%sr%s" % (int(time.time()), random.randint(100, 1000))
-    file_name = "%s-%s%s" % (q_unm, _temp_str, WxConfig.audio_extension)
+    file_name = "%s-%s%s" % (q_unm, _temp_str, WxBtConfig.audio_extension)
     wav_upload_url = file_dir + '/' + file_name
     return wav_upload_url
 
 
 @exam.route('/wxbt/upload-success', methods=['POST'])
-def wx_upload_success():
+def wxbt_upload_success():
     """
     请求参数：questionNum, testID （json）
     上传音频完成，告知后端可以进行处理
@@ -100,7 +100,7 @@ def wx_upload_success():
 
 
 @exam.route('/wxbt/questions', methods=['GET'])
-def wx_get_questions():
+def wxbt_get_questions():
     """
     请求参数： nickname, code
     无session,需要返回testID(current记录的id)给前端,之后前端带此testID请求(wx/upload-success)
@@ -111,19 +111,19 @@ def wx_get_questions():
         return jsonify(errors.Params_error)
     current_app.logger.info('wxbt_get_questions: nickname: %s, code: %s, ' % (nickname, code))
     # 使用 code 获取用户的 openid
-    err_code, _, openid = wxlp_get_sessionkey_openid(code, appid=WxConfig.appid, secret=WxConfig.secret)
+    err_code, _, openid = wxlp_get_sessionkey_openid(code, appid=WxBtConfig.appid, secret=WxBtConfig.secret)
     err_code, _, openid = 0, 'xxx', generate_random_code(length=24)  # overwrite
     # err_code, openid = 0, 'xxx'
     if err_code:
         d = {'err_code': err_code, 'msg': '获取openid出错'}
         return jsonify(errors.error(d))
-    current_app.logger.info('wx_get_questions: openid: %s, nickname: %s' % (openid, nickname))
+    current_app.logger.info('wxbt_get_questions: openid: %s, nickname: %s' % (openid, nickname))
 
     the_exam = BtCurrentTestModel.objects(openid=openid).first()  # 因为可能是重复请求
     if the_exam is None or the_exam.questions['9'].status in ['handling', 'finished', 'error']:
         # 创建新的current记录(新的考试)
-        current_app.logger.info('wx_get_questions: init exam...')
-        the_exam = wx_init_question(openid)
+        current_app.logger.info('wxbt_get_questions: init exam...')
+        the_exam = wxbt_init_question(openid)
         if not the_exam:
             return jsonify(errors.Init_exam_failed)
     # 按格式包装题目并返回
@@ -132,7 +132,7 @@ def wx_get_questions():
 
 
 @exam.route('/wxbt/get-result', methods=['GET'])
-def wx_get_result():
+def wxbt_get_result():
     """
     请求参数： questionNums(list), testID(str) （json格式）
     获取指定current记录的音频题打分
@@ -160,19 +160,19 @@ def wx_get_result():
     return jsonify(errors.success(ret))
 
 
-def wx_init_question(openid: str):
+def wxbt_init_question(openid: str):
     """
     生成一个current记录, 返回current对象本身
     所有current记录到同一个用户上（wx_christmas2019@site.com, user_id: 5dfa0c005e3dd462f4755877）
      另外创建字段记录其openid
     """
     current_test = BtCurrentTestModel()
-    current_test.user_id = WxConfig.wx_user_id
+    current_test.user_id = WxBtConfig.wx_user_id
     current_test.openid = openid
     current_test.test_start_time = datetime.datetime.utcnow()
 
     current_test.questions = {}
-    xuanzeti = QuestionModel.objects(q_id=WxConfig.xuanzeti_q_id).first()
+    xuanzeti = QuestionModel.objects(q_id=WxBtConfig.xuanzeti_q_id).first()
     i = 1
     for t in xuanzeti.questions:
         tmp = {
@@ -183,11 +183,11 @@ def wx_init_question(openid: str):
         }
         current_test.questions.update({str(i): tmp})
         i += 1
-    q1 = QuestionModel.objects(q_id=WxConfig.q8_q_id).first()
-    q2 = QuestionModel.objects(q_id=WxConfig.q9_q_id).first()
+    q1 = QuestionModel.objects(q_id=WxBtConfig.q8_q_id).first()
+    q2 = QuestionModel.objects(q_id=WxBtConfig.q9_q_id).first()
 
     q = q1
-    _upload_url = wx_gen_upload_url(openid, i)
+    _upload_url = wxbt_gen_upload_url(openid, i)
     _upload_url = 'audio/0-bt-christmas2019/8.m4a'
     q_current = CurrentQuestionEmbed(q_id=str(q.id), q_type=q.q_type, q_text=q.text,
                                      wav_upload_url=_upload_url,
@@ -198,7 +198,7 @@ def wx_init_question(openid: str):
     i += 1
 
     q = q2
-    _upload_url = wx_gen_upload_url(openid, i)
+    _upload_url = wxbt_gen_upload_url(openid, i)
     _upload_url = 'audio/0-bt-christmas2019/9.m4a'
     q_current = CurrentQuestionEmbed(q_id=str(q.id), q_type=q.q_type, q_text=q.text,
                                      wav_upload_url=_upload_url,
