@@ -41,6 +41,7 @@ class UserModel(UserMixin, db.Document):
     vip_start_time = db.DateTimeField(default=lambda: datetime.datetime.utcnow())
     vip_end_time = db.DateTimeField(default=lambda: datetime.datetime.utcnow() + datetime.timedelta(days=1))
     remaining_exam_num = db.IntField(min_value=0, default=3)
+    invitation_code = db.StringField(max_length=64, default='')
 
     meta = {'collection': 'users', 'strict': False}
 

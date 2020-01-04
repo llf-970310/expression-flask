@@ -185,6 +185,8 @@ def register():
     new_user.vip_start_time = existing_invitation.vip_start_time
     new_user.vip_end_time = existing_invitation.vip_end_time
     new_user.remaining_exam_num = existing_invitation.remaining_exam_num
+    # 这里需要添加一个邀请码信息
+    new_user.invitation_code = existing_invitation.code
     current_app.logger.info('user info: %s' % new_user.__str__())
     # todo 从这开始需要同步
     new_user.save()
