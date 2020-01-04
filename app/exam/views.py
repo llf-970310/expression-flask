@@ -6,7 +6,7 @@ import random
 import traceback
 
 from flask import request, current_app, jsonify, session
-from flask_login import current_user
+from flask_login import current_user, login_required
 
 from app import errors
 from app.exam.util import *
@@ -18,8 +18,9 @@ from .exam_config import PathConfig, ExamConfig, QuestionConfig, DefaultValue, S
 
 
 @exam.route('/get-test-wav-info', methods=['POST'])
+@login_required
 def get_test_wav_info():
-    user_id = session.get('user_id')
+    user_id = str(current_user.id)
     wav_test = WavTestModel()
     wav_test['text'] = QuestionConfig.test_text['content']
     wav_test['user_id'] = user_id
@@ -39,14 +40,15 @@ def get_test_wav_info():
 
 
 @exam.route('/get-test-wav-url', methods=['POST'])
+@login_required
 def get_test_wav_url():
     test_id = request.form.get('test_id')
     wav_test = WavTestModel.objects(id=test_id).first()
     if not wav_test:
-        current_app.logger.info("get_test_wav_url: no such test! test id: %s, user name: %s" %
-                                (test_id, current_user.name))
+        current_app.logger.error("get_test_wav_url: no such test! test id: %s, user name: %s" %
+                                 (test_id, current_user.name))
         return jsonify(errors.success(errors.Test_not_exist))
-    user_id = session.get('user_id')
+    user_id = str(current_user.id)
     file_dir = '/'.join((PathConfig.audio_test_basedir, get_server_date_str('-'), user_id))
     _temp_str = "%sr%s" % (int(time.time()), random.randint(100, 1000))
     file_name = "%s%s" % (_temp_str, PathConfig.audio_extension)
@@ -63,10 +65,8 @@ def get_test_wav_url():
 
 
 @exam.route('/upload-test-wav-success', methods=['POST'])
+@login_required
 def upload_test_wav_success():
-    if not current_user.is_authenticated:
-        current_app.logger.error("upload_test_wav_success: user not authenticated! user name: %s" % current_user.name)
-        return jsonify(errors.Login_required)
     test_id = request.form.get('test_id')
     wav_test = WavTestModel.objects(id=test_id).first()
     if not wav_test:
@@ -87,6 +87,7 @@ def upload_test_wav_success():
 
 
 @exam.route('/get_test_result', methods=['POST'])
+@login_required
 def get_test_result():
     test_id = request.form.get('test_id')
     wav_test = WavTestModel.objects(id=test_id).first()
@@ -107,6 +108,7 @@ def get_test_result():
 
 
 @exam.route('/get-upload-url', methods=['POST'])
+@login_required
 def get_upload_url():
     # get question number
     question_num = int(request.form.get("nowQuestionNum"))
@@ -118,7 +120,7 @@ def get_upload_url():
         return jsonify(errors.Exam_not_exist)
 
     # get question
-    user_id = session.get("user_id")
+    user_id = str(current_user.id)
     # 这里不能用session存储题号，由于是异步处理，因此session记录到下一题的时候上一题可能还没处理完
     current_app.logger.info("get_upload_url: question_num: %s, user_name: %s" % (str(question_num), current_user.name))
     question = current_test.questions[str(question_num)]
@@ -146,10 +148,8 @@ def get_upload_url():
 
 
 @exam.route('/upload-success', methods=['POST'])
+@login_required
 def upload_success():
-    if not current_user.is_authenticated:
-        current_app.logger.error("upload_success: user not authenticated! user name: %s" % current_user.name)
-        return jsonify(errors.Login_required)
     q_num = request.form.get("nowQuestionNum")
     current_app.logger.info("upload_success: now_question_num: %s, user_name: %s" % (str(q_num), current_user.name))
 
@@ -191,10 +191,8 @@ def upload_success():
 
 
 @exam.route('/get-result', methods=['POST'])
+@login_required
 def get_result():
-    if not current_user.is_authenticated:
-        current_app.logger.error("get_result: user not authenticated! user name: %s" % current_user.name)
-        return jsonify(errors.Login_required)
     current_app.logger.info("get_result: user_name: " + current_user.name)
     current_test_id = session.get("test_id", DefaultValue.test_id)
     test = CurrentTestModel.objects(id=current_test_id).first()
@@ -250,25 +248,23 @@ def get_result():
 
 
 @exam.route('/next-question', methods=['POST'])
+@login_required
 def next_question():
-    if not current_user.is_authenticated:
-        current_app.logger.error("next_question: user not authenticated! user name: %s" % current_user.name)
-        return jsonify(errors.Login_required)
-
-    now_q_num = request.form.get("nowQuestionNum")
-    current_app.logger.info('next_question: nowQuestionNum: %s, user_name: %s' % (now_q_num, current_user.name))
+    nowQuestionNum = request.form.get("nowQuestionNum")
+    current_app.logger.info('next_question: nowQuestionNum: %s, user_name: %s' % (nowQuestionNum, current_user.name))
     # 判断是否有剩余考试次数
-    # now_q_num = -1 表示是新的考试
-    if (now_q_num is None) or (int(now_q_num) == -1) or (not session.get("test_id")):
+    # nowQuestionNum = -1 表示是新的考试
+    if (nowQuestionNum is None) or (int(nowQuestionNum) == -1) or (not session.get("test_id")):
         if Setting.LIMIT_EXAM_TIMES and current_user.remaining_exam_num <= 0:
             return jsonify(errors.No_exam_times)
         elif Setting.LIMIT_EXAM_TIMES and current_user.remaining_exam_num > 0:
             current_user.remaining_exam_num -= 1
             current_user.save()
-        now_q_num = 0
+        nowQuestionNum = 0
         # 生成当前题目
         current_app.logger.info('init exam...')
-        test_id = init_question(session["user_id"])
+        # 调试发现session["user_id"]和current_user.id相同？？(但应使用current_user.id)
+        test_id = init_question(str(current_user.id))
         if not test_id:
             return jsonify(errors.Init_exam_failed)
         else:
@@ -276,7 +272,7 @@ def next_question():
         session["init_done"] = True
         session["new_test"] = False
     # 获得下一题号 此时now_q_num最小是0
-    next_question_num = int(now_q_num) + 1
+    next_question_num = int(nowQuestionNum) + 1
     session["question_num"] = next_question_num
     current_app.logger.info("next-question: username: %s, next_question_num: %s" % (current_user.name, next_question_num))
     # 如果超出最大题号，如用户多次刷新界面，则重定向到结果页面
@@ -285,7 +281,7 @@ def next_question():
         session["new_test"] = True
         return jsonify(errors.Exam_finished)
     # 根据题号查找题目
-    context = question_dealer(next_question_num, session["test_id"], session["user_id"])
+    context = question_dealer(next_question_num, session["test_id"], str(current_user.id))
     if not context:
         return jsonify(errors.Get_question_failed)
     # 判断考试是否超时，若超时则返回错误
@@ -296,6 +292,7 @@ def next_question():
 
 
 @exam.route('/find-left-exam', methods=['POST'])
+@login_required
 def find_left_exam():
     # 判断断电续做功能是否开启
     if ExamConfig.detect_left_exam:
@@ -324,6 +321,7 @@ def find_left_exam():
 
 
 def init_question(user_id):
+    user_id = str(user_id)
     current_test = CurrentTestModel()
     user = UserModel.objects(id=user_id).first()
     if user is None:
@@ -337,7 +335,8 @@ def init_question(user_id):
     for t in ExamConfig.question_num_each_type.keys():
         temp_q_lst = []
         question_num_needed = ExamConfig.question_num_each_type[t]
-        questions = QuestionModel.objects(q_type=t).order_by('used_times')  # 按使用次数倒序获得questions
+        d = {'q_type': t, 'q_id': {'$lte': 10000}}  # 题号<=10000, (大于10000的题目用作其他用途)
+        questions = QuestionModel.objects(__raw__=d).order_by('used_times')  # 按使用次数倒序获得questions
         if ExamConfig.question_allow_repeat[t]:
             for q in questions:
                 temp_q_lst.append(q)
@@ -380,6 +379,7 @@ def init_question(user_id):
 
 
 def question_dealer(question_num, test_id, user_id) -> dict:
+    user_id = str(user_id)
     # get test
     test = CurrentTestModel.objects(id=test_id).first()
     if test is None:

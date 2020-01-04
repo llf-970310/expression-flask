@@ -6,6 +6,8 @@
 import datetime
 import json
 
+from flask_login import current_user
+
 from app.auth.util import admin_login_required
 from app import errors
 from app.models.exam import QuestionModel, CurrentTestModel, CurrentQuestionEmbed
@@ -29,7 +31,7 @@ def admin_get_question():
 
     # 生成测试
     test = CurrentTestModel()
-    test.user_id = session.get("user_id")
+    test.user_id = str(current_user.id)
     test.test_start_time = datetime.datetime.utcnow()
     q_current = CurrentQuestionEmbed(q_id=question.id.__str__(), q_type=question.q_type, q_text=question.text,
                                      wav_upload_url='', wav_temp_url='')

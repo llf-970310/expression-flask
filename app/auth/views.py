@@ -4,16 +4,13 @@
 # Created by dylanchu on 19-2-24
 
 import datetime
-import json
-
-import requests
 from flask import current_app, jsonify, request, session
 from flask_login import login_user, logout_user, current_user, login_required
 
 from app import errors
 from app.admin.admin_config import ScoreConfig
 from app.admin.util import convert_datetime_to_str
-from app.auth.util import validate_email
+from app.auth.util import validate_email, wx_get_user_info
 from app.models.exam import HistoryTestModel, CurrentTestModel
 from app.models.invitation import InvitationModel
 from app.models.user import UserModel
@@ -22,7 +19,7 @@ from . import auth
 
 @auth.route('/user/info', methods=['GET'])
 @login_required
-def user_info():
+def get_user_info():
     current_app.logger.info('get user info request: %s' % request.form.__str__())
     print(current_user)
     return jsonify(errors.success({
@@ -259,18 +256,9 @@ def wechat_login():
     code = request.form.get('code')
     if not code:
         return jsonify(errors.Params_error)
-    oauth2_url = 'https://api.weixin.qq.com/sns/oauth2/access_token?appid={0}&secret={1}&code={2}&' \
-                 'grant_type=authorization_code'.format(current_app.config['WX_APPID'],
-                                                        current_app.config['WX_SECRET'], code)
-    oauth2_ret = json.loads(requests.get(oauth2_url).text)
-    err_code = oauth2_ret.get('errcode')
+    err_code, user_info = wx_get_user_info(code, current_app.config['WX_APPID'], current_app.config['WX_SECRET'])
     if err_code:
         return jsonify(errors.error({'code': int(err_code), 'msg': 'invalid wechat code'}))
-    token = oauth2_ret.get('access_token')
-    openid = oauth2_ret.get('openid')
-
-    user_info_url = 'https://api.weixin.qq.com/sns/userinfo?access_token={0}&openid={1}'.format(token, openid)
-    user_info = json.loads(requests.get(user_info_url).text)
     wx_union_id = user_info.get('unionid')
     check_user = UserModel.objects(wx_id=wx_union_id).first()
     if not check_user:
@@ -285,8 +273,6 @@ def wechat_login():
             'headimgurl': headimgurl,
             'nickname': nickname,
         }))
-    session['wx_token'] = oauth2_ret.get('access_token')
-    session['wx_openid'] = oauth2_ret.get('openid')
     session['wx_nickname'] = user_info.get('nickname')
     login_user(check_user)
     check_user.last_login_time = datetime.datetime.utcnow()

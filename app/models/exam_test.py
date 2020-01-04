@@ -6,30 +6,44 @@
 from app.models.exam import *
 from app.models.user import UserModel
 
-if __name__ == '__main__':
-    import time
-    import datetime
-    from mongoengine import connect
+import time
+import datetime
+from mongoengine import connect
 
-    MONGODB = {
-        'NAME': 'expression_flask',
-        'HOST': 'mongo-server.expression.hosts',
-        'PORT': 27017,  # caution: integer here (unlike django default)
-        'NEED_AUTH': True,
-        'AUTH_MECHANISM': 'SCRAM-SHA-1',
-        'USER': 'iselab',
-        'PASSWORD': 'iselab###nju.cn'
-    }
-    connect(MONGODB['NAME'], host=MONGODB['HOST'], port=MONGODB['PORT'],
-            username=MONGODB['USER'], password=MONGODB['PASSWORD'], authentication_source=MONGODB['NAME'],
-            authentication_mechanism=MONGODB['AUTH_MECHANISM'])
+MONGODB = {
+    'NAME': 'expression',
+    'HOST': 'mongo-server.expression.hosts',
+    'PORT': 27017,  # caution: integer here (unlike django default)
+    'NEED_AUTH': True,
+    'AUTH_MECHANISM': 'SCRAM-SHA-1',
+    'USER': 'iselab',
+    'PASSWORD': 'iselab###nju.cn'
+}
+connect(MONGODB['NAME'], host=MONGODB['HOST'], port=MONGODB['PORT'],
+        username=MONGODB['USER'], password=MONGODB['PASSWORD'], authentication_source=MONGODB['NAME'],
+        authentication_mechanism=MONGODB['AUTH_MECHANISM'])
 
+# connect('expression_test', host='127.0.0.1', port=27017)
+
+
+def history_test():
     histories = HistoryTestModel.objects()
     print(len(histories))
     for history in histories:
         history['all_analysed'] = False
         history.save()
-    # connect('expression_test', host='127.0.0.1', port=27017)
+
+
+def question_type4_test():
+    q = QuestionModel.objects(q_id=10001).first()
+    print(q)
+    print(q.questions)
+
+
+if __name__ == '__main__':
+    pass
+    question_type4_test()
+
     # ---------------------------example:add(simple)-------------------------------------------
     # question = QuestionModel()
     # question.text = '工作时间之外，是否应该接听工作电话，处理工作？请你谈谈对这个问题的看法。'
