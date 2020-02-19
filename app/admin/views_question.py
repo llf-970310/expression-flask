@@ -35,9 +35,10 @@ def get_all_type_two_questions():
     :return: 所有第二种类型的题目题目，可直接展示
     """
     (page, size) = util.get_page_and_size_from_request_args(request.args)
+
     current_app.logger.info('get_all_type_two_questions  page = %d, size = %d', page, size)
 
-    all_questions_num = len(QuestionModel.objects(q_type=2))
+    all_questions_num = QuestionModel.objects(q_type=2).count()
 
     temp_question_query_max = page * size
     question_query_max = all_questions_num if temp_question_query_max > all_questions_num \
@@ -68,7 +69,7 @@ def get_all_questions():
 
     current_app.logger.info('get_all_questions  page = %d, size = %d', page, size)
 
-    all_questions_num = len(QuestionModel.objects())
+    all_questions_num = QuestionModel.objects().count()
 
     temp_question_query_max = page * size
     question_query_max = all_questions_num if temp_question_query_max > all_questions_num \
