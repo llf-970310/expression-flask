@@ -10,7 +10,7 @@ from flask_login import login_user, logout_user, current_user, login_required
 from app import errors
 from app.admin.admin_config import ScoreConfig
 from app.admin.util import convert_datetime_to_str
-from app.auth.util import validate_email, wx_get_user_info
+from app.auth.util import *
 from app.models.exam import HistoryTestModel, CurrentTestModel
 from app.models.invitation import InvitationModel
 from app.models.user import UserModel
@@ -44,7 +44,7 @@ def update():
         return jsonify(errors.Login_required)
     password = request.form.get('password').strip()
     name = request.form.get('name').strip()
-    check_user = __get_check_user_from_db(current_user)
+    check_user = get_check_user_from_db(current_user)
     if not password:
         check_user.name = name
     else:
@@ -63,7 +63,7 @@ def update():
 def untying():
     if not current_user.is_authenticated:
         return jsonify(errors.Login_required)
-    check_user = __get_check_user_from_db(current_user)
+    check_user = get_check_user_from_db(current_user)
     if not check_user.wx_id:
         return jsonify(errors.Wechat_not_bind)
     check_user.wx_id = ''
@@ -79,7 +79,7 @@ def untying():
 def showscore():
     if not current_user.is_authenticated:
         return jsonify(errors.Login_required)
-    check_user = __get_check_user_from_db(current_user)
+    check_user = get_check_user_from_db(current_user)
     history_scores_origin = HistoryTestModel.objects(user_id=str(check_user['id']))
     current_scores_origin = CurrentTestModel.objects(user_id=str(check_user['id']))
     history_scores = []
@@ -115,7 +115,7 @@ def showscore():
 
     for current in current_scores_origin:
         questions = current['questions']
-        if __question_all_finished(questions):  # 全部结束才录入history
+        if question_all_finished(questions):  # 全部结束才录入history
             history_scores.append({
                 "test_start_time": convert_datetime_to_str(current["test_start_time"]),
                 "score_info": {
@@ -221,7 +221,7 @@ def login():
         1. email符合规范
         2. 各项不为空
     """
-    err, check_user = __authorize(username, password)
+    err, check_user = authorize(username, password)
     if err is not None:
         return jsonify(err)
     login_user(check_user)
@@ -314,7 +314,7 @@ def wechat_bind():
         return jsonify(errors.error())
     username = request.form.get('username')
     password = request.form.get('password')
-    err, check_user = __authorize(username, password)
+    err, check_user = authorize(username, password)
     if err is not None:
         return jsonify(err)
     if check_user.wx_id:
@@ -330,57 +330,3 @@ def wechat_bind():
         'uuid': str(check_user.id),
         'name': str(check_user.name),
     }))
-
-
-def __get_check_user_from_db(current_user):
-    """
-    根据登录的用户获取当前数据库中用户
-    :param email_or_phone: 当前登录用户
-    :return: 当前用户
-    """
-    email = current_user.email
-    if email is None:
-        phone = current_user.phone
-        check_user = UserModel.objects(phone=phone).first()
-    else:
-        check_user = UserModel.objects(email=email).first()
-    return check_user
-
-
-def __question_all_finished(question_dict):
-    for value in question_dict.values():
-        if value['status'] != 'finished':
-            return False
-    return True
-
-
-def __authorize(username, password):
-    """
-    使用 username 和 password 验证用户
-    :type username: str
-    :type password: str
-    :return: 返回一个tuple： (err, check_user)
-        err 为 errors 中定义的错误类型（dict）
-        check_user 为数据库中检索到的用户对象
-        若通过, err 为 None
-        若验证不通过, check_user 为 None
-    """
-    if not (username and password):
-        return errors.Params_error, None
-    username = username.strip().lower()
-    password = password.strip()
-    if '@' in username:
-        # 邮箱登录
-        email = username
-        if not validate_email(email):
-            return errors.Params_error, None
-        check_user = UserModel.objects(email=email).first()
-    else:
-        # 手机号登录
-        phone = username
-        check_user = UserModel.objects(phone=phone).first()
-    if not check_user:
-        return errors.Authorize_failed, None
-    if (not current_app.config['IGNORE_LOGIN_PASSWORD']) and (check_user.password != current_app.md5_hash(password)):
-        return errors.Authorize_failed, None
-    return None, check_user

@@ -6,9 +6,10 @@
 from functools import wraps
 import json
 import requests
-from flask import jsonify
+from flask import jsonify, current_app
 from flask_login import login_required, current_user
 from app import errors
+from app.models.user import UserModel
 
 
 def validate_email(email):
@@ -62,6 +63,60 @@ def wxlp_get_sessionkey_openid(code: str, appid, secret):
     session_key = ret.get('session_key')
     openid = ret.get('openid')
     return 0, session_key, openid
+
+
+def get_check_user_from_db(current_user):
+    """
+    根据登录的用户获取当前数据库中用户
+    :param email_or_phone: 当前登录用户
+    :return: 当前用户
+    """
+    email = current_user.email
+    if email is None:
+        phone = current_user.phone
+        check_user = UserModel.objects(phone=phone).first()
+    else:
+        check_user = UserModel.objects(email=email).first()
+    return check_user
+
+
+def question_all_finished(question_dict):
+    for value in question_dict.values():
+        if value['status'] != 'finished':
+            return False
+    return True
+
+
+def authorize(username, password):
+    """
+    使用 username 和 password 验证用户
+    :type username: str
+    :type password: str
+    :return: 返回一个tuple： (err, check_user)
+        err 为 errors 中定义的错误类型（dict）
+        check_user 为数据库中检索到的用户对象
+        若通过, err 为 None
+        若验证不通过, check_user 为 None
+    """
+    if not (username and password):
+        return errors.Params_error, None
+    username = username.strip().lower()
+    password = password.strip()
+    if '@' in username:
+        # 邮箱登录
+        email = username
+        if not validate_email(email):
+            return errors.Params_error, None
+        check_user = UserModel.objects(email=email).first()
+    else:
+        # 手机号登录
+        phone = username
+        check_user = UserModel.objects(phone=phone).first()
+    if not check_user:
+        return errors.Authorize_failed, None
+    if (not current_app.config['IGNORE_LOGIN_PASSWORD']) and (check_user.password != current_app.md5_hash(password)):
+        return errors.Authorize_failed, None
+    return None, check_user
 
 
 # if __name__ == '__main__':

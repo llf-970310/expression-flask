@@ -11,6 +11,7 @@ from app.models.exam import QuestionModel
 from app.models.user import UserModel
 from . import admin, util
 from .algorithm import OptimizeAlgorithm
+from app.admin.util import *
 
 
 @admin.route('/score/question', methods=['GET'])
@@ -21,12 +22,12 @@ def get_score_of_all_questions():
     """
     current_app.logger.info('get_score_of_all_questions')
 
-    all_answers = AnalysisModel.objects().order_by('question_num')
-    if len(all_answers) == 0:
+    all_answers = AnalysisModel.objects.fields(question_num=1, score_key=1, score_detail=1).order_by('question_num')
+    if all_answers.count() == 0:
         return jsonify(errors.Score_no_data)
 
     mapper = QuestionNumMapper()
-    result = __generate_result_from_dict(mapper.map_answers(all_answers), 'questionId')
+    result = generate_result_from_dict(mapper.map_answers(all_answers), 'questionId')
     return jsonify(errors.success({'result': result}))
 
 
@@ -48,11 +49,11 @@ def get_score_of_specific_questions(id):
         return jsonify(errors.Score_no_data)
 
     mapper = DateMapper()
-    result_by_date = __generate_result_from_dict(mapper.map_answers(all_answers), 'date')
+    result_by_date = generate_result_from_dict(mapper.map_answers(all_answers), 'date')
 
     result_all = []
     for answer in all_answers:
-        result_all.append(_generate_total_score(answer['score_key'], answer['score_detail']))
+        result_all.append(generate_total_score(answer['score_key'], answer['score_detail']))
 
     return jsonify(errors.success({
         'resultByDate': result_by_date,
@@ -68,24 +69,31 @@ def get_score_of_all_users():
     """
     current_app.logger.info('get_score_of_all_users')
 
-    all_answers = AnalysisModel.objects()
-    if len(all_answers) == 0:
+    all_answers = AnalysisModel.objects.fields(user=1, score_key=1, score_detail=1)
+    if all_answers.count() == 0:
         return jsonify(errors.Score_no_data)
 
     mapper = UserMapper()
-    result = __generate_result_from_dict(mapper.map_answers(all_answers), 'username')
+    result = generate_result_from_dict(mapper.map_answers(all_answers), 'username')
 
     # map_answers_by_user() 返回的结果中 key 为 ObjectId，需要改为 email / phone
+    # 先把所有用户信息取回本地，相比每一次遍历都连接数据库查询用户信息更快
+    all_users = UserModel.objects.fields(id=1, email=1, phone=1)
+    user_dict = {}
+    for user in all_users:
+        user_dict[user['id']] = {'email': user['email'], 'phone': user['phone']}
+
     for item in result:
         cur_user_id = item['username']
-        cur_user = UserModel.objects(id=cur_user_id).first()
 
-        if cur_user:
+        if cur_user_id in user_dict:
+            cur_user = user_dict[cur_user_id]
             cur_username = cur_user['email'] if cur_user['email'] else cur_user['phone']
         else:
             cur_username = cur_user_id.__str__() + ScoreConfig.DEFAULT_USER_EMAIL
 
         item['username'] = cur_username
+
     return jsonify(errors.success({'result': result}))
 
 
@@ -112,24 +120,26 @@ def get_score_of_specific_users(username):
             cur_user = UserModel.objects(email=username).first()
             if not cur_user:
                 return jsonify(errors.Score_criteria_not_exist)
-            all_answers = AnalysisModel.objects(user=cur_user['id']).order_by('date')
+            all_answers = AnalysisModel.objects(user=cur_user['id']).\
+                fields(voice_features=0, key_hits=0, detail_hits=0).order_by('date')
     else:
         # 手机号登录
         cur_user = UserModel.objects(phone=username).first()
         if not cur_user:
             return jsonify(errors.Score_criteria_not_exist)
-        all_answers = AnalysisModel.objects(user=cur_user['id']).order_by('date')
+        all_answers = AnalysisModel.objects(user=cur_user['id']).\
+            fields(voice_features=0, key_hits=0, detail_hits=0).order_by('date')
 
     if len(all_answers) == 0:
         return jsonify(errors.Score_no_data)
 
     date_mapper = DateMapper()
-    result_by_date = __generate_result_from_dict(date_mapper.map_answers(all_answers), 'date')
+    result_by_date = generate_result_from_dict(date_mapper.map_answers(all_answers), 'date')
 
     question_id_mapper = QuestionNumMapper()
-    result_by_qid = __generate_result_from_dict(question_id_mapper.map_answers(all_answers), 'questionId')
+    result_by_qid = generate_result_from_dict(question_id_mapper.map_answers(all_answers), 'questionId')
     # 按照 q_id 排序
-    result_by_qid.sort(key=__sort_by_question_id)
+    result_by_qid.sort(key=sort_by_question_id)
 
     result_all = []
     for answer in result_by_qid:
@@ -141,102 +151,4 @@ def get_score_of_specific_users(username):
     }))
 
 
-class AbstractMapper(object):
-    __metaclass__ = abc.ABCMeta
 
-    @abc.abstractmethod
-    def map_answers(self, answers):
-        """
-        将回答 list 按照一定规则对应为 dict
-        """
-        return
-
-
-class QuestionNumMapper(AbstractMapper):
-
-    def map_answers(self, answers):
-        """将所有回答结果按照题号对应
-
-        :param answers: 所有的回答
-        :return: key 为题号，value 为相应的 {key, detail} 得分的字典
-        """
-        res = {}
-        for answer in answers:
-            cur_question_id = answer['question_num']
-            if cur_question_id in res:
-                res[cur_question_id].append({'key': answer['score_key'], 'detail': answer['score_detail']})
-            else:
-                res[cur_question_id] = [{'key': answer['score_key'], 'detail': answer['score_detail']}]
-        return res
-
-
-class UserMapper(AbstractMapper):
-
-    def map_answers(self, answers):
-        """将所有回答结果按照用户对应
-
-        :param answers: 所有的回答
-        :return: key 为用户 ObjectId，value 为相应的 {key, detail} 得分的字典
-        """
-        res = {}
-        for answer in answers:
-            cur_user = answer['user']
-            if cur_user in res:
-                res[cur_user].append({'key': answer['score_key'], 'detail': answer['score_detail']})
-            else:
-                res[cur_user] = [{'key': answer['score_key'], 'detail': answer['score_detail']}]
-        return res
-
-
-class DateMapper(AbstractMapper):
-
-    def map_answers(self, answers):
-        """将所有回答结果按照回答日期对应
-
-            :param answers: 所有的回答
-            :return: key 为日期，value 为相应的 {key, detail} 得分的字典
-        """
-        res = {}
-        for answer in answers:
-            cur_date = util.convert_date_to_str(answer['test_start_time'])
-            if cur_date in res:
-                res[cur_date].append({'key': answer['score_key'], 'detail': answer['score_detail']})
-            else:
-                res[cur_date] = [{'key': answer['score_key'], 'detail': answer['score_detail']}]
-        return res
-
-
-def __generate_result_from_dict(dict, result_key_name):
-    """
-
-    :param dict: {result_key: {key, detail}]}
-    :param result_key_name: 结果集中的 key 值
-    :return:
-    """
-    algorithm = OptimizeAlgorithm()
-
-    result = []
-    for key in dict:
-        cur_answers = dict[key]
-        detail_scores = [cur_answer['detail'] for cur_answer in cur_answers]
-        key_scores = [cur_answer['key'] for cur_answer in cur_answers]
-
-        key_score = algorithm.analysis_score(key_scores, ExamConfig.full_score)['mean']
-        detail_score = algorithm.analysis_score(detail_scores, ExamConfig.full_score)['mean']
-        result.append({
-            result_key_name: key,
-            'times': len(cur_answers),
-            'mainScore': format(key_score, ScoreConfig.DEFAULT_NUM_FORMAT),
-            'detailScore': format(detail_score, ScoreConfig.DEFAULT_NUM_FORMAT),
-            'totalScore': _generate_total_score(key_score, detail_score)
-        })
-    return result
-
-
-def __sort_by_question_id(array_item):
-    return array_item['questionId']
-
-
-def _generate_total_score(key_score, detail_score):
-    return format(key_score * ExamConfig.key_percent + detail_score * ExamConfig.detail_percent,
-                  ScoreConfig.DEFAULT_NUM_FORMAT)
