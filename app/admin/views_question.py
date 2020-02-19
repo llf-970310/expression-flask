@@ -243,6 +243,8 @@ def modify_question():
         "detailwords": json.loads(request.form.get('data[detailwords]')),
     }
 
+    if not id:
+        return jsonify(errors.Params_error)
     question = QuestionModel.objects(q_id=id).first()
     if not question:
         return jsonify(errors.Question_not_exist)
