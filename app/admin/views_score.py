@@ -22,8 +22,8 @@ def get_score_of_all_questions():
     """
     current_app.logger.info('get_score_of_all_questions')
 
-    all_answers = AnalysisModel.objects().order_by('question_num')
-    if len(all_answers) == 0:
+    all_answers = AnalysisModel.objects.fields(question_num=1, score_key=1, score_detail=1).order_by('question_num')
+    if all_answers.count() == 0:
         return jsonify(errors.Score_no_data)
 
     mapper = QuestionNumMapper()
@@ -69,24 +69,31 @@ def get_score_of_all_users():
     """
     current_app.logger.info('get_score_of_all_users')
 
-    all_answers = AnalysisModel.objects()
-    if len(all_answers) == 0:
+    all_answers = AnalysisModel.objects.fields(user=1, score_key=1, score_detail=1)
+    if all_answers.count() == 0:
         return jsonify(errors.Score_no_data)
 
     mapper = UserMapper()
     result = generate_result_from_dict(mapper.map_answers(all_answers), 'username')
 
     # map_answers_by_user() 返回的结果中 key 为 ObjectId，需要改为 email / phone
+    # 先把所有用户信息取回本地，相比每一次遍历都连接数据库查询用户信息更快
+    all_users = UserModel.objects.fields(id=1, email=1, phone=1)
+    user_dict = {}
+    for user in all_users:
+        user_dict[user['id']] = {'email': user['email'], 'phone': user['phone']}
+
     for item in result:
         cur_user_id = item['username']
-        cur_user = UserModel.objects(id=cur_user_id).first()
 
-        if cur_user:
+        if cur_user_id in user_dict:
+            cur_user = user_dict[cur_user_id]
             cur_username = cur_user['email'] if cur_user['email'] else cur_user['phone']
         else:
             cur_username = cur_user_id.__str__() + ScoreConfig.DEFAULT_USER_EMAIL
 
         item['username'] = cur_username
+
     return jsonify(errors.success({'result': result}))
 
 
@@ -113,13 +120,15 @@ def get_score_of_specific_users(username):
             cur_user = UserModel.objects(email=username).first()
             if not cur_user:
                 return jsonify(errors.Score_criteria_not_exist)
-            all_answers = AnalysisModel.objects(user=cur_user['id']).order_by('date')
+            all_answers = AnalysisModel.objects(user=cur_user['id']).\
+                fields(voice_features=0, key_hits=0, detail_hits=0).order_by('date')
     else:
         # 手机号登录
         cur_user = UserModel.objects(phone=username).first()
         if not cur_user:
             return jsonify(errors.Score_criteria_not_exist)
-        all_answers = AnalysisModel.objects(user=cur_user['id']).order_by('date')
+        all_answers = AnalysisModel.objects(user=cur_user['id']).\
+            fields(voice_features=0, key_hits=0, detail_hits=0).order_by('date')
 
     if len(all_answers) == 0:
         return jsonify(errors.Score_no_data)
