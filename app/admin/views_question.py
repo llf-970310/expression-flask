@@ -102,10 +102,16 @@ def get_question(id):
     # wrap question
     context = {
         "questionId": result_question['q_id'],
+        "questionType": result_question['q_type'],
         "rawText": result_question['text'],
-        "keywords": result_question['wordbase']['keywords'],
-        "detailwords": result_question['wordbase']['detailwords'],
+        "keywords": "",
+        "detailwords": ""
     }
+
+    if result_question['q_type'] == 2:
+        context["keywords"] = result_question['wordbase']['keywords']
+        context["detailwords"] = result_question['wordbase']['detailwords']
+
     return jsonify(errors.success(context))
 
 
