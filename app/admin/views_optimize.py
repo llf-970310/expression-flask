@@ -10,6 +10,7 @@ from flask import request, jsonify
 import datetime
 import json
 from functools import reduce
+from app.admin.util import *
 
 
 @admin.route('/get-score-data', methods=['GET'])
@@ -45,7 +46,7 @@ def get_weight_data():
     question = QuestionModel.objects(q_id=question_num).first()
     if not question:
         return jsonify(errors.Question_not_exist)
-    data = __question2weight(question)
+    data = question2weight(question)
     data['allHitTimes'] = len(AnalysisModel.objects(question_num=question_num))
     # return jsonify(errors.success(mock_data.weight_data))
     print(errors.success(data))
@@ -68,7 +69,7 @@ def update_weight():
     question['last_optimize_time'] = datetime.datetime.utcnow()
     question.save()
     # return jsonify(errors.success(mock_data.weight_data))
-    return jsonify(errors.success(__question2weight(question)))
+    return jsonify(errors.success(question2weight(question)))
 
 
 @admin.route('/get-last-cost-data', methods=['GET'])
@@ -161,17 +162,3 @@ def refresh_auto_optimize():
     print("refresh_auto_optimize: questionNum: " + str(question_num))
     return jsonify(errors.success())
 
-
-def __question2weight(question):
-    detail = []
-    for lst in question['wordbase']['detailwords']:
-        detail += lst
-    res = {
-        'keyWords': question['wordbase']['keywords'],
-        'keyWeight': question['weights']['key'],
-        'keyHitTimes': question['weights']['key_hit_times'],
-        'detailWords': detail,
-        'detailWeight': question['weights']['detail'],
-        'detailHitTimes': question['weights']['detail_hit_times']
-    }
-    return res
