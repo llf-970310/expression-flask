@@ -17,11 +17,15 @@ from app.admin.util import *
 def get_score_data():
     question_num = request.args.get('questionNum')
     force = util.str_to_bool(request.args.get('force'))
+    print("get_score_data: questionNum: " + str(question_num))
+
+    question = QuestionModel.objects.filter(q_id=question_num).first()
+    if not question:
+        return jsonify(errors.Question_not_exist)
     if force:
-        question = QuestionModel.objects.filter(q_id=question_num).first()
         analysis = Analysis()
         analysis.re_analysis(question)
-    print("get_score_data: questionNum: " + str(question_num))
+
     analysis_list = AnalysisModel.objects(question_num=question_num)
     if len(analysis_list) == 0:
         return jsonify(errors.success(OptimizeConfig.EMPTY_SCORE_DATA))
