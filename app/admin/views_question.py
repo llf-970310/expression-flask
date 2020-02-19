@@ -60,12 +60,29 @@ def get_all_type_two_questions():
 
 @admin.route('/questions', methods=['GET'])
 def get_all_questions():
-    """获取所有题目 TODO
+    """获取所有题目 TODO: 返回值待定
 
     :return: 所有题目，可直接展示
     """
     (page, size) = util.get_page_and_size_from_request_args(request.args)
-    return jsonify(errors.success(mock_data.questions))
+
+    current_app.logger.info('get_all_questions  page = %d, size = %d', page, size)
+
+    all_questions_num = len(QuestionModel.objects())
+
+    temp_question_query_max = page * size
+    question_query_max = all_questions_num if temp_question_query_max > all_questions_num \
+        else temp_question_query_max
+    questions = QuestionModel.objects()[((page - 1) * size):question_query_max].order_by('q_id')
+
+    data = []
+    for question in questions:
+        data.append({
+            "questionId": question['q_id'],
+            "questionType": question['q_type'],
+            "rawText": question['text'],
+        })
+    return jsonify(errors.success({"count": all_questions_num, "questions": data}))
 
 
 @admin.route('/question/<id>', methods=['GET'])
