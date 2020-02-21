@@ -19,7 +19,7 @@ from app.utils.datetime import datetime_fromisoformat  # for py3.6
 
 @admin.route('/accounts/invite', methods=['POST'])  # url will be .../admin/accounts/test
 @admin_login_required
-def generate_invitation_code():
+def accounts_invite():
     current_app.logger.info('create invitation request: %s' % request.form.__str__())
     # 检验是否有权限申请邀请码
     form = request.form
@@ -41,7 +41,7 @@ def generate_invitation_code():
         5. codeNum要大于0（邀请码个数）
         6. 各项不为空
     """
-    if not vip_start_time or not vip_end_time or not remaining_exam_num or not available_times:
+    if not vip_start_time and not vip_end_time and not remaining_exam_num and not available_times:
         return jsonify(errors.Params_error)
     if vip_start_time >= vip_end_time:  # rule 1
         return jsonify(errors.Params_error)
@@ -63,10 +63,10 @@ def generate_invitation_code():
         invitation.vip_end_time = vip_end_time
         invitation.remaining_exam_num = remaining_exam_num
         invitation.available_times = available_times
-        # 生成指定位数随机字符串为邀请码
         invitation.code = generate_random_code(AccountsConfig.INVITATION_CODE_LEN)
         invitation.create_time = datetime.datetime.utcnow()
         current_app.logger.info('invitation info:%s' % invitation.__str__())
+        # 生成指定位数随机字符串为邀请码
         invitation.save(invitation)
         current_app.logger.info('invitation(id: %s)' % invitation.id)
         invitation_codes.append(invitation.code)

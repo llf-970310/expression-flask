@@ -1,9 +1,11 @@
 import json
+from functools import reduce
 
 from flask import request, current_app, jsonify
 from flask_login import current_user
 
 from app import errors
+from app.admin.admin_config import PaginationConfig
 from app.models.exam import *
 from app.models.origin import *
 from . import admin, util
@@ -34,11 +36,10 @@ def get_all_type_two_questions():
 
     :return: 所有第二种类型的题目题目，可直接展示
     """
-    (page, size) = util.get_page_and_size_from_request_args(request.args)
-
+    (page, size) = __get_page_and_size_from_request_args(request.args)
     current_app.logger.info('get_all_type_two_questions  page = %d, size = %d', page, size)
 
-    all_questions_num = QuestionModel.objects(q_type=2).count()
+    all_questions_num = len(QuestionModel.objects(q_type=2))
 
     temp_question_query_max = page * size
     question_query_max = all_questions_num if temp_question_query_max > all_questions_num \
@@ -61,29 +62,42 @@ def get_all_type_two_questions():
 
 @admin.route('/questions', methods=['GET'])
 def get_all_questions():
-    """获取所有题目 TODO: 返回值待定
+    """获取所有题目 TODO
 
     :return: 所有题目，可直接展示
     """
-    (page, size) = util.get_page_and_size_from_request_args(request.args)
+    (page, size) = __get_page_and_size_from_request_args(request.args)
+    return jsonify(errors.success(mock_data.questions))
 
-    current_app.logger.info('get_all_questions  page = %d, size = %d', page, size)
 
-    all_questions_num = QuestionModel.objects().count()
+def __get_page_and_size_from_request_args(args):
+    """从请求中获得参数
 
-    temp_question_query_max = page * size
-    question_query_max = all_questions_num if temp_question_query_max > all_questions_num \
-        else temp_question_query_max
-    questions = QuestionModel.objects()[((page - 1) * size):question_query_max].order_by('q_id')
+    :param args: request.args get请求的参数
+    :return: get请求中的page、size参数组成的元组
+    """
+    page = args.get('page')
+    size = args.get('size')
 
-    data = []
-    for question in questions:
-        data.append({
-            "questionId": question['q_id'],
-            "questionType": question['q_type'],
-            "rawText": question['text'],
-        })
-    return jsonify(errors.success({"count": all_questions_num, "questions": data}))
+    # 参数小于0不合法，日志记录
+    if page and int(page) < 0:
+        current_app.logger.info('page is not applicable, and page = %d', page)
+    if size and int(size) < 0:
+        current_app.logger.info('size is not applicable, and size = %d', size)
+
+    # 提供默认参数
+    if page == None or page == '' or int(page) < 0:
+        page = PaginationConfig.DEFAULT_PAGE
+    else:
+        page = int(page)
+
+    if size == None or size == '' or int(size) < 0:
+        size = PaginationConfig.DEFAULT_SIZE
+    else:
+        size = int(size)
+
+    current_app.logger.info('page = %d, size = %d', page, size)
+    return (page, size)
 
 
 @admin.route('/question/<id>', methods=['GET'])
@@ -103,16 +117,10 @@ def get_question(id):
     # wrap question
     context = {
         "questionId": result_question['q_id'],
-        "questionType": result_question['q_type'],
         "rawText": result_question['text'],
-        "keywords": "",
-        "detailwords": ""
+        "keywords": result_question['wordbase']['keywords'],
+        "detailwords": result_question['wordbase']['detailwords'],
     }
-
-    if result_question['q_type'] == 2:
-        context["keywords"] = result_question['wordbase']['keywords']
-        context["detailwords"] = result_question['wordbase']['detailwords']
-
     return jsonify(errors.success(context))
 
 
@@ -123,7 +131,7 @@ def del_question(id):
     :param id: 问题ID
     :return:  该问题详情
     """
-    # 检验是否有权限删除题目
+    # 检验是否有权限申请邀请码
     if not current_user.is_authenticated:
         return jsonify(errors.Login_required)
     if not current_user.is_admin():
@@ -211,7 +219,7 @@ def post_new_question():
             origin_question.delete()
 
     # 进入 questions 的 q_id
-    next_q_id = util.get_next_available_question_id()
+    next_q_id = __get_next_available_question_id()
     current_app.logger.info('next_q_id: ' + next_q_id.__str__())
     # 插入 questions，初始化关键词权重 weights
     new_question = QuestionModel(
@@ -219,11 +227,20 @@ def post_new_question():
         level=5,
         text=question_data_raw_text,
         wordbase=question_wordbase,
-        weights=util.reset_question_weights(question_wordbase),
+        weights=__reset_question_weights(question_wordbase),
         q_id=next_q_id
     )
     new_question.save()
     return jsonify(errors.success())
+
+
+def __get_next_available_question_id():
+    """获取当前题目 question 中最大的题号
+
+    :return: 当前最大题号
+    """
+    max_question = QuestionModel.objects().order_by('-q_id').limit(1).first()
+    return max_question['q_id'] + 1
 
 
 @admin.route('/question', methods=['PUT'])
@@ -244,8 +261,6 @@ def modify_question():
         "detailwords": json.loads(request.form.get('data[detailwords]')),
     }
 
-    if not id:
-        return jsonify(errors.Params_error)
     question = QuestionModel.objects(q_id=id).first()
     if not question:
         return jsonify(errors.Question_not_exist)
@@ -254,10 +269,28 @@ def modify_question():
     question.update(
         text=question_data_raw_text,
         wordbase=question_wordbase,
-        weights=util.reset_question_weights(question_wordbase)
+        weights=__reset_question_weights(question_wordbase)
     )
 
     return jsonify(errors.success())
 
 
+def __reset_question_weights(wordbase):
+    """
+    1。 重置问题关键词的权重：权重的数量等于词的数量加一，每个词的权重=100/权重的数量
+    2。 重置权重的击中次数为0
+    """
+    weights = {}
+    len_keywords = len(wordbase['keywords'])
+    len_detailwords = len(reduce(lambda x, y: x + y, wordbase['detailwords']))
 
+    # 重置问题关键词的权重
+    key_init = 100 / (len_keywords + 1)
+    detail_init = 100 / (len_detailwords + 1)
+    weights['key'] = [key_init for i in range(len_keywords + 1)]
+    weights['detail'] = [detail_init for i in range(len_detailwords + 1)]
+
+    # 重置权重的击中次数为0
+    weights['key_hit_times'] = [0 for i in range(len_keywords)]
+    weights['detail_hit_times'] = [0 for i in range(len_detailwords)]
+    return weights
