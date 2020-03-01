@@ -22,7 +22,7 @@ def upload_success_for_test():
     current_app.logger.info("upload_success_for_test: upload_url: " + upload_url)
 
     if q_type == 'pre-test':
-        wav_test = WavTestModel()
+        wav_test = WavPretestModel()
         wav_test['result']['status'] = 'handling'
         wav_test.result['analysis_start_time'] = datetime.datetime.utcnow()
         wav_test['wav_upload_url'] = upload_url.lstrip('/expression')
@@ -76,7 +76,7 @@ def get_result_for_test():
     if not test_id or (len(test_id) != 12 and len(test_id) != 24):
         return jsonify(errors.Params_error)
     if pre_test is True or pre_test == 'True':
-        the_test = WavTestModel.objects(id=test_id).first()
+        the_test = WavPretestModel.objects(id=test_id).first()
         if the_test is None:
             return jsonify(errors.Exam_not_exist)
         try:

@@ -7,7 +7,7 @@ from app import db
 # 中文资料：https://segmentfault.com/a/1190000008025156#articleHeader8
 
 
-class WavTestModel(db.DynamicDocument):
+class WavPretestModel(db.DynamicDocument):
     """
     用户的音频测试 wav+test
     """

@@ -4,6 +4,7 @@
 # Created by dylanchu on 19-2-25
 import random
 import traceback
+import Levenshtein
 
 from flask import request, current_app, jsonify, session
 from flask_login import current_user, login_required
@@ -21,7 +22,7 @@ from .exam_config import PathConfig, ExamConfig, QuestionConfig, DefaultValue, S
 @login_required
 def get_test_wav_info():
     user_id = str(current_user.id)
-    wav_test = WavTestModel()
+    wav_test = WavPretestModel()
     wav_test['text'] = QuestionConfig.test_text['content']
     wav_test['user_id'] = user_id
     wav_test.save()
@@ -43,7 +44,7 @@ def get_test_wav_info():
 @login_required
 def get_test_wav_url():
     test_id = request.form.get('test_id')
-    wav_test = WavTestModel.objects(id=test_id).first()
+    wav_test = WavPretestModel.objects(id=test_id).first()
     if not wav_test:
         current_app.logger.error("get_test_wav_url: no such test! test id: %s, user name: %s" %
                                  (test_id, current_user.name))
@@ -68,7 +69,7 @@ def get_test_wav_url():
 @login_required
 def upload_test_wav_success():
     test_id = request.form.get('test_id')
-    wav_test = WavTestModel.objects(id=test_id).first()
+    wav_test = WavPretestModel.objects(id=test_id).first()
     if not wav_test:
         current_app.logger.error("upload_test_wav_success: no such test! test id: %s, user name: %s" %
                                  (test_id, current_user.name))
@@ -90,7 +91,7 @@ def upload_test_wav_success():
 @login_required
 def get_test_result():
     test_id = request.form.get('test_id')
-    wav_test = WavTestModel.objects(id=test_id).first()
+    wav_test = WavPretestModel.objects(id=test_id).first()
     if not wav_test:
         current_app.logger.error("get_test_result: no test test_id: %s, user name: %s" % (test_id, current_user.name))
         return jsonify(errors.success(errors.Test_not_exist))
@@ -104,6 +105,30 @@ def get_test_result():
     else:
         current_app.logger.info("get_test_result: bad quality test_id: %s, user name: %s" %
                                 (test_id, current_user.name))
+        return jsonify(errors.success({"canRcg": False, "qualityIsOk": False}))
+
+
+# Optional for get_test_result:
+def get_pretest_result():
+    test_id = request.json.get('test_id')
+    wav_pretest = WavPretestModel.objects(id=test_id).first()
+    test_info = 'test_id: %s, user name: %s' % (test_id, current_user.name)
+    if wav_pretest is None:
+        current_app.logger.error('[Not Found][get_pretest_result]%s' % test_info)
+        return jsonify(errors.Test_not_exist)
+    status = wav_pretest['result']['status']
+    if status == 'handling':
+        return jsonify(errors.WIP)
+    elif status == 'finished':
+        current_app.logger.info('[Success][get_test_result]%s' % test_info)
+        rcg_text = wav_pretest['result']['feature']['rcg_text']
+        d = {
+            "qualityIsOk": Levenshtein.ratio(rcg_text, wav_pretest['text']) >= 0.6,
+            "canRcg": True
+        }
+        return jsonify(errors.success(d))
+    else:
+        current_app.logger.info('[Bad Quality][get_test_result]%s' % test_info)
         return jsonify(errors.success({"canRcg": False, "qualityIsOk": False}))
 
 
