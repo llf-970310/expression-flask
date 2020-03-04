@@ -28,6 +28,8 @@ class QuestionModel(db.DynamicDocument):
     level = db.IntField(min_value=1, max_value=10)
     q_type = db.IntField(min_value=1, max_value=3)  # type是留字，可能会有一些坑
     used_times = db.IntField(min_value=0, default=0)
+    up_count = db.IntField(min_value=0, default=0)
+    down_count = db.IntField(min_value=0, default=0)
     wordbase = db.DictField(default={})
     weights = db.DictField(default={})
     questions = db.ListField(default=None)  # 选择题集合可以包含若干选择题

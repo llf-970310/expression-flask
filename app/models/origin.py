@@ -10,6 +10,9 @@ class OriginTypeTwoQuestionModel(db.DynamicDocument):
     q_id = db.IntField(min_value=0)  # 题号，从0开始
     origin = db.StringField(max_length=512)
     url = db.StringField(max_length=512)
+    up_count = db.IntField(default=0)
+    down_count = db.IntField(default=0)
+    used_times = db.IntField(default=0)
 
     meta = {'collection': 'origin_questions'}
 

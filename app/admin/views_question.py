@@ -11,11 +11,13 @@ from app.models.origin import *
 from . import admin, util
 from . import mock_data
 from .question_generator import generator
+from app.auth.util import admin_login_required
 
 wordbase_generator = generator.WordbaseGenerator()
 
 
 @admin.route('/generate-keywords', methods=['POST'])
+@admin_login_required
 def generate_wordbase_by_text():
     """根据原文重新生成关键词
 
@@ -31,6 +33,7 @@ def generate_wordbase_by_text():
 
 
 @admin.route('/question-type-two', methods=['GET'])
+@admin_login_required
 def get_all_type_two_questions():
     """获取所有第二种类型的题目
 
@@ -56,11 +59,15 @@ def get_all_type_two_questions():
             "inOptimize": question['in_optimize'],
             "lastOpDate": question['last_optimize_time'],
             "optimized": question['auto_optimized'],
+            "upCount": question.up_count,
+            "downCount": question.down_count,
+            "usedTimes": question.used_times,
         })
     return jsonify(errors.success({"count": all_questions_num, "questions": data}))
 
 
 @admin.route('/questions', methods=['GET'])
+@admin_login_required
 def get_all_questions():
     """获取所有题目 TODO
 
@@ -101,6 +108,7 @@ def __get_page_and_size_from_request_args(args):
 
 
 @admin.route('/question/<id>', methods=['GET'])
+@admin_login_required
 def get_question(id):
     """获取问题详情
 
@@ -120,11 +128,15 @@ def get_question(id):
         "rawText": result_question['text'],
         "keywords": result_question['wordbase']['keywords'],
         "detailwords": result_question['wordbase']['detailwords'],
+        "upCount": result_question.up_count,
+        "downCount": result_question.down_count,
+        "usedTimes": result_question.used_times,
     }
     return jsonify(errors.success(context))
 
 
 @admin.route('/question/<id>', methods=['DELETE'])
+@admin_login_required
 def del_question(id):
     """删除特定问题
 
@@ -132,11 +144,6 @@ def del_question(id):
     :return:  该问题详情
     """
     # 检验是否有权限申请邀请码
-    if not current_user.is_authenticated:
-        return jsonify(errors.Login_required)
-    if not current_user.is_admin():
-        return jsonify(errors.Admin_login_required)
-
     current_app.logger.info('q_id = ' + id)
     to_delete_question = QuestionModel.objects(q_id=id).first()
 
@@ -149,6 +156,7 @@ def del_question(id):
 
 
 @admin.route('/question-from-pool', methods=['GET'])
+@admin_login_required
 def get_question_from_pool():
     """获取题库中题目
 
@@ -171,6 +179,7 @@ def get_question_from_pool():
 
 
 @admin.route('/question-from-pool', methods=['DELETE'])
+@admin_login_required
 def delete_specific_question_from_pool():
     """
     删除题库中题目
@@ -191,6 +200,7 @@ def delete_specific_question_from_pool():
 
 
 @admin.route('/question', methods=['POST'])
+@admin_login_required
 def post_new_question():
     """新建一个问题
 
@@ -244,6 +254,7 @@ def __get_next_available_question_id():
 
 
 @admin.route('/question', methods=['PUT'])
+@admin_login_required
 def modify_question():
     """修改一个问题
 
