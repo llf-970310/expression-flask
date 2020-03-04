@@ -43,7 +43,7 @@ def upload_success_for_test():
         current_test = CurrentTestModel()
         current_test.test_start_time = datetime.datetime.utcnow()
         q = QuestionModel.objects(q_type=int(q_type)).order_by('used_times')[0]
-        q_current = CurrentQuestionEmbed(q_id=q.id.__str__(), q_type=q.q_type, q_text=q.text, wav_upload_url='')
+        q_current = CurrentQuestionEmbed(q_dbid=str(q.id), q_type=q.q_type, q_text=q.text, wav_upload_url='')
         current_test.questions = {"1": q_current}
         current_test.save()
 

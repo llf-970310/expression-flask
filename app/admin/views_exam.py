@@ -33,7 +33,7 @@ def admin_get_question():
     test = CurrentTestModel()
     test.user_id = str(current_user.id)
     test.test_start_time = datetime.datetime.utcnow()
-    q_current = CurrentQuestionEmbed(q_id=question.id.__str__(), q_type=question.q_type, q_text=question.text,
+    q_current = CurrentQuestionEmbed(q_dbid=str(question.id), q_type=question.q_type, q_text=question.text,
                                      wav_upload_url='', wav_temp_url='')
     test.questions = {"1": q_current}
     test.save()

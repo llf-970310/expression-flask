@@ -394,7 +394,7 @@ def init_question(user_id):
 
     for i in range(len(temp_all_q_lst)):
         q = temp_all_q_lst[i]
-        q_current = CurrentQuestionEmbed(q_id=q.id.__str__(), q_type=q.q_type, q_text=q.text, wav_upload_url='')
+        q_current = CurrentQuestionEmbed(q_dbid=str(q.id), q_type=q.q_type, q_text=q.text, wav_upload_url='')
         current_test.questions.update({str(i + 1): q_current})
         q.update(inc__used_times=1)  # update
 
@@ -414,6 +414,7 @@ def question_dealer(question_num, test_id, user_id) -> dict:
     # wrap question
     question = test.questions[str(question_num)]
     context = {"questionType": question.q_type,
+               "questionDbId": question.q_dbid,
                "questionNumber": question_num,
                "questionLimitTime": ExamConfig.question_limit_time[question.q_type],
                "lastQuestion": question_num == ExamConfig.total_question_num,
@@ -434,7 +435,7 @@ def question_dealer(question_num, test_id, user_id) -> dict:
     user = UserModel.objects(id=user_id).first()
     if user is None:
         current_app.logger.error("question_dealer: ERROR: user not find")
-    user.questions_history.update({question.q_id: datetime.datetime.utcnow()})
+    user.questions_history.update({question.q_dbid: datetime.datetime.utcnow()})
     user.save()
 
     return context

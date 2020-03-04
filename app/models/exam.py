@@ -50,7 +50,7 @@ class CurrentQuestionEmbed(db.EmbeddedDocument):
     """
     用户做题的题目 current.question[x]
     """
-    q_id = db.StringField(max_length=32)
+    q_dbid = db.StringField(max_length=32, db_field='q_id')
     q_type = db.IntField(min_value=1, max_value=3)
     q_text = db.StringField(max_length=512)
     file_location = db.StringField(max_length=32)

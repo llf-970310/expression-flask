@@ -180,7 +180,7 @@ def wx_init_question(openid: str):
     q2 = QuestionModel.objects(q_id=WxConfig.q9_q_id).first()
     for q in (q1, q2):
         _upload_url = wx_gen_upload_url(openid, i)
-        q_current = CurrentQuestionEmbed(q_id=str(q.id), q_type=q.q_type, q_text=q.text,
+        q_current = CurrentQuestionEmbed(q_dbid=str(q.id), q_type=q.q_type, q_text=q.text,
                                          wav_upload_url=_upload_url,
                                          file_location='BOS',
                                          status='url_fetched')

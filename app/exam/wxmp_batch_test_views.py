@@ -203,7 +203,7 @@ def wxbt_init_question(openid: str):
     q = q1
     _upload_url = wxbt_gen_upload_url(openid, i)
     _upload_url = 'audio/0-bt-christmas2019/8.m4a'
-    q_current = CurrentQuestionEmbed(q_id=str(q.id), q_type=q.q_type, q_text=q.text,
+    q_current = CurrentQuestionEmbed(q_dbid=str(q.id), q_type=q.q_type, q_text=q.text,
                                      wav_upload_url=_upload_url,
                                      file_location='BOS',
                                      status='url_fetched')
@@ -214,7 +214,7 @@ def wxbt_init_question(openid: str):
     q = q2
     _upload_url = wxbt_gen_upload_url(openid, i)
     _upload_url = 'audio/0-bt-christmas2019/9.m4a'
-    q_current = CurrentQuestionEmbed(q_id=str(q.id), q_type=q.q_type, q_text=q.text,
+    q_current = CurrentQuestionEmbed(q_dbid=str(q.id), q_type=q.q_type, q_text=q.text,
                                      wav_upload_url=_upload_url,
                                      file_location='BOS',
                                      status='url_fetched')
