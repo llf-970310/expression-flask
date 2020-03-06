@@ -42,8 +42,8 @@ def create_app():
         Session(app)
     db.init_app(app)
 
-    from celery_config import CeleryConfig
-    app.config.from_object(CeleryConfig)
+    from .async_tasks.celery_scheduler_config import CelerySchedulerConfig
+    app.config.from_object(CelerySchedulerConfig)
     scheduler.init_app(app)  # 把任务列表放进flask
     scheduler.start()  # 启动任务列表
 

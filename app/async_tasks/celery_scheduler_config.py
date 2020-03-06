@@ -1,7 +1,7 @@
-from app.celery_manage.task import collect_history_to_analysis, move_current_to_history
+from .celery_scheduler_tasks import collect_history_to_analysis, move_current_to_history
 
 
-class CeleryConfig:
+class CelerySchedulerConfig:
     SCHEDULER_API_ENABLED = True
     JOBS = [
         {
