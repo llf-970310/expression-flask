@@ -13,7 +13,7 @@ from app import errors
 from app.exam.util import *
 from app.models.exam import *
 from app.models.user import UserModel
-from celery_tasks import analysis_main_12, analysis_main_3, analysis_wav_test
+from app.async_tasks import analysis_main_12, analysis_main_3, analysis_wav_pretest
 from . import exam
 from .exam_config import PathConfig, ExamConfig, QuestionConfig, DefaultValue, Setting
 
@@ -77,7 +77,7 @@ def upload_test_wav_success():
     wav_test['result']['status'] = 'handling'
     wav_test.save()
     try:
-        ret = analysis_wav_test.apply_async(args=[test_id], queue='q_pre_test', priority=20)
+        ret = analysis_wav_pretest.apply_async(args=[test_id], queue='q_pre_test', priority=20)
         current_app.logger.info("AsyncResult id: %s" % ret.id)
     except Exception as e:
         current_app.logger.error('upload_test_wav_success: ERROR! celery enqueue:\n%s' % traceback.format_exc())

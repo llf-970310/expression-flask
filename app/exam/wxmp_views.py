@@ -13,7 +13,7 @@ from flask import request, current_app, jsonify
 from app import errors
 from app.exam.util import get_server_date_str
 from app.models.exam import *
-from celery_tasks import analysis_main_12, analysis_main_3
+from app.async_tasks import analysis_main_12, analysis_main_3
 from . import exam
 from .exam_config import PathConfig
 from app.auth.util import wxlp_get_sessionkey_openid

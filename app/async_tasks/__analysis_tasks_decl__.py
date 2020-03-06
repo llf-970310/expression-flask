@@ -12,16 +12,16 @@ celery_backend = celery_broker
 app = Celery('tasks', broker=celery_broker, backend=celery_backend)
 
 
-@app.task
+@app.task(name='analysis_12')
 def analysis_main_12(current_id_str, q_num_str):
     pass
 
 
-@app.task
+@app.task(name='analysis_3')
 def analysis_main_3(current_id_str, q_num_str):
     pass
 
 
-@app.task
-def analysis_wav_test(test_id_str):
+@app.task(name='analysis_pretest')
+def analysis_wav_pretest(test_id_str):
     pass

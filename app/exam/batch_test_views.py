@@ -7,7 +7,7 @@ from . import exam
 from app import errors
 from app.models.exam import *
 from flask import request, current_app, jsonify
-from celery_tasks import analysis_main_12, analysis_main_3, analysis_wav_test
+from app.async_tasks import analysis_main_12, analysis_main_3, analysis_wav_pretest
 import datetime
 import traceback
 
@@ -31,7 +31,7 @@ def upload_success_for_test():
         wav_test.save()
 
         try:
-            ret = analysis_wav_test.apply_async(args=(str(wav_test.id),), queue='q_pre_test', priority=20)
+            ret = analysis_wav_pretest.apply_async(args=(str(wav_test.id),), queue='q_pre_test', priority=20)
             current_app.logger.info("AsyncResult id: %s" % ret.id)
         except Exception as e:
             current_app.logger.error('upload_success_for_test: celery enqueue:\n%s' % traceback.format_exc())
