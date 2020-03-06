@@ -7,7 +7,7 @@ from . import exam
 from app import errors
 from app.models.exam import *
 from flask import request, current_app, jsonify
-from app.async_tasks import analysis_main_12, analysis_main_3, analysis_wav_pretest
+from app.async_tasks import CeleryQueue
 import datetime
 import traceback
 
@@ -30,13 +30,12 @@ def upload_success_for_test():
         wav_test['text'] = '表达力测试将用15分钟的时间，数据化您的表达能力。'
         wav_test.save()
 
-        try:
-            ret = analysis_wav_pretest.apply_async(args=(str(wav_test.id),), queue='q_pre_test', priority=20)
-            current_app.logger.info("AsyncResult id: %s" % ret.id)
-        except Exception as e:
-            current_app.logger.error('upload_success_for_test: celery enqueue:\n%s' % traceback.format_exc())
-            return jsonify(errors.exception({'Exception': str(e)}))
-        resp = {"status": "Success", "desc": "添加任务成功，等待服务器处理", "dataID": str(wav_test.id), "taskID": ret.id}
+        task_id, err = CeleryQueue.put_task('pretest', wav_test.id)
+        if err:
+            current_app.logger.error('[PutTaskException][upload_success_for_test]test_id:%s,'
+                                     'exception:\n%s' % (wav_test.id, traceback.format_exc()))
+            return jsonify(errors.exception({'Exception': str(err)}))
+        resp = {"status": "Success", "desc": "添加任务成功，等待服务器处理", "dataID": str(wav_test.id), "taskID": task_id}
         return jsonify(errors.success(resp))
     else:
         # 新建一个current
@@ -54,18 +53,18 @@ def upload_success_for_test():
         current_test.questions['1'].file_location = 'BOS'
         current_test.save()
 
-        try:
-            if q.q_type == 3 or q.q_type == '3':
-                ret = analysis_main_3.apply_async(args=(str(current_test.id), '1'), queue='q_type3', priority=10)
-                # todo: store ret.id in redis for status query
-            else:
-                ret = analysis_main_12.apply_async(args=(str(current_test.id), '1'), queue='q_type12', priority=2)
-                # todo: store ret.id in redis for status query
-            current_app.logger.info("AsyncResult id: %s" % ret.id)
-        except Exception as e:
-            current_app.logger.error('upload_success_for_test: celery enqueue:\n%s' % traceback.format_exc())
-            return jsonify(errors.exception({'Exception': str(e)}))
-        resp = {"status": "Success", "desc": "添加任务成功，等待服务器处理", "dataID": str(current_test.id), "taskID": ret.id}
+        task_id, err = CeleryQueue.put_task(q.q_type, current_test.id, '1')
+        if err:
+            current_app.logger.error('[PutTaskException][upload_success_for_test]q_type:%s, test_id:%s,'
+                                     'exception:\n%s' % (q.q_type, current_test.id, traceback.format_exc()))
+            return jsonify(errors.exception({'Exception': str(err)}))
+        current_app.logger.info("[PutTaskSuccess][upload_success_for_test]dataID: %s" % str(current_test.id))
+        resp = {
+            "status": "Success",
+            "desc": "添加任务成功，等待服务器处理",
+            "dataID": str(current_test.id),
+            "taskID": task_id
+        }
         return jsonify(errors.success(resp))
 
 

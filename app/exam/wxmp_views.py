@@ -13,7 +13,7 @@ from flask import request, current_app, jsonify
 from app import errors
 from app.exam.util import get_server_date_str
 from app.models.exam import *
-from app.async_tasks import analysis_main_12, analysis_main_3
+from app.async_tasks import CeleryQueue
 from . import exam
 from .exam_config import PathConfig
 from app.auth.util import wxlp_get_sessionkey_openid
@@ -75,21 +75,18 @@ def wx_upload_success():
     q['analysis_start_time'] = datetime.datetime.utcnow()
     current_test.save()
 
-    try:
-        if q.q_type == 3 or q.q_type == '3':
-            ret = analysis_main_3.apply_async(args=(str(current_test.id), str(q_num)), queue='q_type3', priority=10)
-            # todo: store ret.id in redis for status query
-        elif q.q_type in [1, 2, '1', '2']:
-            ret = analysis_main_12.apply_async(args=(str(current_test.id), str(q_num)), queue='q_type12', priority=2)
-            # todo: store ret.id in redis for status query
-        else:
-            return jsonify(errors.exception({'msg': '不能处理该题目类型:%s' % q.q_type}))
-        current_app.logger.info("AsyncResult id: %s" % ret.id)
-    except Exception as e:
-        current_app.logger.error('upload_success: celery enqueue:\n%s' % traceback.format_exc())
-        return jsonify(errors.exception({'Exception': str(e)}))
-    current_app.logger.info("upload_success: success return! dataID: %s" % str(current_test.id))
-    resp = {"status": "Success", "desc": "添加任务成功，等待服务器处理", "dataID": current_test.id.__str__(), "taskID": ret.id}
+    task_id, err = CeleryQueue.put_task(q.q_type, current_test.id, q_num)
+    if err:
+        current_app.logger.error('[PutTaskException][wx_upload_success]q_type:%s, test_id:%s,'
+                                 'exception:\n%s' % (q.q_type, current_test.id, traceback.format_exc()))
+        return jsonify(errors.exception({'Exception': str(err)}))
+    current_app.logger.info("[PutTaskSuccess][wx_upload_success]dataID: %s" % str(current_test.id))
+    resp = {
+        "status": "Success",
+        "desc": "添加任务成功，等待服务器处理",
+        "dataID": str(current_test.id),
+        "taskID": task_id
+    }
     return jsonify(errors.success(resp))
 
 
