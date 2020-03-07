@@ -1,12 +1,17 @@
 #!/usr/bin/env python3
 # coding: utf-8
 
+from __future__ import absolute_import
 import datetime
 from app.models.exam import CurrentStatisticsModel, CurrentTestModel, HistoryTestModel, QuestionModel
 from app.admin.analysis import Analysis
 from app.exam.exam_config import ExamConfig
 from app.exam.util import compute_exam_score
-from app import scheduler
+
+
+def func_example():
+    print('this is an example apscheduler task')
+    # raise Exception('nothing wrong, just wanna except')
 
 
 def move_current_to_history():

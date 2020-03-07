@@ -6,6 +6,20 @@
 import hashlib
 
 
+class MongoConfig:
+    # for apscheduler client
+    # actually these information should be moved to .env file, then loaded here
+    host = 'redis-server.expression.hosts'
+    port = 27017
+    # {
+    # auth = None
+    auth = 'SCRAM-SHA-1'  # auth mechanism, set to None if auth is not needed
+    user = 'iselab'
+    password = 'iselab###nju.cn'
+    # }
+    db = 'expression'
+
+
 class BaseConfig(object):
     LOG_LEVEL = 'DEBUG'  # DEBUG, INFO, WARNING, ERROR, CRITICAL. 可使用app.logger.exception(msg)，但level没有EXCEPTION
     SECRET_KEY = 'dL28o(19xi54h2?3BX90k92R'
@@ -49,12 +63,12 @@ class DevelopmentConfig(BaseConfig):
     # SESSION_REDIS = Redis(host='127.0.0.1', port=6379, db=0, password=None)
     SESSION_REDIS = Redis(host='redis-server.expression.hosts', port=6379, db=0, password='ise_expression')
     MONGODB_SETTINGS = {
-        'db': 'expression',
-        'host': 'mongo-server.expression.hosts',
-        'port': 27017,
+        'db': MongoConfig.db,
+        'host': MongoConfig.host,
+        'port': MongoConfig.port,
         # if authentication is needed:
-        'username': 'iselab',
-        'password': 'iselab###nju.cn',
+        'username': MongoConfig.user,
+        'password': MongoConfig.password,
         'connect': False  # False: connect when first connect instead of instantiated
     }
     IGNORE_LOGIN_PASSWORD = False

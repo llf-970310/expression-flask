@@ -8,7 +8,6 @@ from app_config import DevelopmentConfig
 from flask import Flask, jsonify
 from flask_login import LoginManager
 from flask_mongoengine import MongoEngine
-from flask_apscheduler import APScheduler as _BaseAPScheduler
 
 import os
 import sys
@@ -18,14 +17,7 @@ sys.path.append(analysis_docker_folder)
 sys.path.append(os.path.join(analysis_docker_folder, 'expression'))
 
 
-class APScheduler(_BaseAPScheduler):
-    def run_job(self, id, jobstore=None):
-        with self.app.app_context():
-            super().run_job(id=id, jobstore=jobstore)
-
-
 db = MongoEngine()
-scheduler = APScheduler()
 login_manager = LoginManager()
 login_manager.session_protection = 'strong'
 login_manager.unauthorized = lambda: jsonify(errors.Login_required)
@@ -41,13 +33,27 @@ def create_app():
         from flask_session import Session
         Session(app)
     db.init_app(app)
-
-    from .async_tasks.apscheduler_config import SchedulerConfig
-    app.config.from_object(SchedulerConfig)
-    scheduler.init_app(app)  # 把任务列表放进flask
-    scheduler.start()  # 启动任务列表
-
     login_manager.init_app(app)
+
+    # -------------------------------------------apscheduler init
+    from app.async_tasks import APScheduler, SchedulerConfig
+    scheduler = APScheduler()
+    app.config.from_object(SchedulerConfig)
+    from app.async_tasks import AvailableJobs
+    from app.models.apscheduler import ApJob
+
+    stored_jobs = ApJob.objects()
+    stored_job_ids = [j.get_id() for j in stored_jobs]
+    app.config['JOBS'] = AvailableJobs.get_new_available_jobs(stored_job_ids)
+    print('--------- new apscheduler available jobs ---------')
+    print(app.config['JOBS'])
+    print('--------------------------------------------------')
+    scheduler.init_app(app)
+    scheduler.start()
+    scheduler._logger = app.logger
+    # ---------------------------------------apscheduler init end
+
+    app.md5_hash = app.config['MD5_HASH']
 
     from .auth import auth as auth_blueprint
     app.register_blueprint(auth_blueprint, url_prefix='/api/auth')
@@ -57,7 +63,7 @@ def create_app():
     app.register_blueprint(admin_blueprint, url_prefix='/api/admin')
     from .accounts import accounts as accounts_blueprint
     app.register_blueprint(accounts_blueprint, url_prefix='/api/accounts')
-
-    app.md5_hash = app.config['MD5_HASH']
+    from .async_tasks import ap_view as ap_view_blueprint
+    app.register_blueprint(ap_view_blueprint, url_prefix='/api/apscheduler')
 
     return app
