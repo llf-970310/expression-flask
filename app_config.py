@@ -4,6 +4,10 @@
 # Created by dylanchu on 19-2-15
 
 import hashlib
+from redis import Redis
+
+# redis_client = Redis(host='redis-server.expression.hosts', port=6379, db=0, password='ise_expression')
+redis_client = Redis(host='127.0.0.1', port=6379, db=0, password=None)
 
 
 class MongoConfig:
@@ -59,9 +63,7 @@ class DevelopmentConfig(BaseConfig):
     WTF_CSRF_ENABLED = False  # 是否开启flask-wtf的csrf保护,默认是True,用postman提交表单测试需要设为False
     SESSION_USE_SIGNER = False
     SESSION_TYPE = 'redis'
-    from redis import Redis
-    # SESSION_REDIS = Redis(host='127.0.0.1', port=6379, db=0, password=None)
-    SESSION_REDIS = Redis(host='redis-server.expression.hosts', port=6379, db=0, password='ise_expression')
+    SESSION_REDIS = redis_client
     MONGODB_SETTINGS = {
         'db': MongoConfig.db,
         'host': MongoConfig.host,

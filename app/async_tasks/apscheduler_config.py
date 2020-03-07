@@ -65,7 +65,8 @@ class AvailableJobs(object):
                 'func': func_example,
                 'args': '',
                 'trigger': 'interval',
-                'minutes': 7200,
+                'minutes': 720,
+                # 'seconds': 20,
                 'replace_existing': True
             },
             'description': '一个定时任务示例'
