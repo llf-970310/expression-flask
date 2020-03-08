@@ -6,8 +6,8 @@
 import hashlib
 from redis import Redis
 
-redis_client = Redis(host='redis-server.expression.hosts', port=6379, db=0, password='ise_expression')
-# redis_client = Redis(host='127.0.0.1', port=6379, db=0, password=None)
+# redis_client = Redis(host='redis-server.expression.hosts', port=6379, db=0, password='ise_expression')
+redis_client = Redis(host='127.0.0.1', port=6379, db=0, password=None)
 
 
 class MongoConfig:

@@ -4,28 +4,28 @@
 from __future__ import absolute_import
 import datetime
 
-from app.async_tasks.utils import get_a_redis_lock
+from app.async_tasks.utils import mutex_with_redis
 from app.models.exam import CurrentStatisticsModel, CurrentTestModel, HistoryTestModel, QuestionModel
 from app.admin.analysis import Analysis
 from app.exam.exam_config import ExamConfig
 from app.exam.util import compute_exam_score
 
 
+@mutex_with_redis(3600 * 6)
 def func_example():
-    if not get_a_redis_lock(func_example, 24 * 3 * 3600):
-        print('cannot get a redis lock, exit now')
-        return
-    print('this is an example apscheduler task')
+    # if not get_a_redis_lock(func_example, 24 * 3 * 3600):
+    #     print('cannot get a redis lock, exit now')
+    #     return
+    print('[Example][APSTask]this is an example apscheduler task', datetime.datetime.now())
     # raise Exception('nothing wrong, just wanna except')
 
 
+@mutex_with_redis(600)
 def move_current_to_history():
     """
     1. 删除 current 表中 user_id 为空 或为 'batchtest' 的记录
     2. 将 current 表中超时且未在处理中的部分搬运到history
     """
-    if not get_a_redis_lock(move_current_to_history):
-        return
     print('move_current_to_history')
     stat = CurrentStatisticsModel()
     stat.total_cnt = CurrentTestModel.objects().count()
@@ -86,11 +86,10 @@ def question_process_finished(question_dict):
     return False
 
 
+@mutex_with_redis(600)
 def collect_history_to_analysis():
     """将 current 表中新出现的已评分分析的题目搬运到 analysis
     """
-    if not get_a_redis_lock(collect_history_to_analysis):
-        return
     print('collect_history_to_analysis')
     history_list = HistoryTestModel.objects()
 

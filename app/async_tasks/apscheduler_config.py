@@ -37,10 +37,10 @@ class AvailableJobs(object):
                 'func': collect_history_to_analysis,
                 'args': '',
                 'trigger': {
-                    # 5:36 分钟同步一次
+                    # 4:36 分钟同步一次
                     'type': 'cron',
                     'day_of_week': "0-6",
-                    'hour': 5,
+                    'hour': 4,
                     'minute': 36
                 }
             },
@@ -65,8 +65,8 @@ class AvailableJobs(object):
                 'func': func_example,
                 'args': '',
                 'trigger': 'interval',
-                'minutes': 720,
-                # 'seconds': 20,
+                'minutes': 10,
+                # 'seconds': 10,
                 'replace_existing': True
             },
             'description': '一个定时任务示例'
