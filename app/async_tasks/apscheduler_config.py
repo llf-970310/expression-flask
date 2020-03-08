@@ -4,6 +4,7 @@ from apscheduler.jobstores.mongodb import MongoDBJobStore, MongoClient
 from flask_apscheduler import APScheduler as _BaseAPScheduler
 
 from .ap_tasks_impl import collect_history_to_analysis, move_current_to_history, func_example
+from app_config import MongoConfig
 
 
 class APScheduler(_BaseAPScheduler):
@@ -11,8 +12,6 @@ class APScheduler(_BaseAPScheduler):
         with self.app.app_context():
             super().run_job(id=id, jobstore=jobstore)
 
-
-from app_config import MongoConfig
 
 client = MongoClient(host=MongoConfig.host, port=MongoConfig.port, username=MongoConfig.user,
                      password=MongoConfig.password, authSource=MongoConfig.db,
