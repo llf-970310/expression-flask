@@ -63,6 +63,8 @@ def create_app():
     app.register_blueprint(admin_blueprint, url_prefix='/api/admin')
     from .accounts import accounts as accounts_blueprint
     app.register_blueprint(accounts_blueprint, url_prefix='/api/accounts')
+    from .questions import questions as questions_blueprint
+    app.register_blueprint(questions_blueprint, url_prefix='/api/questions')
     from .async_tasks import ap_view as ap_view_blueprint
     app.register_blueprint(ap_view_blueprint, url_prefix='/api/apscheduler')
 

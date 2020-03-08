@@ -31,6 +31,8 @@ class UserModel(UserMixin, db.Document):
     register_time = db.DateTimeField(default=lambda: datetime.datetime.utcnow())
     last_login_time = db.DateTimeField(default=lambda: datetime.datetime.utcnow())
     questions_history = db.DictField(default={})  # {question_id: fetched_datetime, ...}
+    questions_liked = db.DictField(default={})  # {question_id: liked_datetime, ...}
+    users_similar = db.DictField(default={})  # {user_id: similarity, ...}
     # student_id = db.StringField(max_length=32)  # student_id should be unique. todo: remove? should remove
     # university = db.StringField(max_length=32) # 改成枚举
     # college = db.StringField(max_length=32)

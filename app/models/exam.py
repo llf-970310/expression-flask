@@ -37,6 +37,9 @@ class QuestionModel(db.DynamicDocument):
     in_optimize = db.BooleanField(default=False)  # 现在是否在优化中
     last_optimize_time = db.DateTimeField(default=None)  # 最后优化时间
     auto_optimized = db.BooleanField(default=False)  # 是否被自动优化过
+    feedback_ups = db.IntField(default=0)  # 短时重复切换状态时，请求可能不按顺序到达，可能短时间内<0
+    feedback_downs = db.IntField(default=0)
+    feedback_likes = db.IntField(default=0)
 
     meta = {'collection': 'questions'}
 
