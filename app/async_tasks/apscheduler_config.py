@@ -3,7 +3,7 @@ from __future__ import absolute_import
 from apscheduler.jobstores.mongodb import MongoDBJobStore, MongoClient
 from flask_apscheduler import APScheduler as _BaseAPScheduler
 
-from .ap_tasks_impl import collect_history_to_analysis, move_current_to_history, func_example
+from .ap_tasks_impl import collect_history_to_analysis, move_current_to_history, func_example, user_based_cf
 from app_config import MongoConfig
 
 
@@ -36,7 +36,7 @@ class AvailableJobs(object):
                 'func': collect_history_to_analysis,
                 'args': '',
                 'trigger': {
-                    # 4:36 分钟同步一次
+                    # 4:36 同步一次
                     'type': 'cron',
                     'day_of_week': "0-6",
                     'hour': 4,
@@ -50,7 +50,6 @@ class AvailableJobs(object):
                 'func': move_current_to_history,
                 'args': '',
                 'trigger': {
-                    # 3:52 分钟同步一次
                     'type': 'cron',
                     'day_of_week': "0-6",
                     'hour': 3,
@@ -58,6 +57,20 @@ class AvailableJobs(object):
                 }
             },
             'description': '移动已完成的测试到history collection'
+        },
+        'user_based_cf': {
+            'job': {
+                'func': user_based_cf,
+                'args': '',
+                'trigger': {
+                    # 2:50
+                    'type': 'cron',
+                    'day_of_week': "0-6",
+                    'hour': 2,
+                    'minute': 50
+                }
+            },
+            'description': '定时计算用户相似性'
         },
         'example task': {
             'job': {

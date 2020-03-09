@@ -13,11 +13,13 @@ from app.exam.util import compute_exam_score
 
 @mutex_with_redis(3600 * 6)
 def func_example():
-    # if not get_a_redis_lock(func_example, 24 * 3 * 3600):
-    #     print('cannot get a redis lock, exit now')
-    #     return
     print('[Example][APSTask]this is an example apscheduler task', datetime.datetime.now())
     # raise Exception('nothing wrong, just wanna except')
+
+
+@mutex_with_redis(600)
+def user_based_cf():
+    print('[Example][APSTask][user_based_cf]', datetime.datetime.now())
 
 
 @mutex_with_redis(600)
