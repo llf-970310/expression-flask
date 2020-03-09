@@ -80,8 +80,8 @@ def showscore():
     if not current_user.is_authenticated:
         return jsonify(errors.Login_required)
     check_user = __get_check_user_from_db(current_user)
-    history_scores_origin = HistoryTestModel.objects(user_id=str(check_user['id']))
-    current_scores_origin = CurrentTestModel.objects(user_id=str(check_user['id']))
+    history_scores_origin = HistoryTestModel.objects(user_id=str(check_user['id'])).order_by("test_start_time")
+    current_scores_origin = CurrentTestModel.objects(user_id=str(check_user['id'])).order_by("test_start_time")
     history_scores = []
     for history in history_scores_origin:
         if history["score_info"]:
