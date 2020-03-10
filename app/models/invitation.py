@@ -12,7 +12,8 @@ class InvitationModel(db.Document):
     available_times = db.IntField(min_value=0, default=1)
     vip_start_time = db.DateTimeField(default=lambda: datetime.datetime.utcnow())
     vip_end_time = db.DateTimeField(default=lambda: datetime.datetime.utcnow() + datetime.timedelta(days=1))
-    remaining_exam_num = db.IntField(min_value=0, default=3)
+    remaining_exam_num = db.IntField(min_value=0, default=0)
+    remaining_exercise_num = db.IntField(min_value=0, default=0)
     activate_users = db.ListField(db.StringField(max_length=32))  # name
     create_time = db.DateTimeField(default=None)
 

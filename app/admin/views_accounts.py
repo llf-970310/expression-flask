@@ -27,6 +27,7 @@ def accounts_invite():
         vip_start_time = datetime.datetime.utcfromtimestamp(float(form.get('vipStartTime').strip()))
         vip_end_time = datetime.datetime.utcfromtimestamp(float(form.get('vipEndTime').strip()))
         remaining_exam_num = int(form.get('remainingExamNum').strip())
+        remaining_exercise_num = int(form.get('remainingExerciseNum').strip())
         available_times = int(form.get('availableTimes').strip())
         code_num = int(form.get('codeNum').strip())
     except Exception as e:
@@ -36,18 +37,18 @@ def accounts_invite():
         form 校验规则
         1. vipStartTime必须在vipEndTime之前
         2. vipEndTime必须在现在之后
-        3. remainingExamNum要大于0（可用考试次数）
+        3. remainingExamNum和remainingExerciseNum至少有一个>0（可用考试、练习次数）
         4. availableTimes要大于0（邀请码可用人数）
         5. codeNum要大于0（邀请码个数）
         6. 各项不为空
     """
-    if not vip_start_time and not vip_end_time and not remaining_exam_num and not available_times:
+    if not vip_start_time and not vip_end_time and not available_times:
         return jsonify(errors.Params_error)
     if vip_start_time >= vip_end_time:  # rule 1
         return jsonify(errors.Params_error)
     if vip_end_time <= datetime.datetime.utcnow():  # rule 2
         return jsonify(errors.Params_error)
-    if remaining_exam_num <= 0:  # rule 3
+    if not (remaining_exam_num > 0 or remaining_exercise_num > 0):  # rule 3
         return jsonify(errors.Params_error)
     if available_times <= 0:  # rule 4
         return jsonify(errors.Params_error)
@@ -62,6 +63,7 @@ def accounts_invite():
         invitation.vip_start_time = vip_start_time
         invitation.vip_end_time = vip_end_time
         invitation.remaining_exam_num = remaining_exam_num
+        invitation.remaining_exercise_num = remaining_exercise_num
         invitation.available_times = available_times
         invitation.code = generate_random_code(AccountsConfig.INVITATION_CODE_LEN)
         invitation.create_time = datetime.datetime.utcnow()
@@ -143,6 +145,7 @@ def get_invitations():
             'vip_end_time': convert_datetime_to_str(invitation['vip_end_time']),
             # 此邀请码支持的测试次数
             'remaining_exam_num': invitation['remaining_exam_num'],
+            'remaining_exercise_num': invitation.remaining_exercise_num,
             # 使用此邀请码的用户
             'activate_users': array2str(invitation['activate_users'], 1)
         })
