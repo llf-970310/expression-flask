@@ -95,7 +95,7 @@ def wxbt_upload_success():
     q['analysis_start_time'] = datetime.datetime.utcnow()
     current_test.save()
 
-    task_id, err = CeleryQueue.put_task(q.q_type, current_test.id, q_num)
+    task_id, err = CeleryQueue.put_task(q.q_type, current_test.id, q_num, use_lock=False)
     if err:
         current_app.logger.error('[PutTaskException][wxbt_upload_success]q_type:%s, test_id:%s,'
                                  'exception:\n%s' % (q.q_type, current_test.id, traceback.format_exc()))

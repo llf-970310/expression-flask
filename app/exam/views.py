@@ -18,6 +18,9 @@ from . import exam
 from .exam_config import PathConfig, ExamConfig, QuestionConfig, DefaultValue, Setting
 
 
+# todo: 保存put_task接口返回的ret.id到redis，于查询考试结果时查验，减少读库次数
+
+
 @exam.route('/get-test-wav-info', methods=['POST'])
 @login_required
 def get_test_wav_info():

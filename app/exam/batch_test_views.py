@@ -30,7 +30,7 @@ def upload_success_for_test():
         wav_test['text'] = '表达力测试将用15分钟的时间，数据化您的表达能力。'
         wav_test.save()
 
-        task_id, err = CeleryQueue.put_task('pretest', wav_test.id)
+        task_id, err = CeleryQueue.put_task('pretest', wav_test.id, use_lock=False)
         if err:
             current_app.logger.error('[PutTaskException][upload_success_for_test]test_id:%s,'
                                      'exception:\n%s' % (wav_test.id, traceback.format_exc()))
@@ -53,7 +53,7 @@ def upload_success_for_test():
         current_test.questions['1'].file_location = 'BOS'
         current_test.save()
 
-        task_id, err = CeleryQueue.put_task(q.q_type, current_test.id, '1')
+        task_id, err = CeleryQueue.put_task(q.q_type, current_test.id, '1', use_lock=False)
         if err:
             current_app.logger.error('[PutTaskException][upload_success_for_test]q_type:%s, test_id:%s,'
                                      'exception:\n%s' % (q.q_type, current_test.id, traceback.format_exc()))
