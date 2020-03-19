@@ -20,16 +20,14 @@ print('================================================')
 
 app = create_app()
 
+print('==================================================')
+print('                FLASK APP CREATED                 ')
+print('                  STARTING  NOW                   ')
+print('==================================================')
+
 if __name__ == '__main__':
     # handler = logging.FileHandler('flask.log')
     # app.logger.addHandler(handler)
     # print(app.logger.handlers)
     # print(len(app.logger.handlers))
-    print('=====================================================')
-    print('====                                             ====')
-    print('====             FLASK  APP  CREATED             ====')
-    print('====                                             ====')
-    print('====           NOW  STARTING  THE  APP           ====')
-    print('====                                             ====')
-    print('=====================================================')
     app.run()
