@@ -21,7 +21,7 @@ rednose = "*"
 nose = "*"
 coverage = "*"
 kombu = "==4.6.3"
-celery = {version = "==4.3.0", extras = ["redis"]}
+celery = {version = "==4.3.0",extras = ["redis"]}
 tornado = "==5.1.1"
 flower = "*"
 celery-flower = "==1.0.1"
@@ -38,6 +38,7 @@ scipy = "*"
 Flask-APScheduler = "*"
 jieba = "*"
 synonyms = "*"
+smart-open = "*"
 
 [dev-packages]
 
