@@ -219,7 +219,7 @@ def upload_success():
 @exam.route('/get-result', methods=['POST'])
 @login_required
 def get_result():
-    current_app.logger.info("get_result: user_name: " + current_user.name)
+    current_app.logger.debug("get_result: user_name: " + current_user.name)
     current_test_id = session.get("test_id", DefaultValue.test_id)
     test = CurrentTestModel.objects(id=current_test_id).first()
     if test is None:
@@ -404,8 +404,9 @@ def init_question(user_id):
     return current_test.id.__str__()
 
 
-def question_dealer(question_num, test_id, user_id) -> dict:
+def question_dealer(question_num: int, test_id, user_id) -> dict:
     user_id = str(user_id)
+    test_id = str(test_id)
     # get test
     test = CurrentTestModel.objects(id=test_id).first()
     if test is None:
