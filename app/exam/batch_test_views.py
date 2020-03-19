@@ -58,6 +58,7 @@ def find_left_exam(user_id):
 
 @exam.route('/bt0319/init-exam', methods=['POST'])
 def init_exam_bt():
+    current_user = UserModel.objects(id='5c939bb4cb08361b85b63be9').first()  # 需要手动重读用户信息， only for batch test
     has_left_exam, now_question_num = find_left_exam(current_user.id)
     if not has_left_exam:
         # 判断是否有剩余考试次数
