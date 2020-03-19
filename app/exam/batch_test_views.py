@@ -191,7 +191,7 @@ def upload_success_bt(question_num):
         return jsonify(errors.Exam_not_exist)
 
     question = current_test.questions.get(question_num)  # production to_do: 任务队列应放更多信息，避免让评分节点查url
-    q_type = question.get('q_type')
+    q_type = question['q_type']  # EmbeddedDocument不是dict，没有get方法
 
     # task_id, err = CeleryQueue.put_task(q_type, current_test.id, question_num)  # for production
     task_id, err = CeleryQueue.put_task('2', current_test.id, question_num, use_lock=False)  # batch test
