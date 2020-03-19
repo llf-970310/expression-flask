@@ -59,6 +59,7 @@ class BaseConfig(object):
 
 
 class DevelopmentConfig(BaseConfig):
+    LOG_LEVEL = 'INFO'  # DEBUG, INFO, WARNING, ERROR, CRITICAL. 可使用app.logger.exception(msg)，但level没有EXCEPTION
     ALLOW_REGISTER = True  # 是否允许自助注册
     WTF_CSRF_ENABLED = False  # 是否开启flask-wtf的csrf保护,默认是True,用postman提交表单测试需要设为False
     SESSION_USE_SIGNER = False
