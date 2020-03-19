@@ -96,7 +96,7 @@ def next_question_bt():
                              % (now_question_num, current_user.name))
     try:
         next_question_num = int(now_question_num) + 1
-        if next_question_num < 0:
+        if next_question_num <= 0:  # db中题号从1开始
             raise Exception('Bad request')
     except Exception as e:
         return jsonify(errors.Params_error)
@@ -111,7 +111,6 @@ def next_question_bt():
     session["question_num"] = next_question_num
 
     # 根据题号查找题目
-    next_question_num = 2  # fix the number, only for batch test
     context = question_dealer(next_question_num, test_id, str(current_user.id))
     if not context:
         return jsonify(errors.Get_question_failed)
