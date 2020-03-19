@@ -9,7 +9,6 @@ import time
 from . import exam
 from app import errors
 from app.models.exam import *
-from flask import request, current_app, jsonify
 from app.async_tasks import CeleryQueue
 import datetime
 import traceback
@@ -58,7 +57,7 @@ def find_left_exam(user_id):
 
 
 @exam.route('/bt0319/init-exam', methods=['POST'])
-def init_exam():
+def init_exam_bt():
     has_left_exam, now_question_num = find_left_exam(current_user.id)
     if not has_left_exam:
         # 判断是否有剩余考试次数
@@ -82,7 +81,7 @@ def init_exam():
 
 
 @exam.route('/bt0319/next-question', methods=['GET'])
-def next_question():
+def next_question_bt():
     """
     需携带参数nowQuestionNum，0表示初始化测试后首次获取下一题
     :return:
@@ -124,7 +123,7 @@ def next_question():
 
 
 @exam.route('/bt0319/<question_num>/upload-url', methods=['GET'])
-def get_upload_url(question_num):
+def get_upload_url_bt(question_num):
     test_id = session.get("test_id", DefaultValue.test_id)  # for production
     test_id = batch_test_id  # temporary data, only for today's batch test
 
@@ -182,7 +181,7 @@ def get_upload_url(question_num):
 
 
 @exam.route('/bt0319/<question_num>/upload-success', methods=['POST'])
-def upload_success(question_num):
+def upload_success_bt(question_num):
     test_id = session.get("test_id", DefaultValue.test_id)  # for production
     test_id = batch_test_id  # temporary data, only for today's batch test
 
@@ -217,7 +216,7 @@ def upload_success(question_num):
 
 
 @exam.route('/bt0319/result', methods=['GET'])
-def get_result():
+def get_result_bt():
     test_id = session.get("test_id", DefaultValue.test_id)  # for production
     test_id = batch_test_id  # temporary data, only for today's batch test
 
