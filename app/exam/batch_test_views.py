@@ -185,11 +185,6 @@ def upload_success_bt(question_num):
     test_id = session.get("test_id", DefaultValue.test_id)  # for production
     test_id = batch_test_id  # temporary data, only for today's batch test
 
-    upload_url = request.form.get("uploadUrl")
-    q_type = request.form.get("questionType")
-    if not upload_url or not q_type:
-        return jsonify(errors.Params_error)
-
     current_test = CurrentTestModel.objects(id=test_id).first()
     if current_test is None:
         # current_app.logger.error("get_upload_url ERROR: No Tests!, test_id: %s" % test_id)
