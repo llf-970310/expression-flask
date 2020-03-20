@@ -24,6 +24,7 @@ current_user = UserModel.objects(id='5c939bb4cb08361b85b63be9').first()
 batch_test_id = '5e73670e90d0d5dfb9b4ca38'  # temporary data, only for today's batch test
 
 # logger 内容中的 BT 意为batch test
+# 需避免使用flask-session库，以更好地支持无状态请求
 
 
 def find_left_exam(user_id):

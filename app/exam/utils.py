@@ -44,7 +44,7 @@ def get_server_date_str(separator='') -> str:
 
 class ExamSession:
     @staticmethod
-    def set(user_id, name, value, ex=ExamConfig.exam_total_time, px=None, nx=False, xx=False):
+    def set(user_id, name, value, ex=int(ExamConfig.exam_total_time), px=None, nx=False, xx=False):
         user_id = str(user_id)
         key = 'ES##%s##%s' % (user_id, name)
         return redis_client.set(key, value, ex, px, nx, xx)
