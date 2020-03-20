@@ -59,7 +59,7 @@ class ExamSession:
         user_id = str(user_id)
         key = 'ES##%s##%s' % (user_id, name)
         ret = redis_client.get(key)
-        return ret if ret is not None else default
+        return ret.decode() if ret is not None else default
 
     @staticmethod
     def expire(user_id, name, time):
