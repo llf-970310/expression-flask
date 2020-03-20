@@ -10,7 +10,7 @@ from flask import request, current_app, jsonify, session
 from flask_login import current_user, login_required
 
 from app import errors
-from app.exam.util import *
+from app.exam.utils import *
 from app.models.exam import *
 from app.models.user import UserModel
 from app.async_tasks import CeleryQueue

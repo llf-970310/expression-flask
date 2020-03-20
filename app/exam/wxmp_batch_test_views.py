@@ -12,7 +12,7 @@ import datetime
 from flask import request, current_app, jsonify
 
 from app import errors, db
-from app.exam.util import get_server_date_str
+from app.exam.utils import get_server_date_str
 from app.models.exam import CurrentQuestionEmbed, QuestionModel
 from app.async_tasks import CeleryQueue
 from . import exam

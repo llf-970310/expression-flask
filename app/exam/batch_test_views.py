@@ -12,10 +12,10 @@ from app.models.exam import *
 from app.async_tasks import CeleryQueue
 import datetime
 import traceback
-from .exam_config import PathConfig, ExamConfig, QuestionConfig, DefaultValue, Setting
-from flask import request, current_app, jsonify, session
+from .exam_config import PathConfig, ExamConfig, DefaultValue, Setting
+from flask import request, current_app, jsonify
 
-from .util import get_server_date_str, compute_exam_score
+from .utils import get_server_date_str, compute_exam_score, ExamSession
 from .views import init_question, question_dealer
 
 # from flask_login import current_user
@@ -23,61 +23,70 @@ from ..models.user import UserModel
 current_user = UserModel.objects(id='5c939bb4cb08361b85b63be9').first()
 batch_test_id = '5e73670e90d0d5dfb9b4ca38'  # temporary data, only for today's batch test
 
+# logger 内容中的 BT 意为batch test
+
 
 def find_left_exam(user_id):
     """
     :param user_id: 用户id
-    :return: bool, current_q_num
+    :return: bool: 是否有未完成考试
+    :return: current_q_num: 未完成考试id
     """
     # 判断断电续做功能是否开启
+    if not ExamConfig.detect_left_exam:
+        current_app.logger.debug("find_left_exam: function not enabled. user_id: %s" % user_id)
+        return False, None
     if ExamConfig.detect_left_exam:
-        user_id = str(user_id)
+        test_id = ExamSession.get(user_id, name="test_id")
         # 首先判断是否有未做完的考试
-        current_app.logger.debug("find_left_exam: user id: %s" % user_id)
-        left_exam = CurrentTestModel.objects(user_id=user_id).order_by('-test_start_time').first()
-        if not left_exam:
-            # current_app.logger.debug("find_left_exam: no left exam, user name: %s" % current_user.name)
+        current_app.logger.debug("find_left_exam for user_id: %s" % user_id)
+        if not test_id:
+            current_app.logger.debug("find_left_exam: no left exam, user_id: %s" % user_id)
             return False, None
-        in_process = ((datetime.datetime.utcnow() - left_exam["test_start_time"]).total_seconds() <
-                      ExamConfig.exam_total_time)
-        if in_process:
-            # 查找到第一个未做的题目
-            for key, value in left_exam['questions'].items():
-                status = value['status']
-                if status in ['none', 'question_fetched', 'url_fetched']:
-                    current_app.logger.info("[BT-LeftExamFound][find_left_exam]user name: %s, test_id: %s" %
-                                            (current_user.name, left_exam.id.__str__()))
-                    # return True, int(key) - 1  # for production
-                    return False, None  # only for batch test
-        # current_app.logger.debug("find_left_exam: no left exam, user name: %s" % current_user.name)
-        return False, None
-    else:
-        # current_app.logger.debug("find_left_exam: no need to detect, user name: %s" % current_user.name)
-        return False, None
+        left_exam = CurrentTestModel.objects(id=test_id).first()
+        if not left_exam:
+            current_app.logger.error("[BT-ExamNotFound][find_left_exam]exam recorded but not found,"
+                                     "user[id]: %s" % user_id)
+            return False, None
+        else:
+            in_process = ((datetime.datetime.utcnow() - left_exam["test_start_time"]).total_seconds() <
+                          ExamConfig.exam_total_time)
+            if not in_process:
+                current_app.logger.debug("find_left_exam: exam expired, user_id: %s" % user_id)
+                return False, None
+            else:
+                # 查找到第一个未做的题目
+                questions = left_exam.questions
+                for key, value in questions.items():
+                    status = value['status']
+                    if status in ['none', 'question_fetched', 'url_fetched']:
+                        current_app.logger.info("[BT-LeftExamFound][find_left_exam]user_id: %s, test_id: %s" %
+                                                (user_id, left_exam.id))
+                        # return True, int(key) - 1  # for production
+                        return False, None  # only for batch test
 
 
+# @exam.route('/', methods=['POST'])  # should use this for production (POST /api/exam/)
 @exam.route('/bt0319/init-exam', methods=['POST'])
 def init_exam_bt():
+    force_create = request.args.get('forceCreate', False)
     current_user = UserModel.objects(id='5c939bb4cb08361b85b63be9').first()  # 需要手动重读用户信息， only for batch test
     has_left_exam, now_question_num = find_left_exam(current_user.id)
-    if not has_left_exam:
+    if not has_left_exam or force_create:
         # 判断是否有剩余考试次数
         if Setting.LIMIT_EXAM_TIMES and current_user.remaining_exam_num <= 0:
             return jsonify(errors.No_exam_times)
-        elif Setting.LIMIT_EXAM_TIMES and current_user.remaining_exam_num > 0:
-            current_user.remaining_exam_num -= 1
-            current_user.save()
         now_question_num = 0
         # 生成当前题目
-        # current_app.logger.info('init exam...')
-        # 调试发现session["user_id"]和current_user.id相同？？(但应使用current_user.id)
+        current_app.logger.info('init exam...')
         test_id = init_question(str(current_user.id))
         if not test_id:
             return jsonify(errors.Init_exam_failed)
         else:
-            session["test_id"] = test_id
-        session["init_done"] = True
-        session["new_test"] = False
+            if Setting.LIMIT_EXAM_TIMES:
+                current_user.remaining_exam_num -= 1
+                current_user.save()
+            ExamSession.set(current_user.id, 'test_id', test_id)
     return jsonify(errors.success({'nowQuestionNum': now_question_num}))
 
 
@@ -87,28 +96,27 @@ def next_question_bt():
     需携带参数nowQuestionNum，0表示初始化测试后首次获取下一题
     :return:
     """
-    test_id = session.get("test_id")  # for production
+    test_id = ExamSession.get(current_user.id, "test_id",
+                              default=DefaultValue.test_id)  # for production
     test_id = batch_test_id  # temporary data, only for today's batch test
-
-    # production to--do: nowQuestionNum: 限制只能获取当前题目
     now_question_num = request.args.get("nowQuestionNum")
-    current_app.logger.debug('next_question: nowQuestionNum: %s, user_name: %s'
-                             % (now_question_num, current_user.name))
     try:
         next_question_num = int(now_question_num) + 1
         if next_question_num <= 0:  # db中题号从1开始
             raise Exception('Bad request')
     except Exception as e:
+        current_app.logger.error('[BT-ParamsError][next_question]nowQuestionNum: %s, user_name: %s'
+                                 % (now_question_num, current_user.name))
         return jsonify(errors.Params_error)
 
     current_app.logger.debug("next-question: username: %s, next_question_num: %s"
                              % (current_user.name, next_question_num))
     # 如果超出最大题号，如用户多次刷新界面，则重定向到结果页面
     if next_question_num > ExamConfig.total_question_num:
-        session["question_num"] = 0
-        session["new_test"] = True
+        ExamSession.set(current_user.id, 'question_num', 0)
         return jsonify(errors.Exam_finished)
-    session["question_num"] = next_question_num
+    # production to--do: nowQuestionNum: 限制只能获取当前题目
+    ExamSession.set(current_user.id, 'question_num', next_question_num)
 
     # 根据题号查找题目
     context = question_dealer(next_question_num, test_id, str(current_user.id))
@@ -124,7 +132,8 @@ def next_question_bt():
 
 @exam.route('/bt0319/<question_num>/upload-url', methods=['GET'])
 def get_upload_url_bt(question_num):
-    test_id = session.get("test_id", DefaultValue.test_id)  # for production
+    test_id = ExamSession.get(current_user.id, "test_id",
+                              default=DefaultValue.test_id)  # for production
     test_id = batch_test_id  # temporary data, only for today's batch test
 
     # get test
@@ -135,13 +144,12 @@ def get_upload_url_bt(question_num):
 
     # get question
     user_id = str(current_user.id)
-    # 这里不能用session存储题号，因为是异步处理，session记录到下一题的时候上一题可能还没处理完
     current_app.logger.debug("[BT-DEBUG][get_upload_url]question_num: %s, user_name: %s"
                              % (str(question_num), current_user.name))
     question = current_test.questions[str(question_num)]
 
     # sts = auth.get_sts_from_redis()  # a production to--do
-    _ = session.get("sts", DefaultValue.test_id)  # just to waste some time, only for batch test
+    _ = ExamSession.get(user_id, "sts", DefaultValue.test_id)  # just to waste some time, only for batch test
 
     """generate file path
     upload file path: 相对目录(audio)/日期/用户id/时间戳+后缀(.wav)
@@ -182,7 +190,8 @@ def get_upload_url_bt(question_num):
 
 @exam.route('/bt0319/<question_num>/upload-success', methods=['POST'])
 def upload_success_bt(question_num):
-    test_id = session.get("test_id", DefaultValue.test_id)  # for production
+    test_id = ExamSession.get(current_user.id, "test_id",
+                              default=DefaultValue.test_id)  # for production
     test_id = batch_test_id  # temporary data, only for today's batch test
 
     current_test = CurrentTestModel.objects(id=test_id).first()
@@ -212,7 +221,8 @@ def upload_success_bt(question_num):
 
 @exam.route('/bt0319/result', methods=['GET'])
 def get_result_bt():
-    test_id = session.get("test_id", DefaultValue.test_id)  # for production
+    test_id = ExamSession.get(current_user.id, "test_id",
+                              default=DefaultValue.test_id)  # for production
     test_id = batch_test_id  # temporary data, only for today's batch test
 
     current_app.logger.debug("get_result: user_name: " + current_user.name)
@@ -257,13 +267,13 @@ def get_result_bt():
             current_app.logger.info("get_result: use computed score! test_id: %s, user name: %s" %
                                     (test_id, current_user.name))
             result = {"status": "Success", "totalScore": test['score_info']['total'], "data": test['score_info']}
-        session['tryTimes'] = 0
+        ExamSession.set(current_user.id, 'tryTimes', 0)
         current_app.logger.info("get_result: return data! test_id: %s, user name: %s, result: %s" %
                                 (test_id, current_user.name, str(result)))
         return jsonify(errors.success(result))
     else:
-        try_times = session.get("tryTimes", 0) + 1
-        session['tryTimes'] = try_times
+        try_times = ExamSession.get(current_user.id, "tryTimes", 0) + 1
+        ExamSession.set(current_user.id, 'tryTimes', try_times)
         current_app.logger.info("get_result: handling!!! try times: %s, test_id: %s, user name: %s" %
                                 (str(try_times), test_id, current_user.name))
         return jsonify(errors.WIP)

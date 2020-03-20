@@ -8,7 +8,7 @@ from app.async_tasks.utils import mutex_with_redis
 from app.models.exam import CurrentStatisticsModel, CurrentTestModel, HistoryTestModel, QuestionModel
 from app.admin.analysis import Analysis
 from app.exam.exam_config import ExamConfig
-from app.exam.util import compute_exam_score
+from app.exam.utils import compute_exam_score
 
 
 @mutex_with_redis(3600 * 6)

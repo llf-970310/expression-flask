@@ -2,6 +2,7 @@
 
 import time
 from .exam_config import ExamConfig
+from app_config import redis_client
 
 
 def compute_exam_score(score):
@@ -39,6 +40,27 @@ def get_server_date_str(separator='') -> str:
     Desc:   获得当前日期格式化字符串，可指定分隔符，如: 20181009(默认), 2018-10-31(输入为-), 2018===10===31(输入为===)
     """
     return time.strftime("%%Y%s%%m%s%%d" % (separator, separator), time.localtime(time.time()))
+
+
+class ExamSession:
+    @staticmethod
+    def set(user_id, name, value, ex=ExamConfig.exam_total_time, px=None, nx=False, xx=False):
+        user_id = str(user_id)
+        key = 'ES##%s##%s' % (user_id, name)
+        return redis_client.set(key, value, ex, px, nx, xx)
+
+    @staticmethod
+    def get(user_id, name, default=None):
+        user_id = str(user_id)
+        key = 'ES##%s##%s' % (user_id, name)
+        ret = redis_client.get(key)
+        return ret if ret is not None else default
+
+    @staticmethod
+    def expire(user_id, name, time):
+        user_id = str(user_id)
+        key = 'ES##%s##%s' % (user_id, name)
+        return redis_client.expire(key, time)
 
 
 if __name__ == '__main__':
