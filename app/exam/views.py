@@ -6,7 +6,7 @@ import random
 import traceback
 import Levenshtein
 
-from flask import request, current_app, jsonify, session
+from flask import request, current_app, jsonify
 from flask_login import current_user, login_required
 
 from app import errors
@@ -141,7 +141,7 @@ def get_upload_url():
     # get question number
     question_num = int(request.form.get("nowQuestionNum"))
     # get test
-    test_id = session.get("test_id", DefaultValue.test_id)
+    test_id = ExamSession.get(current_user.id, "test_id", DefaultValue.test_id)
     current_test = CurrentTestModel.objects(id=test_id).first()
     if current_test is None:
         current_app.logger.error("get_upload_url ERROR: No Tests!, test_id: %s" % test_id)
@@ -181,7 +181,7 @@ def upload_success():
     q_num = request.form.get("nowQuestionNum")
     current_app.logger.info("upload_success: now_question_num: %s, user_name: %s" % (str(q_num), current_user.name))
 
-    test_id = session.get("test_id")  # for production
+    test_id = ExamSession.get(current_user.id, "test_id", DefaultValue.test_id)  # for production
     # test_id = request.form.get("test_id")  # just for unittest
 
     current_test = CurrentTestModel.objects(id=test_id).first()
@@ -221,7 +221,7 @@ def upload_success():
 @login_required
 def get_result():
     current_app.logger.debug("get_result: user_name: " + current_user.name)
-    current_test_id = session.get("test_id", DefaultValue.test_id)
+    current_test_id = ExamSession.get(current_user.id, "test_id", DefaultValue.test_id)
     test = CurrentTestModel.objects(id=current_test_id).first()
     if test is None:
         test = HistoryTestModel.objects(current_id=current_test_id).first()
@@ -262,13 +262,13 @@ def get_result():
             current_app.logger.info("get_result: use computed score! test_id: %s, user name: %s" %
                                     (current_test_id, current_user.name))
             result = {"status": "Success", "totalScore": test['score_info']['total'], "data": test['score_info']}
-        session['tryTimes'] = 0
+        ExamSession.set(current_user.id, 'tryTimes', 0)
         current_app.logger.info("get_result: return data! test_id: %s, user name: %s, result: %s" %
                                 (current_test_id, current_user.name, str(result)))
         return jsonify(errors.success(result))
     else:
-        try_times = session.get("tryTimes", 0) + 1
-        session['tryTimes'] = try_times
+        try_times = ExamSession.get(current_user.id, "tryTimes", 0) + 1
+        ExamSession.set(current_user.id, 'tryTimes', try_times)
         current_app.logger.info("get_result: handling!!! try times: %s, test_id: %s, user name: %s" %
                                 (str(try_times), current_test_id, current_user.name))
         return jsonify(errors.WIP)
@@ -281,7 +281,7 @@ def next_question():
     current_app.logger.info('next_question: nowQuestionNum: %s, user_name: %s' % (nowQuestionNum, current_user.name))
     # 判断是否有剩余考试次数
     # nowQuestionNum = -1 表示是新的考试
-    if (nowQuestionNum is None) or (int(nowQuestionNum) == -1) or (not session.get("test_id")):
+    if (nowQuestionNum is None) or (int(nowQuestionNum) == -1) or (not ExamSession.get(current_user.id, "test_id")):
         if Setting.LIMIT_EXAM_TIMES and current_user.remaining_exam_num <= 0:
             return jsonify(errors.No_exam_times)
         elif Setting.LIMIT_EXAM_TIMES and current_user.remaining_exam_num > 0:
@@ -295,20 +295,21 @@ def next_question():
         if not test_id:
             return jsonify(errors.Init_exam_failed)
         else:
-            session["test_id"] = test_id
-        session["init_done"] = True
-        session["new_test"] = False
+            ExamSession.set(current_user.id, 'test_id', test_id)
+        ExamSession.set(current_user.id, 'init_done', True)  # 有啥用？
+        ExamSession.set(current_user.id, 'new_test', False)  # 有啥用？
     # 获得下一题号 此时now_q_num最小是0
     next_question_num = int(nowQuestionNum) + 1
-    session["question_num"] = next_question_num
+    ExamSession.set(current_user.id, 'question_num', next_question_num)
     current_app.logger.info("next-question: username: %s, next_question_num: %s" % (current_user.name, next_question_num))
     # 如果超出最大题号，如用户多次刷新界面，则重定向到结果页面
     if next_question_num > ExamConfig.total_question_num:
-        session["question_num"] = 0
-        session["new_test"] = True
+        ExamSession.set(current_user.id, 'question_num', 0)
+        ExamSession.set(current_user.id, 'new_test', True)
         return jsonify(errors.Exam_finished)
     # 根据题号查找题目
-    context = QuestionUtils.question_dealer(next_question_num, session["test_id"], str(current_user.id))
+    the_test_id = ExamSession.get(current_user.id, 'test_id')
+    context = QuestionUtils.question_dealer(next_question_num, the_test_id, str(current_user.id))
     if not context:
         return jsonify(errors.Get_question_failed)
     # 判断考试是否超时，若超时则返回错误
