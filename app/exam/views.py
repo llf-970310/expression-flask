@@ -112,6 +112,7 @@ def get_test_result():
 
 # Optional for get_test_result:
 # @exam.route('/pretest-result', methods=['GET'])
+# @login_required
 def get_pretest_result_v2():
     test_id = request.json.get('test_id')
     wav_pretest = WavPretestModel.objects(id=test_id).first()
@@ -136,6 +137,7 @@ def get_pretest_result_v2():
 
 
 @exam.route('/<question_num>/upload-url', methods=['GET'])
+@login_required
 def get_upload_url_v2(question_num):
     test_id = ExamSession.get(current_user.id, "test_id",
                               default=DefaultValue.test_id)  # for production
