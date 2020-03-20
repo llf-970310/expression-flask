@@ -15,8 +15,7 @@ import traceback
 from .exam_config import PathConfig, ExamConfig, DefaultValue, Setting
 from flask import request, current_app, jsonify
 
-from .utils import get_server_date_str, compute_exam_score, ExamSession
-from .views import init_question, question_dealer
+from .utils import get_server_date_str, compute_exam_score, ExamSession, QuestionUtils
 
 # from flask_login import current_user
 from ..models.user import UserModel
@@ -80,7 +79,7 @@ def init_exam_bt():
         now_question_num = 0
         # 生成当前题目
         current_app.logger.info('init exam...')
-        test_id = init_question(str(current_user.id))
+        test_id = QuestionUtils.init_question(str(current_user.id))
         if not test_id:
             return jsonify(errors.Init_exam_failed)
         else:
@@ -120,7 +119,7 @@ def next_question_bt():
     ExamSession.set(current_user.id, 'question_num', next_question_num)
 
     # 根据题号查找题目
-    context = question_dealer(next_question_num, test_id, str(current_user.id))
+    context = QuestionUtils.question_dealer(next_question_num, test_id, str(current_user.id))
     if not context:
         return jsonify(errors.Get_question_failed)
     # 判断考试是否超时，若超时则返回错误

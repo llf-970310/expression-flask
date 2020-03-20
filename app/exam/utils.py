@@ -1,7 +1,12 @@
 # coding: utf-8
-
+import datetime
 import time
-from .exam_config import ExamConfig
+
+from flask import current_app
+
+from app.models.exam import CurrentTestModel, QuestionModel, CurrentQuestionEmbed
+from app.models.user import UserModel
+from .exam_config import ExamConfig, QuestionConfig
 from app_config import redis_client
 
 
@@ -61,6 +66,105 @@ class ExamSession:
         user_id = str(user_id)
         key = 'ES##%s##%s' % (user_id, name)
         return redis_client.expire(key, time)
+
+
+class QuestionUtils:
+    @staticmethod
+    def init_question(user_id):
+        user_id = str(user_id)
+        current_test = CurrentTestModel()
+        user = UserModel.objects(id=user_id).first()
+        if user is None:
+            current_app.logger.error("init_question ERROR: No Such User!")
+            return False
+        current_test.user_id = user_id
+        current_test.test_start_time = datetime.datetime.utcnow()
+
+        current_test.questions = {}
+        temp_all_q_lst = []
+        for t in ExamConfig.question_num_each_type.keys():
+            temp_q_lst = []
+            question_num_needed = ExamConfig.question_num_each_type[t]
+            d = {'q_type': t, 'q_id': {'$lte': 10000}}  # 题号<=10000, (大于10000的题目用作其他用途)
+            questions = QuestionModel.objects(__raw__=d).order_by('used_times')  # 按使用次数倒序获得questions
+            if ExamConfig.question_allow_repeat[t]:
+                for q in questions:
+                    temp_q_lst.append(q)
+                    if len(temp_q_lst) >= question_num_needed:
+                        break
+            else:  # do Not use repeated questions
+                q_history = set(user.questions_history)
+                q_backup = []
+                for q in questions:
+                    if q.id.__str__() not in q_history:
+                        temp_q_lst.append(q)
+                    else:
+                        q_backup.append(q)
+                    if len(temp_q_lst) >= question_num_needed:
+                        break
+                # 如果题目数量不够，用重复的题目补够
+                if len(temp_q_lst) < question_num_needed:
+                    for q in q_backup:
+                        temp_q_lst.append(q)
+                        if len(temp_q_lst) >= question_num_needed:
+                            break
+
+                # 如果题目数量不够，报错
+                if len(temp_q_lst) < question_num_needed:
+                    current_app.logger.error("init_question: Questions of Type %s Is Not Enough! "
+                                             "need %s, but only has %s" % (t, question_num_needed, len(questions)))
+                    return False
+
+            temp_all_q_lst += temp_q_lst
+
+        for i in range(len(temp_all_q_lst)):
+            q = temp_all_q_lst[i]
+            q_current = CurrentQuestionEmbed(q_dbid=str(q.id), q_type=q.q_type, q_text=q.text, wav_upload_url='')
+            current_test.questions.update({str(i + 1): q_current})
+            q.update(inc__used_times=1)  # update
+
+        # save
+        current_test.save()
+        return current_test.id.__str__()
+
+    @staticmethod
+    def question_dealer(question_num: int, test_id, user_id) -> dict:
+        user_id = str(user_id)
+        test_id = str(test_id)
+        # get test
+        test = CurrentTestModel.objects(id=test_id).first()
+        if test is None:
+            current_app.logger.error("question_generator ERROR: No Tests!, test_id: %s" % test_id)
+            return {}
+
+        # wrap question
+        question = test.questions[str(question_num)]
+        context = {"questionType": question.q_type,
+                   "questionDbId": question.q_dbid,
+                   "questionNumber": question_num,
+                   "questionLimitTime": ExamConfig.question_limit_time[question.q_type],
+                   "lastQuestion": question_num == ExamConfig.total_question_num,
+                   "readLimitTime": ExamConfig.question_prepare_time[question.q_type],
+                   "questionInfo": QuestionConfig.question_type_tip[question.q_type],
+                   "questionContent": question.q_text,
+                   "examLeftTime": ExamConfig.exam_total_time - (datetime.datetime.utcnow() - test[
+                       'test_start_time']).total_seconds(),
+                   "examTime": ExamConfig.exam_total_time
+                   }
+
+        # update and save
+        question.status = 'question_fetched'
+        test.current_q_num = question_num
+        test.save()
+
+        # log question id to user's historical questions
+        user = UserModel.objects(id=user_id).first()
+        if user is None:
+            current_app.logger.error("question_dealer: ERROR: user not find")
+        user.questions_history.update({question.q_dbid: datetime.datetime.utcnow()})
+        user.save()
+
+        return context
 
 
 if __name__ == '__main__':

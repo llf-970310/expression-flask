@@ -12,10 +12,10 @@ from flask_login import current_user, login_required
 from app import errors
 from app.exam.utils import *
 from app.models.exam import *
-from app.models.user import UserModel
 from app.async_tasks import CeleryQueue
 from . import exam
 from .exam_config import PathConfig, ExamConfig, QuestionConfig, DefaultValue, Setting
+from .utils import QuestionUtils
 
 
 # todo: 保存put_task接口返回的ret.id到redis，于查询考试结果时查验，减少读库次数
@@ -111,7 +111,8 @@ def get_test_result():
 
 
 # Optional for get_test_result:
-def get_pretest_result():
+# @exam.route('/pretest-result', methods=['GET'])
+def get_pretest_result_v2():
     test_id = request.json.get('test_id')
     wav_pretest = WavPretestModel.objects(id=test_id).first()
     test_info = 'test_id: %s, user name: %s' % (test_id, current_user.name)
@@ -290,7 +291,7 @@ def next_question():
         # 生成当前题目
         current_app.logger.info('init exam...')
         # 调试发现session["user_id"]和current_user.id相同？？(但应使用current_user.id)
-        test_id = init_question(str(current_user.id))
+        test_id = QuestionUtils.init_question(str(current_user.id))
         if not test_id:
             return jsonify(errors.Init_exam_failed)
         else:
@@ -307,7 +308,7 @@ def next_question():
         session["new_test"] = True
         return jsonify(errors.Exam_finished)
     # 根据题号查找题目
-    context = question_dealer(next_question_num, session["test_id"], str(current_user.id))
+    context = QuestionUtils.question_dealer(next_question_num, session["test_id"], str(current_user.id))
     if not context:
         return jsonify(errors.Get_question_failed)
     # 判断考试是否超时，若超时则返回错误
@@ -344,100 +345,3 @@ def find_left_exam():
     else:
         current_app.logger.info("find_left_exam: no left exam, user name: %s" % current_user.name)
         return jsonify(errors.success({"info": "没有未完成的考试"}))
-
-
-def init_question(user_id):
-    user_id = str(user_id)
-    current_test = CurrentTestModel()
-    user = UserModel.objects(id=user_id).first()
-    if user is None:
-        current_app.logger.error("init_question ERROR: No Such User!")
-        return False
-    current_test.user_id = user_id
-    current_test.test_start_time = datetime.datetime.utcnow()
-
-    current_test.questions = {}
-    temp_all_q_lst = []
-    for t in ExamConfig.question_num_each_type.keys():
-        temp_q_lst = []
-        question_num_needed = ExamConfig.question_num_each_type[t]
-        d = {'q_type': t, 'q_id': {'$lte': 10000}}  # 题号<=10000, (大于10000的题目用作其他用途)
-        questions = QuestionModel.objects(__raw__=d).order_by('used_times')  # 按使用次数倒序获得questions
-        if ExamConfig.question_allow_repeat[t]:
-            for q in questions:
-                temp_q_lst.append(q)
-                if len(temp_q_lst) >= question_num_needed:
-                    break
-        else:  # do Not use repeated questions
-            q_history = set(user.questions_history)
-            q_backup = []
-            for q in questions:
-                if q.id.__str__() not in q_history:
-                    temp_q_lst.append(q)
-                else:
-                    q_backup.append(q)
-                if len(temp_q_lst) >= question_num_needed:
-                    break
-            # 如果题目数量不够，用重复的题目补够
-            if len(temp_q_lst) < question_num_needed:
-                for q in q_backup:
-                    temp_q_lst.append(q)
-                    if len(temp_q_lst) >= question_num_needed:
-                        break
-
-            # 如果题目数量不够，报错
-            if len(temp_q_lst) < question_num_needed:
-                current_app.logger.error("init_question: Questions of Type %s Is Not Enough! "
-                                         "need %s, but only has %s" % (t, question_num_needed, len(questions)))
-                return False
-
-        temp_all_q_lst += temp_q_lst
-
-    for i in range(len(temp_all_q_lst)):
-        q = temp_all_q_lst[i]
-        q_current = CurrentQuestionEmbed(q_dbid=str(q.id), q_type=q.q_type, q_text=q.text, wav_upload_url='')
-        current_test.questions.update({str(i + 1): q_current})
-        q.update(inc__used_times=1)  # update
-
-    # save
-    current_test.save()
-    return current_test.id.__str__()
-
-
-def question_dealer(question_num: int, test_id, user_id) -> dict:
-    user_id = str(user_id)
-    test_id = str(test_id)
-    # get test
-    test = CurrentTestModel.objects(id=test_id).first()
-    if test is None:
-        current_app.logger.error("question_generator ERROR: No Tests!, test_id: %s" % test_id)
-        return {}
-
-    # wrap question
-    question = test.questions[str(question_num)]
-    context = {"questionType": question.q_type,
-               "questionDbId": question.q_dbid,
-               "questionNumber": question_num,
-               "questionLimitTime": ExamConfig.question_limit_time[question.q_type],
-               "lastQuestion": question_num == ExamConfig.total_question_num,
-               "readLimitTime": ExamConfig.question_prepare_time[question.q_type],
-               "questionInfo": QuestionConfig.question_type_tip[question.q_type],
-               "questionContent": question.q_text,
-               "examLeftTime": ExamConfig.exam_total_time - (datetime.datetime.utcnow() - test[
-                   'test_start_time']).total_seconds(),
-               "examTime": ExamConfig.exam_total_time
-               }
-
-    # update and save
-    question.status = 'question_fetched'
-    test.current_q_num = question_num
-    test.save()
-
-    # log question id to user's historical questions
-    user = UserModel.objects(id=user_id).first()
-    if user is None:
-        current_app.logger.error("question_dealer: ERROR: user not find")
-    user.questions_history.update({question.q_dbid: datetime.datetime.utcnow()})
-    user.save()
-
-    return context
