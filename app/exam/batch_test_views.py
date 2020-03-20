@@ -199,7 +199,7 @@ def upload_success_bt(question_num):
         # current_app.logger.error("get_upload_url ERROR: No Tests!, test_id: %s" % test_id)
         return jsonify(errors.Exam_not_exist)
 
-    question = current_test.questions.get(question_num)  # production to_do: 任务队列应放更多信息，避免让评分节点查url
+    question = current_test.questions[question_num]  # production to_do: 任务队列应放更多信息，避免让评分节点查url
     q_type = question['q_type']  # EmbeddedDocument不是dict，没有get方法
 
     # task_id, err = CeleryQueue.put_task(q_type, current_test.id, question_num)  # for production

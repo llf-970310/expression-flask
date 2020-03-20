@@ -225,6 +225,41 @@ def get_upload_url():
     return jsonify(errors.success(context))
 
 
+@exam.route('/<question_num>/upload-success', methods=['POST'])
+@login_required
+def upload_success_v2(question_num):
+    # get test
+    test_id = ExamSession.get(current_user.id, "test_id",
+                              default=DefaultValue.test_id)  # for production
+    current_test = CurrentTestModel.objects(id=test_id).first()
+    if current_test is None:
+        current_app.logger.error("[TestNotFound][upload_success_v2]test_id: %s" % test_id)
+        return jsonify(errors.Exam_not_exist)
+    try:
+        question = current_test.questions[question_num]
+    except Exception as e:
+        current_app.logger.error("[GetEmbeddedQuestionException][get_upload_url_v2]question_num: "
+                                 "%s, user_name: %s. exception:\n%s"
+                                 % (question_num, current_user.name, e))
+        return jsonify(errors.Get_question_failed)
+    q_type = question['q_type']  # EmbeddedDocument不是dict，没有get方法
+
+    # todo: 任务队列应放更多信息，让评分节点直接取用，避免让评分节点查url
+    task_id, err = CeleryQueue.put_task(q_type, current_test.id, question_num)
+    if err:
+        current_app.logger.error('[PutTaskException][upload_success]q_type:%s, test_id:%s,'
+                                 'exception:\n%s' % (q_type, current_test.id, traceback.format_exc()))
+        return jsonify(errors.exception({'Exception': str(err)}))
+    current_app.logger.info("[PutTaskSuccess][upload_success]dataID: %s" % str(current_test.id))
+    resp = {
+        "status": "Success",
+        "desc": "添加任务成功，等待服务器处理",
+        "dataID": str(current_test.id),
+        "taskID": task_id
+    }
+    return jsonify(errors.success(resp))
+
+
 @exam.route('/upload-success', methods=['POST'])
 @login_required
 def upload_success():
