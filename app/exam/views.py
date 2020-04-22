@@ -348,3 +348,54 @@ def find_left_exam():
     else:
         current_app.logger.info("find_left_exam: no left exam, user name: %s" % current_user.name)
         return jsonify(errors.success({"info": "没有未完成的考试"}))
+
+
+# upload url TEST - 2020-04-23
+@exam.route('/<question_num>/upload-url-bt202004', methods=['GET'])
+@login_required
+def get_upload_url_v2_bt202004(question_num):
+    given_url = request.args.get('givenUrl')
+    test_id = ExamSession.get(current_user.id, "test_id",
+                              default=DefaultValue.test_id)  # for production
+    # get test
+    current_test = CurrentTestModel.objects(id=test_id).first()
+    if current_test is None:
+        current_app.logger.error("[TestNotFound][get_upload_url_v2]test_id: %s" % test_id)
+        return jsonify(errors.Exam_not_exist)
+
+    # get question
+    user_id = str(current_user.id)
+    current_app.logger.debug("[DEBUG][get_upload_url_v2]question_num: %s, user_name: %s"
+                             % (question_num, current_user.name))
+    try:
+        question = current_test.questions[question_num]
+    except Exception as e:
+        current_app.logger.error("[GetEmbeddedQuestionException][get_upload_url_v2]question_num: "
+                                 "%s, user_name: %s. exception:\n%s"
+                                 % (question_num, current_user.name, e))
+        return jsonify(errors.Get_question_failed)
+
+    # sts = auth.get_sts_from_redis()  # a production to--do
+
+    """generate file path
+    upload file path: 相对目录(audio)/日期/用户id/时间戳+后缀(.wav)
+    temp path for copy: 相对目录(temp_audio)/用户id/文件名(同上)
+    """
+
+    # 如果数据库没有该题的url，创建url，存数据库 ，然后返回
+    # 如果数据库里已经有这题的url，说明是重复请求，不用再创建
+    if not question.wav_upload_url:
+        file_dir = '/'.join((PathConfig.audio_save_basedir, get_server_date_str('-'), user_id))
+        _temp_str = "%sr%s" % (int(time.time()), random.randint(100, 1000))
+        file_name = "%s%s" % (_temp_str, PathConfig.audio_extension)
+        question.wav_upload_url = file_dir + '/' + file_name
+        question.wav_upload_url = given_url
+        question.file_location = 'BOS'
+        question.status = 'url_fetched'
+        current_test.save()
+        current_app.logger.info("[NewUploadUrl][get_upload_url]user_id:%s, url:%s"
+                                % (current_user.id, question.wav_upload_url))
+        current_app.logger.info("[INFO][get_upload_url_v2]new url: " + question.wav_upload_url)
+
+    context = {"fileLocation": "BOS", "url": question.wav_upload_url}
+    return jsonify(errors.success(context))
