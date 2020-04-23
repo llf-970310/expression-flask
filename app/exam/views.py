@@ -269,8 +269,8 @@ def get_result():
                                 (current_test_id, current_user.name, str(result)))
         return jsonify(errors.success(result))
     else:
-        try_times = ExamSession.get(current_user.id, "tryTimes", 0) + 1
-        ExamSession.set(current_user.id, 'tryTimes', try_times)
+        try_times = int(ExamSession.get(current_user.id, "tryTimes", 0)) + 1
+        ExamSession.set(current_user.id, 'tryTimes', str(try_times))
         current_app.logger.info("get_result: handling!!! try times: %s, test_id: %s, user name: %s" %
                                 (str(try_times), current_test_id, current_user.name))
         return jsonify(errors.WIP)
@@ -298,8 +298,8 @@ def next_question():
             return jsonify(errors.Init_exam_failed)
         else:
             ExamSession.set(current_user.id, 'test_id', test_id)
-        ExamSession.set(current_user.id, 'init_done', True)  # 有啥用？
-        ExamSession.set(current_user.id, 'new_test', False)  # 有啥用？
+        ExamSession.set(current_user.id, 'init_done', 'True')  # 有啥用？
+        ExamSession.set(current_user.id, 'new_test', 'False')  # 有啥用？
     # 获得下一题号 此时now_q_num最小是0
     next_question_num = int(nowQuestionNum) + 1
     ExamSession.set(current_user.id, 'question_num', next_question_num)
