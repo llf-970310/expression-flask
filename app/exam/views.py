@@ -293,7 +293,7 @@ def next_question():
         # 生成当前题目
         current_app.logger.info('init exam...')
         # 调试发现session["user_id"]和current_user.id相同？？(但应使用current_user.id)
-        test_id = QuestionUtils.init_question(str(current_user.id))
+        test_id = QuestionUtils.init_question(current_user)
         if not test_id:
             return jsonify(errors.Init_exam_failed)
         else:
@@ -307,7 +307,7 @@ def next_question():
     # 如果超出最大题号，如用户多次刷新界面，则重定向到结果页面
     if next_question_num > ExamConfig.total_question_num:
         ExamSession.set(current_user.id, 'question_num', 0)
-        ExamSession.set(current_user.id, 'new_test', True)
+        ExamSession.set(current_user.id, 'new_test', 'True')  # 没用到？
         return jsonify(errors.Exam_finished)
     # 根据题号查找题目
     the_test_id = ExamSession.get(current_user.id, 'test_id')

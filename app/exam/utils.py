@@ -70,14 +70,9 @@ class ExamSession:
 
 class QuestionUtils:
     @staticmethod
-    def init_question(user_id):
-        user_id = str(user_id)
+    def init_question(user):
         current_test = CurrentTestModel()
-        user = UserModel.objects(id=user_id).first()
-        if user is None:
-            current_app.logger.error("init_question ERROR: No Such User!")
-            return False
-        current_test.user_id = user_id
+        current_test.user_id = str(user.id)
         current_test.test_start_time = datetime.datetime.utcnow()
 
         current_test.questions = {}
@@ -86,6 +81,7 @@ class QuestionUtils:
             temp_q_lst = []
             question_num_needed = ExamConfig.question_num_each_type[t]
             d = {'q_type': t, 'q_id': {'$lte': 10000}}  # 题号<=10000, (大于10000的题目用作其他用途)
+
             questions = QuestionModel.objects(__raw__=d).order_by('used_times')  # 按使用次数倒序获得questions
             if ExamConfig.question_allow_repeat[t]:
                 for q in questions:
@@ -94,12 +90,40 @@ class QuestionUtils:
                         break
             else:  # do Not use repeated questions
                 q_history = set(user.questions_history)
-                q_backup = []
+                q_backup = set()
+
+                # # 方式一：随机选取
+                # pipeline = [{"$match": d}, {"$sample": {"size": 1}}]
+                # i = 0
+                # while i < question_num_needed:
+                #     rand_q = QuestionModel.objects.aggregate(*pipeline)
+                #     the_q_id = str(rand_q.id)
+                #     if the_q_id not in temp_q_lst:
+                #         if the_q_id not in q_history:
+                #             temp_q_lst.append(rand_q)
+                #         else:
+                #             q_backup.add(rand_q)
+                #     if len(temp_q_lst) >= question_num_needed:
+                #         break
+                #     else:
+                #         end = False
+                #         if i // question_num_needed > 5:  # 要选n题，但选了5n次还不行，就用重复的
+                #             for q in q_backup:
+                #                 temp_q_lst.append(q)
+                #                 if len(temp_q_lst) >= question_num_needed:
+                #                     end = True
+                #                     break
+                #         if end:
+                #             if len(temp_q_lst) < question_num_needed:  # 使用重复题目后数量还不够
+                #                 return False
+                #             break
+
+                # 方式二：优先选使用次数少的
                 for q in questions:
                     if q.id.__str__() not in q_history:
                         temp_q_lst.append(q)
                     else:
-                        q_backup.append(q)
+                        q_backup.add(q)
                     if len(temp_q_lst) >= question_num_needed:
                         break
                 # 如果题目数量不够，用重复的题目补够
@@ -115,6 +139,7 @@ class QuestionUtils:
                                              "need %s, but only has %s" % (t, question_num_needed, len(questions)))
                     return False
 
+            # 加入试题列表
             temp_all_q_lst += temp_q_lst
 
         for i in range(len(temp_all_q_lst)):
@@ -125,7 +150,7 @@ class QuestionUtils:
 
         # save
         current_test.save()
-        return current_test.id.__str__()
+        return str(current_test.id)
 
     @staticmethod
     def question_dealer(question_num: int, test_id, user_id) -> dict:

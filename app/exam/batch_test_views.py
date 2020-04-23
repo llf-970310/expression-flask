@@ -79,7 +79,7 @@ def init_exam_bt():
         now_question_num = 0
         # 生成当前题目
         current_app.logger.info('init exam...')
-        test_id = QuestionUtils.init_question(str(current_user.id))
+        test_id = QuestionUtils.init_question(current_user)
         if not test_id:
             return jsonify(errors.Init_exam_failed)
         else:
@@ -272,8 +272,8 @@ def get_result_bt():
                                 (test_id, current_user.name, str(result)))
         return jsonify(errors.success(result))
     else:
-        try_times = ExamSession.get(current_user.id, "tryTimes", 0) + 1
-        ExamSession.set(current_user.id, 'tryTimes', try_times)
+        try_times = int(ExamSession.get(current_user.id, "tryTimes", 0)) + 1
+        ExamSession.set(current_user.id, 'tryTimes', str(try_times))
         current_app.logger.info("get_result: handling!!! try times: %s, test_id: %s, user name: %s" %
                                 (str(try_times), test_id, current_user.name))
         return jsonify(errors.WIP)
