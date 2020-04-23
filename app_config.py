@@ -4,9 +4,11 @@
 # Created by dylanchu on 19-2-15
 
 import hashlib
-from redis import Redis
+from redis import StrictRedis, ConnectionPool
 
-redis_client = Redis(host='redis-server.expression.hosts', port=6379, db=0, password='ise_expression')
+# redis_client = Redis(host='redis-server.expression.hosts', port=6379, db=0, password='ise_expression')
+pool = ConnectionPool(host='redis-server.expression.hosts', port=6379, db=0, password='ise_expression')
+redis_client = StrictRedis(connection_pool=pool)
 # redis_client = Redis(host='127.0.0.1', port=6379, db=0, password=None)
 
 
