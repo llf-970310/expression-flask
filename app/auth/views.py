@@ -216,16 +216,19 @@ def login():
     # current_app.logger.debug('login request current user: %s' % current_user.__str__())
 
     if current_user.is_authenticated:
-        return jsonify(errors.Already_logged_in)
-    """
-        校验form，规则
-        1. email符合规范
-        2. 各项不为空
-    """
-    err, check_user = __authorize(username, password)
-    if err is not None:
-        return jsonify(err)
-    current_app.logger.info('login user: %s, id: %s' % (check_user.name, check_user.id))
+        # return jsonify(errors.Already_logged_in)
+        check_user = current_user
+        current_app.logger.info('re-login user: %s, id: %s' % (check_user.name, check_user.id))
+    else:
+        """
+            校验form，规则
+            1. email符合规范
+            2. 各项不为空
+        """
+        err, check_user = __authorize(username, password)
+        if err is not None:
+            return jsonify(err)
+        current_app.logger.info('login user: %s, id: %s' % (check_user.name, check_user.id))
 
     # 修改最后登录时间
     # check_user.last_login_time = datetime.datetime.utcnow()
