@@ -210,12 +210,13 @@ def register():
 
 @auth.route('/login', methods=['POST'])
 def login():
-    current_app.logger.info('login request: %s' % request.form.__str__())
-    current_app.logger.info('login request current user: %s' % current_user.__str__())
-    if current_user.is_authenticated:
-        return jsonify(errors.Already_logged_in)
     username = request.form.get('username')
     password = request.form.get('password')
+    # current_app.logger.debug('login request: %s' % request.form.__str__())
+    # current_app.logger.debug('login request current user: %s' % current_user.__str__())
+
+    if current_user.is_authenticated:
+        return jsonify(errors.Already_logged_in)
     """
         校验form，规则
         1. email符合规范
@@ -224,10 +225,13 @@ def login():
     err, check_user = __authorize(username, password)
     if err is not None:
         return jsonify(err)
-    login_user(check_user)
     current_app.logger.info('login user: %s, id: %s' % (check_user.name, check_user.id))
-    check_user.last_login_time = datetime.datetime.utcnow()
-    check_user.save()  # 修改最后登录时间
+
+    # 修改最后登录时间
+    # check_user.last_login_time = datetime.datetime.utcnow()
+    # check_user.save(validate=False)
+    check_user.update(last_login_time=datetime.datetime.utcnow())
+    login_user(check_user)
     return jsonify(errors.success({
         'msg': '登录成功',
         'uuid': str(check_user.id),
@@ -371,14 +375,12 @@ def __authorize(username, password):
     password = password.strip()
     if '@' in username:
         # 邮箱登录
-        email = username
-        if not validate_email(email):
+        if not validate_email(username):
             return errors.Params_error, None
-        check_user = UserModel.objects(email=email).first()
+        check_user = UserModel.objects(email=username).first()
     else:
         # 手机号登录
-        phone = username
-        check_user = UserModel.objects(phone=phone).first()
+        check_user = UserModel.objects(phone=username).first()
     if not check_user:
         return errors.Authorize_failed, None
     if (not current_app.config['IGNORE_LOGIN_PASSWORD']) and (check_user.password != current_app.md5_hash(password)):
