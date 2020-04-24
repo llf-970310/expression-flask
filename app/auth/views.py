@@ -244,7 +244,7 @@ def login():
 
 @auth.route('/logout', methods=['POST'])
 def logout():
-    current_app.logger.info('logout request: %s' % request.form.__str__())
+    # current_app.logger.debug('logout request: %s' % request.form.__str__())
     if current_user.is_authenticated:
         current_app.logger.info('user(id:%s) logout' % current_user.id)
         logout_user()
