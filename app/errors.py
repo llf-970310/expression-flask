@@ -79,6 +79,7 @@ Add_task_failed = {'code': 4101, 'msg': '添加任务失败'}
 Test_not_exist = {'code': 4002, 'msg': '考前测试不存在'}
 Test_time_out = {'code': 4003, 'msg': '考试超时'}
 No_exam_times = {'code': 4004, 'msg': '没有剩余考试次数'}
+Check_history_results = {'code': 4005, 'msg': '请查看历史成绩'}
 
 Login_required = {'code': 4300, 'msg': '需要登录'}
 Authorize_failed = {'code': 4301, 'msg': '账号或密码错误'}
@@ -103,8 +104,8 @@ Process_audio_failed = {'code': 5103, 'msg': '获取题目失败'}
 Audio_process_failed = {'code': 5105, 'msg': '音频处理出错'}
 WIP = {'code': 5104, 'msg': '正在处理'}
 
-Question_not_exist = {'code': 4002, 'msg': '题目不存在'}
-Optimize_not_exist = {'code': 4003, 'msg': '该题目未进行过优化'}
+Question_not_exist = {'code': 4006, 'msg': '题目不存在'}
+Optimize_not_exist = {'code': 4007, 'msg': '该题目未进行过优化'}
 
 Score_no_data = {'code': 4701, 'msg': '暂无数据'}
 Origin_question_no_more = {'code': 4702, 'msg': '题库中暂无题目'}

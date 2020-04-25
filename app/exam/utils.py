@@ -68,6 +68,13 @@ class ExamSession:
         return redis_client.delete(key)
 
     @staticmethod
+    def rename(user_id, name, new_name):
+        user_id = str(user_id)
+        key = 'ES##%s##%s' % (user_id, name)
+        new_key = 'ES##%s##%s' % (user_id, new_name)
+        return redis_client.rename(key, new_key)
+
+    @staticmethod
     def expire(user_id, name, time):
         user_id = str(user_id)
         key = 'ES##%s##%s' % (user_id, name)

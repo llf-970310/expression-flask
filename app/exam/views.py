@@ -20,6 +20,18 @@ from .utils import QuestionUtils
 
 # todo: 保存put_task接口返回的ret.id到redis，于查询考试结果时查验，减少读库次数
 
+# TODO: pretest完全使用任务队列完成，不使用数据库
+# TODO: 参照batch_test_views.py更改接口为REST风格
+
+"""
+正式评测中考试状态的控制：
+1. 使用Redis存放，调用ExamSession.set/get/delete控制；
+2. 初始化考试时，设置test_id（数据库current.id）和testing（字符串"True"，因Redis不支持bool类型）；
+3. 最后一题上传成功后，清空test_id和testing，同时设置last_test_id，供获取结果时使用；
+4. 获取结果时使用last_test_id查询，（原有的test_id已被清除）；
+5. 再次考试时检查test_id和testing判断有无未完成考试。
+"""
+
 
 @exam.route('/pretest-wav-info', methods=['GET'])
 @login_required
@@ -192,10 +204,15 @@ def upload_success_v2(question_num):
         return jsonify(errors.exception({'Exception': str(err)}))
     current_app.logger.info("[PutTaskSuccess][upload_success]dataID: %s" % str(current_test.id))
 
-    # 最后一题上传完成，去除正在测试状态
+    # 最后一题上传完成，去除正在测试状态，设置last_test_id
     if int(question_num) >= ExamConfig.total_question_num:
-        ExamSession.delete(current_user.id, "test_id")
-        ExamSession.delete(current_user.id, "testing")
+        try:
+            ExamSession.delete(current_user.id, 'testing')
+            ExamSession.rename(current_user.id, 'test_id', 'last_test_id')
+            ExamSession.expire(current_user.id, 'last_test_id', 3600)
+        except Exception as e:
+            current_app.logger.error('[ExamSessionRenameError]%s' % e)
+            return jsonify(errors.exception({'Exception': str(e)}))
 
     resp = {
         "status": "Success",
@@ -209,13 +226,15 @@ def upload_success_v2(question_num):
 @exam.route('/get-result', methods=['POST'])
 @login_required
 def get_result():
-    current_app.logger.debug("get_result: user_name: " + current_user.name)
-    current_test_id = ExamSession.get(current_user.id, "test_id", DefaultValue.test_id)
-    test = CurrentTestModel.objects(id=current_test_id).first()
+    # current_app.logger.debug("get_result: user_name: " + current_user.name)
+    last_test_id = ExamSession.get(current_user.id, "last_test_id", DefaultValue.test_id)
+    if not last_test_id:
+        return jsonify(errors.Check_history_results)
+    test = CurrentTestModel.objects(id=last_test_id).first()
     if test is None:
-        test = HistoryTestModel.objects(current_id=current_test_id).first()
+        test = HistoryTestModel.objects(current_id=last_test_id).first()
         if test is None:
-            current_app.logger.error("upload_file ERROR: No Tests!, test_id: %s" % current_test_id)
+            current_app.logger.error("upload_file ERROR: No Tests!, test_id: %s" % last_test_id)
             return jsonify(errors.Exam_not_exist)
     questions = test['questions']
     score = {}
@@ -224,42 +243,42 @@ def get_result():
         if questions[str(i)]['status'] == 'finished':
             score[i] = questions[str(i)]['score']
             current_app.logger.info("get_result: status is finished! index: %s, score: %s, test_id: %s, user name: %s"
-                                    % (str(i), str(score[i]), current_test_id, current_user.name))
+                                    % (str(i), str(score[i]), last_test_id, current_user.name))
         elif questions[str(i)]['status'] not in ['none', 'question_fetched', 'url_fetched', 'handling']:
             score[i] = {"quality": 0, "key": 0, "detail": 0, "structure": 0, "logic": 0}
             current_app.logger.info("get_result: ZERO score! index: %s, score: %s, test_id: %s, user name: %s"
-                                    % (str(i), str(score[i]), current_test_id, current_user.name))
+                                    % (str(i), str(score[i]), last_test_id, current_user.name))
         else:
             has_handling = has_handling | (questions[str(i)]['status'] == 'handling')
             current_app.logger.info("get_result: status is handling! index: %s , test_id: %s, user name: %s"
-                                    % (str(i), current_test_id, current_user.name))
+                                    % (str(i), last_test_id, current_user.name))
 
     # 判断该测试是否超时
     in_process = ((datetime.datetime.utcnow() - test["test_start_time"]).total_seconds() < ExamConfig.exam_total_time)
     current_app.logger.info("get_result: in_process: %s, test_id: %s, user name: %s" %
-                            (str(in_process), current_test_id, current_user.name))
+                            (str(in_process), last_test_id, current_user.name))
     # 如果回答完问题或超时但已处理完，则计算得分，否则返回正在处理
     if (len(score) == len(questions)) or (not in_process and not has_handling):
         # final score:
         if not test['score_info']:
             current_app.logger.info("get_result: first compute score... test_id: %s, user name: %s" %
-                                    (current_test_id, current_user.name))
+                                    (last_test_id, current_user.name))
             test['score_info'] = compute_exam_score(score)
             test.save()
             result = {"status": "Success", "totalScore": test['score_info']['total'], "data": test['score_info']}
         else:
             current_app.logger.info("get_result: use computed score! test_id: %s, user name: %s" %
-                                    (current_test_id, current_user.name))
+                                    (last_test_id, current_user.name))
             result = {"status": "Success", "totalScore": test['score_info']['total'], "data": test['score_info']}
         ExamSession.set(current_user.id, 'tryTimes', 0)
         current_app.logger.info("get_result: return data! test_id: %s, user name: %s, result: %s" %
-                                (current_test_id, current_user.name, str(result)))
+                                (last_test_id, current_user.name, str(result)))
         return jsonify(errors.success(result))
     else:
         try_times = int(ExamSession.get(current_user.id, "tryTimes", 0)) + 1
         ExamSession.set(current_user.id, 'tryTimes', str(try_times))
         current_app.logger.info("get_result: handling!!! try times: %s, test_id: %s, user name: %s" %
-                                (str(try_times), current_test_id, current_user.name))
+                                (str(try_times), last_test_id, current_user.name))
         return jsonify(errors.WIP)
 
 
