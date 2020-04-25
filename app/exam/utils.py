@@ -62,6 +62,12 @@ class ExamSession:
         return ret.decode() if ret is not None else default
 
     @staticmethod
+    def delete(user_id, name):
+        user_id = str(user_id)
+        key = 'ES##%s##%s' % (user_id, name)
+        return redis_client.delete(key)
+
+    @staticmethod
     def expire(user_id, name, time):
         user_id = str(user_id)
         key = 'ES##%s##%s' % (user_id, name)

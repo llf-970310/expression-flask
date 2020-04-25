@@ -210,6 +210,12 @@ def upload_success_v2(question_num):
                                  'exception:\n%s' % (q_type, current_test.id, traceback.format_exc()))
         return jsonify(errors.exception({'Exception': str(err)}))
     current_app.logger.info("[PutTaskSuccess][upload_success]dataID: %s" % str(current_test.id))
+
+    # 最后一题上传完成，去除正在测试状态
+    if question_num >= ExamConfig.total_question_num:
+        ExamSession.delete(current_user.id, "test_id")
+        ExamSession.delete(current_user.id, "testing")
+
     resp = {
         "status": "Success",
         "desc": "添加任务成功，等待服务器处理",
@@ -296,10 +302,8 @@ def next_question():
         test_id = QuestionUtils.init_question(current_user)
         if not test_id:
             return jsonify(errors.Init_exam_failed)
-        else:
-            ExamSession.set(current_user.id, 'test_id', test_id)
-        ExamSession.set(current_user.id, 'init_done', 'True')  # 有啥用？
-        ExamSession.set(current_user.id, 'new_test', 'False')  # 有啥用？
+        ExamSession.set(current_user.id, 'test_id', test_id)
+        ExamSession.set(current_user.id, 'testing', 'True')  # for find-left-exam
     # 获得下一题号 此时now_q_num最小是0
     next_question_num = int(nowQuestionNum) + 1
     ExamSession.set(current_user.id, 'question_num', next_question_num)
@@ -307,7 +311,6 @@ def next_question():
     # 如果超出最大题号，如用户多次刷新界面，则重定向到结果页面
     if next_question_num > ExamConfig.total_question_num:
         ExamSession.set(current_user.id, 'question_num', 0)
-        ExamSession.set(current_user.id, 'new_test', 'True')  # 没用到？
         return jsonify(errors.Exam_finished)
     # 根据题号查找题目
     the_test_id = ExamSession.get(current_user.id, 'test_id')
@@ -325,29 +328,44 @@ def next_question():
 @login_required
 def find_left_exam():
     # 判断断电续做功能是否开启
-    if ExamConfig.detect_left_exam:
+    if not ExamConfig.detect_left_exam:
         # 首先判断是否有未做完的考试
-        user_id = current_user.id.__str__()
-        current_app.logger.info("find_left_exam: user id: %s" % user_id)
-        left_exam = CurrentTestModel.objects(user_id=user_id).order_by('-test_start_time').first()
-        if not left_exam:
-            current_app.logger.info("find_left_exam: no left exam, user name: %s" % current_user.name)
-            return jsonify(errors.success({"info": "没有未完成的考试"}))
-        in_process = ((datetime.datetime.utcnow() - left_exam["test_start_time"]).total_seconds() <
-                      ExamConfig.exam_total_time)
-        if in_process:
-            # 查找到第一个未做的题目
-            for key, value in left_exam['questions'].items():
-                status = value['status']
-                if status in ['none', 'question_fetched', 'url_fetched']:
-                    current_app.logger.info("find_left_exam: HAS left exam, user name: %s, test_id: %s" %
-                                            (current_user.name, left_exam.id.__str__()))
-                    return jsonify(errors.info("有未完成的考试", {"next_q_num": key}))
-        current_app.logger.info("find_left_exam: no left exam, user name: %s" % current_user.name)
-        return jsonify(errors.success({"info": "没有未完成的考试"}))
-    else:
-        current_app.logger.info("find_left_exam: no left exam, user name: %s" % current_user.name)
-        return jsonify(errors.success({"info": "没有未完成的考试"}))
+        test_id = ExamSession.get(current_user.id, 'test_id')
+        is_testing = ExamSession.get(current_user.id, 'testing')
+        if test_id is not None and is_testing == 'True':
+            left_exam = CurrentTestModel.objects(id=test_id).first()
+            if left_exam:
+                # 查找到第一个未做的题目
+                for key, value in left_exam['questions'].items():
+                    status = value['status']
+                    if status in ['none', 'question_fetched', 'url_fetched']:
+                        current_app.logger.info("[LeftExamFound][find_left_exam]user name: %s, test_id: %s" %
+                                                (current_user.name, left_exam.id))
+                        return jsonify(errors.info("有未完成的考试", {"next_q_num": key}))
+    current_app.logger.debug("[NoLeftExamFound][find_left_exam]user name: %s" % current_user.name)
+    return jsonify(errors.success({"info": "没有未完成的考试"}))
+    #     # 首先判断是否有未做完的考试
+    #     user_id = current_user.id.__str__()
+    #     current_app.logger.info("find_left_exam: user id: %s" % user_id)
+    #     left_exam = CurrentTestModel.objects(user_id=user_id).order_by('-test_start_time').first()
+    #     if not left_exam:
+    #         current_app.logger.info("find_left_exam: no left exam, user name: %s" % current_user.name)
+    #         return jsonify(errors.success({"info": "没有未完成的考试"}))
+    #     in_process = ((datetime.datetime.utcnow() - left_exam["test_start_time"]).total_seconds() <
+    #                   ExamConfig.exam_total_time)
+    #     if in_process:
+    #         # 查找到第一个未做的题目
+    #         for key, value in left_exam['questions'].items():
+    #             status = value['status']
+    #             if status in ['none', 'question_fetched', 'url_fetched']:
+    #                 current_app.logger.info("find_left_exam: HAS left exam, user name: %s, test_id: %s" %
+    #                                         (current_user.name, left_exam.id.__str__()))
+    #                 return jsonify(errors.info("有未完成的考试", {"next_q_num": key}))
+    #     current_app.logger.info("find_left_exam: no left exam, user name: %s" % current_user.name)
+    #     return jsonify(errors.success({"info": "没有未完成的考试"}))
+    #
+    # current_app.logger.debug("[NoLeftExamFound][find_left_exam]user name: %s" % current_user.name)
+    # return jsonify(errors.success({"info": "没有未完成的考试"}))
 
 
 # upload url TEST - 2020-04-23
