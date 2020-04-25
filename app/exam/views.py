@@ -309,10 +309,12 @@ def next_question():
 @login_required
 def find_left_exam():
     # 判断断电续做功能是否开启
-    if not ExamConfig.detect_left_exam:
+    if ExamConfig.detect_left_exam:
         # 首先判断是否有未做完的考试
         test_id = ExamSession.get(current_user.id, 'test_id')
         is_testing = ExamSession.get(current_user.id, 'testing')
+        print(test_id)
+        print(is_testing)
         if test_id is not None and is_testing == 'True':
             left_exam = CurrentTestModel.objects(id=test_id).first()
             if left_exam:
