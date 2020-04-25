@@ -230,11 +230,11 @@ def login():
             return jsonify(err)
         current_app.logger.info('login user: %s, id: %s' % (check_user.name, check_user.id))
 
-    # 修改最后登录时间
-    # check_user.last_login_time = datetime.datetime.utcnow()
-    # check_user.save(validate=False)
-    check_user.update(last_login_time=datetime.datetime.utcnow())
-    login_user(check_user)
+        # 修改最后登录时间
+        # check_user.last_login_time = datetime.datetime.utcnow()
+        # check_user.save(validate=False)
+        check_user.update(last_login_time=datetime.datetime.utcnow())
+        login_user(check_user)
     return jsonify(errors.success({
         'msg': '登录成功',
         'uuid': str(check_user.id),
