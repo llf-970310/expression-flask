@@ -21,7 +21,7 @@ from .utils import QuestionUtils
 # todo: 保存put_task接口返回的ret.id到redis，于查询考试结果时查验，减少读库次数
 
 
-@exam.route('/get-test-wav-info', methods=['POST'])
+@exam.route('/pretest-wav-info', methods=['GET'])
 @login_required
 def get_test_wav_info():
     user_id = str(current_user.id)
@@ -43,10 +43,12 @@ def get_test_wav_info():
     }))
 
 
-@exam.route('/get-test-wav-url', methods=['POST'])
+@exam.route('/pretest-wav-url', methods=['GET'])
 @login_required
 def get_test_wav_url():
-    test_id = request.form.get('test_id')
+    test_id = request.args.get('testId')
+    if not test_id:
+        return jsonify(errors.Params_error)
     wav_test = WavPretestModel.objects(id=test_id).first()
     if not wav_test:
         current_app.logger.error("get_test_wav_url: no such test! test id: %s, user name: %s" %
@@ -68,17 +70,16 @@ def get_test_wav_url():
     }))
 
 
-@exam.route('/upload-test-wav-success', methods=['POST'])
+@exam.route('/pretest-analysis', methods=['POST'])
 @login_required
 def upload_test_wav_success():
-    test_id = request.form.get('test_id')
+    test_id = request.form.get('testId')
     wav_test = WavPretestModel.objects(id=test_id).first()
     if not wav_test:
-        current_app.logger.error("upload_test_wav_success: no such test! test id: %s, user name: %s" %
+        current_app.logger.error("[PretestNotExist][upload_test_wav_success]test id: %s, user name: %s" %
                                  (test_id, current_user.name))
         return jsonify(errors.success(errors.Test_not_exist))
-    wav_test['result']['status'] = 'handling'
-    wav_test.save()
+    wav_test.update(set__result__status='handling')
     _, err = CeleryQueue.put_task('pretest', test_id)
     if err:
         current_app.logger.error('[PutTaskException][upload_test_wav_success]test_id:%s,'
@@ -89,32 +90,10 @@ def upload_test_wav_success():
     return jsonify(errors.success())
 
 
-@exam.route('/get_test_result', methods=['POST'])
+@exam.route('/pretest-result', methods=['GET'])
 @login_required
-def get_test_result():
-    test_id = request.form.get('test_id')
-    wav_test = WavPretestModel.objects(id=test_id).first()
-    if not wav_test:
-        current_app.logger.error("get_test_result: no test test_id: %s, user name: %s" % (test_id, current_user.name))
-        return jsonify(errors.success(errors.Test_not_exist))
-    if wav_test['result']['status'] == 'handling':
-        current_app.logger.info("get_test_result: handling test_id: %s, user name: %s" % (test_id, current_user.name))
-        return jsonify(errors.success(errors.WIP))
-    elif wav_test['result']['status'] == 'finished':
-        current_app.logger.info("get_test_result: success test_id: %s, user name: %s" % (test_id, current_user.name))
-        return jsonify(errors.success({"qualityIsOk": len(wav_test['result']['feature']['rcg_text']) >= len(
-            wav_test['text']) * 0.6, "canRcg": True}))
-    else:
-        current_app.logger.info("get_test_result: bad quality test_id: %s, user name: %s" %
-                                (test_id, current_user.name))
-        return jsonify(errors.success({"canRcg": False, "qualityIsOk": False}))
-
-
-# Optional for get_test_result:
-# @exam.route('/pretest-result', methods=['GET'])
-# @login_required
 def get_pretest_result_v2():
-    test_id = request.json.get('test_id')
+    test_id = request.args.get('testId')
     wav_pretest = WavPretestModel.objects(id=test_id).first()
     test_info = 'test_id: %s, user name: %s' % (test_id, current_user.name)
     if wav_pretest is None:
@@ -126,9 +105,11 @@ def get_pretest_result_v2():
     elif status == 'finished':
         current_app.logger.info('[Success][get_test_result]%s' % test_info)
         rcg_text = wav_pretest['result']['feature']['rcg_text']
+        lev_ratio = Levenshtein.ratio(rcg_text, wav_pretest['text'])
         d = {
-            "qualityIsOk": Levenshtein.ratio(rcg_text, wav_pretest['text']) >= 0.6,
-            "canRcg": True
+            "qualityIsOk": lev_ratio >= 0.6,
+            "canRcg": True,
+            "levRatio": lev_ratio
         }
         return jsonify(errors.success(d))
     else:
@@ -212,7 +193,7 @@ def upload_success_v2(question_num):
     current_app.logger.info("[PutTaskSuccess][upload_success]dataID: %s" % str(current_test.id))
 
     # 最后一题上传完成，去除正在测试状态
-    if question_num >= ExamConfig.total_question_num:
+    if int(question_num) >= ExamConfig.total_question_num:
         ExamSession.delete(current_user.id, "test_id")
         ExamSession.delete(current_user.id, "testing")
 
