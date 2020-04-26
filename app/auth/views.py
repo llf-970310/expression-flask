@@ -233,7 +233,8 @@ def login():
         # 修改最后登录时间
         # check_user.last_login_time = datetime.datetime.utcnow()
         # check_user.save(validate=False)
-        check_user.update(last_login_time=datetime.datetime.utcnow())
+        # 压力测试，暂时注释掉
+        # check_user.update(last_login_time=datetime.datetime.utcnow())
         login_user(check_user)
     return jsonify(errors.success({
         'msg': '登录成功',
