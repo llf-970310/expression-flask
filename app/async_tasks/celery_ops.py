@@ -3,13 +3,13 @@
 #
 # Created by dylanchu on 20-3-06
 
-from .__analysis_tasks_decl__ import analysis_main_12, analysis_main_3, analysis_wav_pretest
+from .celery_config import analysis_main_12, analysis_main_3, analysis_wav_pretest, queues
 from celery.result import AsyncResult
 from flask import current_app
 from app_config import redis_client
 
 
-class CeleryQueue(object):
+class MyCelery(object):
     @staticmethod
     def put_task(q_type, test_id: str, q_num=None, use_lock=True):
         """
@@ -28,11 +28,11 @@ class CeleryQueue(object):
                 if not lock:
                     raise Exception('Failed to get redis lock')
             if q_type == 'pretest':
-                ret = analysis_wav_pretest.apply_async(args=(str(test_id),), queue='q_pre_test', priority=20)
+                ret = analysis_wav_pretest.apply_async(args=(str(test_id),), queue=queues.pretest, priority=20)
             elif q_type in [3, '3']:
-                ret = analysis_main_3.apply_async(args=(str(test_id), str(q_num)), queue='q_type3', priority=10)
+                ret = analysis_main_3.apply_async(args=(str(test_id), str(q_num)), queue=queues.type3, priority=10)
             elif q_type in [1, 2, '1', '2']:
-                ret = analysis_main_12.apply_async(args=(str(test_id), str(q_num)), queue='q_type12', priority=2)
+                ret = analysis_main_12.apply_async(args=(str(test_id), str(q_num)), queue=queues.type12, priority=2)
             else:
                 raise Exception('Unknown q_type')
             current_app.logger.info("AsyncResult id: %s" % ret.id)
@@ -44,3 +44,19 @@ class CeleryQueue(object):
     def is_task_finished(task_id: str):
         task = AsyncResult(task_id)
         return task.ready()
+
+    @staticmethod
+    def get_queue_length(queue) -> int:
+        """
+        获取指定队列中积压的任务数
+        :param queue: 队列名，使用celery_config中的queues成员指定，如queues.pretest
+        :return: 队列长度
+        """
+        return redis_client.llen(queue)
+
+    @classmethod
+    def get_all_queue_length(cls) -> int:
+        n = 0
+        for q in queues:
+            n += cls.get_queue_length(q)
+        return n

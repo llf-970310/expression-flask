@@ -13,7 +13,7 @@ from flask import request, current_app, jsonify
 from app import errors
 from app.exam.utils import get_server_date_str
 from app.models.exam import *
-from app.async_tasks import CeleryQueue
+from app.async_tasks import MyCelery
 from . import exam
 from .exam_config import PathConfig
 from app.auth.util import wxlp_get_sessionkey_openid
@@ -75,7 +75,7 @@ def wx_upload_success():
     q['analysis_start_time'] = datetime.datetime.utcnow()
     current_test.save()
 
-    task_id, err = CeleryQueue.put_task(q.q_type, current_test.id, q_num)
+    task_id, err = MyCelery.put_task(q.q_type, current_test.id, q_num)
     if err:
         current_app.logger.error('[PutTaskException][wx_upload_success]q_type:%s, test_id:%s,'
                                  'exception:\n%s' % (q.q_type, current_test.id, traceback.format_exc()))

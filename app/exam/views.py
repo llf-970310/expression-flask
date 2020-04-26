@@ -12,11 +12,10 @@ from flask_login import current_user, login_required
 from app import errors
 from app.exam.utils import *
 from app.models.exam import *
-from app.async_tasks import CeleryQueue
+from app.async_tasks import MyCelery
 from . import exam
 from .exam_config import PathConfig, ExamConfig, QuestionConfig, DefaultValue, Setting
 from .utils import QuestionUtils
-
 
 # todo: 保存put_task接口返回的ret.id到redis，于查询考试结果时查验，减少读库次数
 
@@ -92,7 +91,7 @@ def upload_test_wav_success():
                                  (test_id, current_user.name))
         return jsonify(errors.success(errors.Test_not_exist))
     wav_test.update(set__result__status='handling')
-    _, err = CeleryQueue.put_task('pretest', test_id)
+    _, err = MyCelery.put_task('pretest', test_id)
     if err:
         current_app.logger.error('[PutTaskException][upload_test_wav_success]test_id:%s,'
                                  'exception:\n%s' % (test_id, traceback.format_exc()))
@@ -137,7 +136,8 @@ def get_upload_url_v2(question_num):
     # get test
     current_test = CurrentTestModel.objects(id=test_id).first()
     if current_test is None:
-        current_app.logger.error("[TestNotFound][get_upload_url_v2]test_id: %s" % test_id)
+        current_app.logger.error(
+            "[TestNotFound][get_upload_url_v2]username: %s, test_id: %s" % (current_user.name, test_id))
         return jsonify(errors.Exam_not_exist)
 
     # get question
@@ -197,7 +197,7 @@ def upload_success_v2(question_num):
     q_type = question['q_type']  # EmbeddedDocument不是dict，没有get方法
 
     # todo: 任务队列应放更多信息，让评分节点直接取用，避免让评分节点查url
-    task_id, err = CeleryQueue.put_task(q_type, current_test.id, question_num)
+    task_id, err = MyCelery.put_task(q_type, current_test.id, question_num)
     if err:
         current_app.logger.error('[PutTaskException][upload_success]q_type:%s, test_id:%s,'
                                  'exception:\n%s' % (q_type, current_test.id, traceback.format_exc()))
@@ -307,7 +307,8 @@ def next_question():
     # 获得下一题号 此时now_q_num最小是0
     next_question_num = int(nowQuestionNum) + 1
     ExamSession.set(current_user.id, 'question_num', next_question_num)
-    current_app.logger.info("next-question: username: %s, next_question_num: %s" % (current_user.name, next_question_num))
+    current_app.logger.info(
+        "next-question: username: %s, next_question_num: %s" % (current_user.name, next_question_num))
     # 如果超出最大题号，如用户多次刷新界面，则重定向到结果页面
     if next_question_num > ExamConfig.total_question_num:
         ExamSession.set(current_user.id, 'question_num', 0)
@@ -378,7 +379,8 @@ def get_upload_url_v2_bt202004(question_num):
     # get test
     current_test = CurrentTestModel.objects(id=test_id).first()
     if current_test is None:
-        current_app.logger.error("[TestNotFound][get_upload_url_v2]test_id: %s" % test_id)
+        current_app.logger.error(
+            "[TestNotFound][get_upload_url_v2]username: %s, test_id: %s" % (current_user.name, test_id))
         return jsonify(errors.Exam_not_exist)
 
     # get question
