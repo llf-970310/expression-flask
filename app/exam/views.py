@@ -300,7 +300,14 @@ def next_question():
         # 生成当前题目
         current_app.logger.info('init exam...')
         # 调试发现session["user_id"]和current_user.id相同？？(但应使用current_user.id)
+
+        _time2 = datetime.datetime.utcnow()
+
         test_id = QuestionUtils.init_question(current_user)
+
+        _time3 = datetime.datetime.utcnow()
+        current_app.logger.info('[TimeDebug][next_question init-exam]%s' % (_time3 - _time2))
+
         if not test_id:
             return jsonify(errors.Init_exam_failed)
         ExamSession.set(current_user.id, 'test_id', test_id)
@@ -316,16 +323,20 @@ def next_question():
         return jsonify(errors.Exam_finished)
     # 根据题号查找题目
     the_test_id = ExamSession.get(current_user.id, 'test_id')
+    _time4 = datetime.datetime.utcnow()
     context = QuestionUtils.question_dealer(next_question_num, the_test_id, str(current_user.id))
+    _time5 = datetime.datetime.utcnow()
+    current_app.logger.info('[TimeDebug][next_question question_dealer]%s' % (_time5 - _time4))
+
     if not context:
         return jsonify(errors.Get_question_failed)
     # 判断考试是否超时，若超时则返回错误
     if context['examLeftTime'] <= 0:
         return jsonify(errors.Test_time_out)
     current_app.logger.info("next_question: return data: %s, user name: %s" % (str(context), current_user.name))
-    _time2 = datetime.datetime.utcnow()
+    _time6 = datetime.datetime.utcnow()
     current_app.logger.info('[TimeDebug][next_question total(nextQuestionNum:%s)]%s'
-                            % (next_question_num, (_time2 - _time1)))
+                            % (next_question_num, (_time6 - _time1)))
     return jsonify(errors.success(context))
 
 
@@ -339,7 +350,10 @@ def find_left_exam():
         test_id = ExamSession.get(current_user.id, 'test_id')
         is_testing = ExamSession.get(current_user.id, 'testing')
         if test_id is not None and is_testing == 'True':
+            _time2 = datetime.datetime.utcnow()
             left_exam = CurrentTestModel.objects(id=test_id).first()
+            _time3 = datetime.datetime.utcnow()
+            current_app.logger.info('[TimeDebug][find_left_exam query-db]%s' % (_time3 - _time2))
             if left_exam:
                 # 查找到第一个未做的题目
                 for key, value in left_exam['questions'].items():
@@ -349,8 +363,8 @@ def find_left_exam():
                                                 (current_user.name, left_exam.id))
                         return jsonify(errors.info("有未完成的考试", {"next_q_num": key}))
     current_app.logger.debug("[NoLeftExamFound][find_left_exam]user name: %s" % current_user.name)
-    _time2 = datetime.datetime.utcnow()
-    current_app.logger.info('[TimeDebug][find_left_exam total]%s' % (_time2 - _time1))
+    _time4 = datetime.datetime.utcnow()
+    current_app.logger.info('[TimeDebug][find_left_exam total]%s' % (_time4 - _time1))
     return jsonify(errors.success({"info": "没有未完成的考试"}))
     #     # 首先判断是否有未做完的考试
     #     user_id = current_user.id.__str__()
