@@ -15,7 +15,7 @@ redis_client = StrictRedis(connection_pool=pool)
 class MongoConfig:
     # for apscheduler client
     # actually these information should be moved to .env file, then loaded here
-    host = 'redis-server.expression.hosts'
+    host = 'mongo-server.expression.hosts'
     port = 27017
     # {
     # auth = None
