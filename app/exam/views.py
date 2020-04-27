@@ -285,6 +285,7 @@ def get_result():
 @exam.route('/next-question', methods=['POST'])
 @login_required
 def next_question():
+    _time1 = datetime.datetime.utcnow()
     nowQuestionNum = request.form.get("nowQuestionNum")
     current_app.logger.info('next_question: nowQuestionNum: %s, user_name: %s' % (nowQuestionNum, current_user.name))
     # 判断是否有剩余考试次数
@@ -322,12 +323,16 @@ def next_question():
     if context['examLeftTime'] <= 0:
         return jsonify(errors.Test_time_out)
     current_app.logger.info("next_question: return data: %s, user name: %s" % (str(context), current_user.name))
+    _time2 = datetime.datetime.utcnow()
+    current_app.logger.info('[TimeDebug][next_question total(nextQuestionNum:%s)]%s'
+                            % (next_question_num, (_time2 - _time1)))
     return jsonify(errors.success(context))
 
 
 @exam.route('/find-left-exam', methods=['POST'])
 @login_required
 def find_left_exam():
+    _time1 = datetime.datetime.utcnow()
     # 判断断电续做功能是否开启
     if ExamConfig.detect_left_exam:
         # 首先判断是否有未做完的考试
@@ -344,6 +349,8 @@ def find_left_exam():
                                                 (current_user.name, left_exam.id))
                         return jsonify(errors.info("有未完成的考试", {"next_q_num": key}))
     current_app.logger.debug("[NoLeftExamFound][find_left_exam]user name: %s" % current_user.name)
+    _time2 = datetime.datetime.utcnow()
+    current_app.logger.info('[TimeDebug][find_left_exam total]%s' % (_time2 - _time1))
     return jsonify(errors.success({"info": "没有未完成的考试"}))
     #     # 首先判断是否有未做完的考试
     #     user_id = current_user.id.__str__()
