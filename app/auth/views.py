@@ -210,6 +210,7 @@ def register():
 
 @auth.route('/login', methods=['POST'])
 def login():
+    _time1 = datetime.datetime.utcnow()
     username = request.form.get('username')
     password = request.form.get('password')
     # current_app.logger.debug('login request: %s' % request.form.__str__())
@@ -225,7 +226,9 @@ def login():
             1. email符合规范
             2. 各项不为空
         """
+        _time2 = datetime.datetime.utcnow()
         err, check_user = __authorize(username, password)
+        _time3 = datetime.datetime.utcnow()
         if err is not None:
             return jsonify(err)
         current_app.logger.info('login user: %s, id: %s' % (check_user.name, check_user.id))
@@ -235,7 +238,13 @@ def login():
         # check_user.save(validate=False)
         # 压力测试，暂时注释掉
         # check_user.update(last_login_time=datetime.datetime.utcnow())
+        _time4 = datetime.datetime.utcnow()
         login_user(check_user)
+        _time5 = datetime.datetime.utcnow()
+        current_app.logger.info('[TimeDebug][__authorize]%s' % (_time3 - _time2))
+        current_app.logger.info('[TimeDebug][login_user]%s' % (_time5 - _time4))
+    _time6 = datetime.datetime.utcnow()
+    current_app.logger.info('[TimeDebug][login total]%s' % (_time6 - _time1))
     return jsonify(errors.success({
         'msg': '登录成功',
         'uuid': str(check_user.id),
@@ -245,10 +254,13 @@ def login():
 
 @auth.route('/logout', methods=['POST'])
 def logout():
+    _time1 = datetime.datetime.utcnow()
     # current_app.logger.debug('logout request: %s' % request.form.__str__())
     if current_user.is_authenticated:
         current_app.logger.info('user(id:%s) logout' % current_user.id)
         logout_user()
+    _time2 = datetime.datetime.utcnow()
+    current_app.logger.info('[TimeDebug][logout total]%s' % (_time2 - _time1))
     return jsonify(errors.success())
 
 

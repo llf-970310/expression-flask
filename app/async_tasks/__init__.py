@@ -4,7 +4,7 @@
 # Created by dylanchu on 20-3-06
 
 from __future__ import absolute_import
-from .celery_queue import CeleryQueue
+from .celery_ops import MyCelery
 from .apscheduler_config import APScheduler, SchedulerConfig
 
 # apscheduler views

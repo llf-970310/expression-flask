@@ -12,11 +12,10 @@ from flask_login import current_user, login_required
 from app import errors
 from app.exam.utils import *
 from app.models.exam import *
-from app.async_tasks import CeleryQueue
+from app.async_tasks import MyCelery
 from . import exam
 from .exam_config import PathConfig, ExamConfig, QuestionConfig, DefaultValue, Setting
 from .utils import QuestionUtils
-
 
 # todo: 保存put_task接口返回的ret.id到redis，于查询考试结果时查验，减少读库次数
 
@@ -92,7 +91,7 @@ def upload_test_wav_success():
                                  (test_id, current_user.name))
         return jsonify(errors.success(errors.Test_not_exist))
     wav_test.update(set__result__status='handling')
-    _, err = CeleryQueue.put_task('pretest', test_id)
+    _, err = MyCelery.put_task('pretest', test_id)
     if err:
         current_app.logger.error('[PutTaskException][upload_test_wav_success]test_id:%s,'
                                  'exception:\n%s' % (test_id, traceback.format_exc()))
@@ -137,7 +136,8 @@ def get_upload_url_v2(question_num):
     # get test
     current_test = CurrentTestModel.objects(id=test_id).first()
     if current_test is None:
-        current_app.logger.error("[TestNotFound][get_upload_url_v2]test_id: %s" % test_id)
+        current_app.logger.error(
+            "[TestNotFound][get_upload_url_v2]username: %s, test_id: %s" % (current_user.name, test_id))
         return jsonify(errors.Exam_not_exist)
 
     # get question
@@ -197,7 +197,7 @@ def upload_success_v2(question_num):
     q_type = question['q_type']  # EmbeddedDocument不是dict，没有get方法
 
     # todo: 任务队列应放更多信息，让评分节点直接取用，避免让评分节点查url
-    task_id, err = CeleryQueue.put_task(q_type, current_test.id, question_num)
+    task_id, err = MyCelery.put_task(q_type, current_test.id, question_num)
     if err:
         current_app.logger.error('[PutTaskException][upload_success]q_type:%s, test_id:%s,'
                                  'exception:\n%s' % (q_type, current_test.id, traceback.format_exc()))
@@ -285,6 +285,7 @@ def get_result():
 @exam.route('/next-question', methods=['POST'])
 @login_required
 def next_question():
+    _time1 = datetime.datetime.utcnow()
     nowQuestionNum = request.form.get("nowQuestionNum")
     current_app.logger.info('next_question: nowQuestionNum: %s, user_name: %s' % (nowQuestionNum, current_user.name))
     # 判断是否有剩余考试次数
@@ -299,7 +300,14 @@ def next_question():
         # 生成当前题目
         current_app.logger.info('init exam...')
         # 调试发现session["user_id"]和current_user.id相同？？(但应使用current_user.id)
+
+        _time2 = datetime.datetime.utcnow()
+
         test_id = QuestionUtils.init_question(current_user)
+
+        _time3 = datetime.datetime.utcnow()
+        current_app.logger.info('[TimeDebug][next_question init-exam]%s' % (_time3 - _time2))
+
         if not test_id:
             return jsonify(errors.Init_exam_failed)
         ExamSession.set(current_user.id, 'test_id', test_id)
@@ -307,33 +315,45 @@ def next_question():
     # 获得下一题号 此时now_q_num最小是0
     next_question_num = int(nowQuestionNum) + 1
     ExamSession.set(current_user.id, 'question_num', next_question_num)
-    current_app.logger.info("next-question: username: %s, next_question_num: %s" % (current_user.name, next_question_num))
+    current_app.logger.info(
+        "next-question: username: %s, next_question_num: %s" % (current_user.name, next_question_num))
     # 如果超出最大题号，如用户多次刷新界面，则重定向到结果页面
     if next_question_num > ExamConfig.total_question_num:
         ExamSession.set(current_user.id, 'question_num', 0)
         return jsonify(errors.Exam_finished)
     # 根据题号查找题目
     the_test_id = ExamSession.get(current_user.id, 'test_id')
+    _time4 = datetime.datetime.utcnow()
     context = QuestionUtils.question_dealer(next_question_num, the_test_id, str(current_user.id))
+    _time5 = datetime.datetime.utcnow()
+    current_app.logger.info('[TimeDebug][next_question question_dealer]%s' % (_time5 - _time4))
+
     if not context:
         return jsonify(errors.Get_question_failed)
     # 判断考试是否超时，若超时则返回错误
     if context['examLeftTime'] <= 0:
         return jsonify(errors.Test_time_out)
     current_app.logger.info("next_question: return data: %s, user name: %s" % (str(context), current_user.name))
+    _time6 = datetime.datetime.utcnow()
+    current_app.logger.info('[TimeDebug][next_question total(nextQuestionNum:%s)]%s'
+                            % (next_question_num, (_time6 - _time1)))
     return jsonify(errors.success(context))
 
 
 @exam.route('/find-left-exam', methods=['POST'])
 @login_required
 def find_left_exam():
+    _time1 = datetime.datetime.utcnow()
     # 判断断电续做功能是否开启
     if ExamConfig.detect_left_exam:
         # 首先判断是否有未做完的考试
         test_id = ExamSession.get(current_user.id, 'test_id')
         is_testing = ExamSession.get(current_user.id, 'testing')
         if test_id is not None and is_testing == 'True':
+            _time2 = datetime.datetime.utcnow()
             left_exam = CurrentTestModel.objects(id=test_id).first()
+            _time3 = datetime.datetime.utcnow()
+            current_app.logger.info('[TimeDebug][find_left_exam query-db]%s' % (_time3 - _time2))
             if left_exam:
                 # 查找到第一个未做的题目
                 for key, value in left_exam['questions'].items():
@@ -343,6 +363,8 @@ def find_left_exam():
                                                 (current_user.name, left_exam.id))
                         return jsonify(errors.info("有未完成的考试", {"next_q_num": key}))
     current_app.logger.debug("[NoLeftExamFound][find_left_exam]user name: %s" % current_user.name)
+    _time4 = datetime.datetime.utcnow()
+    current_app.logger.info('[TimeDebug][find_left_exam total]%s' % (_time4 - _time1))
     return jsonify(errors.success({"info": "没有未完成的考试"}))
     #     # 首先判断是否有未做完的考试
     #     user_id = current_user.id.__str__()
@@ -378,7 +400,8 @@ def get_upload_url_v2_bt202004(question_num):
     # get test
     current_test = CurrentTestModel.objects(id=test_id).first()
     if current_test is None:
-        current_app.logger.error("[TestNotFound][get_upload_url_v2]test_id: %s" % test_id)
+        current_app.logger.error(
+            "[TestNotFound][get_upload_url_v2]username: %s, test_id: %s" % (current_user.name, test_id))
         return jsonify(errors.Exam_not_exist)
 
     # get question

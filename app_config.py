@@ -15,7 +15,7 @@ redis_client = StrictRedis(connection_pool=pool)
 class MongoConfig:
     # for apscheduler client
     # actually these information should be moved to .env file, then loaded here
-    host = 'redis-server.expression.hosts'
+    host = 'mongo-server.expression.hosts'
     port = 27017
     # {
     # auth = None
@@ -33,7 +33,7 @@ class BaseConfig(object):
 
     # session
     SESSION_TYPE = 'null'  # null/redis/.., null: use (flask default) cookie
-    SESSION_KEY_PREFIX = 'flask'
+    SESSION_KEY_PREFIX = 'flask-session:'
     SESSION_USE_SIGNER = True  # 是否强制加盐混淆session
     SESSION_PERMANENT = True  # 是否长期有效，false则关闭浏览器失效
     PERMANENT_SESSION_LIFETIME = 7200  # session长期有效则设定session生命周期

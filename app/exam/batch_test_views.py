@@ -9,7 +9,7 @@ import time
 from . import exam
 from app import errors
 from app.models.exam import *
-from app.async_tasks import CeleryQueue
+from app.async_tasks import MyCelery
 import datetime
 import traceback
 from .exam_config import PathConfig, ExamConfig, DefaultValue, Setting
@@ -202,8 +202,8 @@ def upload_success_bt(question_num):
     question = current_test.questions[question_num]  # production to_do: 任务队列应放更多信息，避免让评分节点查url
     q_type = question['q_type']  # EmbeddedDocument不是dict，没有get方法
 
-    # task_id, err = CeleryQueue.put_task(q_type, current_test.id, question_num)  # for production
-    task_id, err = CeleryQueue.put_task('2', current_test.id, question_num, use_lock=False)  # batch test
+    # task_id, err = MyCelery.put_task(q_type, current_test.id, question_num)  # for production
+    task_id, err = MyCelery.put_task('2', current_test.id, question_num, use_lock=False)  # batch test
 
     if err:
         current_app.logger.error('[BT-PutTaskException][upload_success]q_type:%s, test_id:%s,'
@@ -297,7 +297,7 @@ def upload_success_for_test():
         wav_test['text'] = '表达力测试将用15分钟的时间，数据化您的表达能力。'
         wav_test.save()
 
-        task_id, err = CeleryQueue.put_task('pretest', wav_test.id, use_lock=False)
+        task_id, err = MyCelery.put_task('pretest', wav_test.id, use_lock=False)
         if err:
             current_app.logger.error('[BT-PutTaskException][upload_success_for_test]test_id:%s,'
                                      'exception:\n%s' % (wav_test.id, traceback.format_exc()))
@@ -320,7 +320,7 @@ def upload_success_for_test():
         current_test.questions['1'].file_location = 'BOS'
         current_test.save()
 
-        task_id, err = CeleryQueue.put_task(q.q_type, current_test.id, '1', use_lock=False)
+        task_id, err = MyCelery.put_task(q.q_type, current_test.id, '1', use_lock=False)
         if err:
             current_app.logger.error('[BT-PutTaskException][upload_success_for_test]q_type:%s, test_id:%s,'
                                      'exception:\n%s' % (q.q_type, current_test.id, traceback.format_exc()))

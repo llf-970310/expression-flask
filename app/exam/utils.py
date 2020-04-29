@@ -48,36 +48,38 @@ def get_server_date_str(separator='') -> str:
 
 
 class ExamSession:
-    @staticmethod
-    def set(user_id, name, value, ex=int(ExamConfig.exam_total_time), px=None, nx=False, xx=False):
+    key_format = 'exam-session:%s:%s'
+
+    @classmethod
+    def set(cls, user_id, name, value, ex=int(ExamConfig.exam_total_time), px=None, nx=False, xx=False):
         user_id = str(user_id)
-        key = 'ES##%s##%s' % (user_id, name)
+        key = cls.key_format % (user_id, name)
         return redis_client.set(key, value, ex, px, nx, xx)
 
-    @staticmethod
-    def get(user_id, name, default=None):
+    @classmethod
+    def get(cls, user_id, name, default=None):
         user_id = str(user_id)
-        key = 'ES##%s##%s' % (user_id, name)
+        key = cls.key_format % (user_id, name)
         ret = redis_client.get(key)
         return ret.decode() if ret is not None else default
 
-    @staticmethod
-    def delete(user_id, name):
+    @classmethod
+    def delete(cls, user_id, name):
         user_id = str(user_id)
-        key = 'ES##%s##%s' % (user_id, name)
+        key = cls.key_format % (user_id, name)
         return redis_client.delete(key)
 
-    @staticmethod
-    def rename(user_id, name, new_name):
+    @classmethod
+    def rename(cls, user_id, name, new_name):
         user_id = str(user_id)
-        key = 'ES##%s##%s' % (user_id, name)
-        new_key = 'ES##%s##%s' % (user_id, new_name)
+        key = cls.key_format % (user_id, name)
+        new_key = cls.key_format % (user_id, new_name)
         return redis_client.rename(key, new_key)
 
-    @staticmethod
-    def expire(user_id, name, time):
+    @classmethod
+    def expire(cls, user_id, name, time):
         user_id = str(user_id)
-        key = 'ES##%s##%s' % (user_id, name)
+        key = cls.key_format % (user_id, name)
         return redis_client.expire(key, time)
 
 
