@@ -15,7 +15,7 @@ class PathConfig(object):
 
 class ExamConfig(object):
     answer_time_around = 10
-    question_num_each_type = {1: 1, 2: 4, 3: 1}  # q_type:question_numbers
+    question_num_each_type = {1: 1, 2: 0, 3: 1, 4: 0, 5: 2, 6: 2}  # q_type:question_numbers
     question_allow_repeat = {1: True, 2: False, 3: True}  # q_type:True/False
     question_limit_time = {0: 15, 1: 60, 2: 30, 3: 120}
     question_prepare_time = {0: 5, 1: 5, 2: 60, 3: 60}
@@ -24,8 +24,8 @@ class ExamConfig(object):
     key_percent = 0.7
     detail_percent = 0.3
     full_score = 100
-    exam_total_time = 0.5 * 60 * 60     # 每场考试最长时间（秒）
-    detect_left_exam = True            # 是否断点续作
+    exam_total_time = 0.5 * 60 * 60  # 每场考试最长时间（秒）
+    detect_left_exam = True  # 是否断点续作
 
 
 class QuestionConfig(object):
