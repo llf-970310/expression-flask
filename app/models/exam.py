@@ -24,9 +24,10 @@ class QuestionModel(db.DynamicDocument):
     """
     正常使用的题目 question
     """
-    text = db.StringField(max_length=512)
+    text = db.StringField(max_length=1024)
     level = db.IntField(min_value=1, max_value=10)
-    q_type = db.IntField(min_value=1, max_value=3)  # type是留字，可能会有一些坑
+    q_type = db.IntField(min_value=1, max_value=6)  # type是留字，可能会有一些坑
+    # 1 朗读 2 复述 3 问答 4 选择 5 短文本英文阅读 6 长文本英文阅读
     used_times = db.IntField(min_value=0, default=0)
     up_count = db.IntField(min_value=0, default=0)
     down_count = db.IntField(min_value=0, default=0)
