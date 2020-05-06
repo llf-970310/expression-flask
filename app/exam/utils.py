@@ -95,6 +95,8 @@ class QuestionUtils:
         for t in ExamConfig.question_num_each_type.keys():
             temp_q_lst = []
             question_num_needed = ExamConfig.question_num_each_type[t]
+            if question_num_needed <= 0:
+                continue
             d = {'q_type': t, 'q_id': {'$lte': 10000}}  # 题号<=10000, (大于10000的题目用作其他用途)
 
             questions = QuestionModel.objects(__raw__=d).order_by('used_times')  # 按使用次数倒序获得questions

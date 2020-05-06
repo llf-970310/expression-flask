@@ -16,9 +16,9 @@ class PathConfig(object):
 class ExamConfig(object):
     answer_time_around = 10
     question_num_each_type = {1: 1, 2: 0, 3: 1, 4: 0, 5: 2, 6: 2}  # q_type:question_numbers
-    question_allow_repeat = {1: True, 2: False, 3: True}  # q_type:True/False
-    question_limit_time = {0: 15, 1: 60, 2: 30, 3: 120}
-    question_prepare_time = {0: 5, 1: 5, 2: 60, 3: 60}
+    question_allow_repeat = {1: True, 2: False, 3: True, 4: True, 5: True, 6: True}  # q_type:True/False
+    question_limit_time = {0: 15, 1: 60, 2: 30, 3: 120, 4: 0, 5: 60, 6: 120}
+    question_prepare_time = {0: 5, 1: 5, 2: 60, 3: 60, 4: 0, 5: 120, 6: 240}
     total_question_num = sum(question_num_each_type.values())
     total_question_type_num = len(question_num_each_type)
     key_percent = 0.7
