@@ -18,20 +18,31 @@ def compute_exam_score(score):
     :return: 考试个维度成绩和总成绩
     """
     print(score)
-    for i in range(ExamConfig.total_question_num, 0, -1):
-        if not score.get(i):
-            print("in not")
-            print(score.get(i))
-            score[i] = {"quality": 0, "key": 0, "detail": 0, "structure": 0, "logic": 0}
-    print(score)
+    # for i in range(ExamConfig.total_question_num, 0, -1):
+    #     if not score.get(i):
+    #         print("in not")
+    #         print(score.get(i))
+    #         score[i] = {"quality": 0, "key": 0, "detail": 0, "structure": 0, "logic": 0}
+    # print(score)
+
+    total_quality = 0
+    total_key = 0
+    total_detail = 0
+    total_structure = 0
+    total_logic = 0
+    for k, v in score.items():
+        total_quality += v.get('quality', 0)
+        total_key += v.get('key', 0)
+        total_detail += v.get('detail', 0)
+        total_structure += v.get('structure', 0)
+        total_logic += v.get('logic', 0)
+
     x = {
-        "quality": round(score[1]['quality'], 6),
-        "key": round(score[3]['key'] * 0.25 + score[4]['key'] * 0.25 + score[5]['key'] * 0.25 + score[6][
-            'key'] * 0.25, 6),
-        "detail": round(score[3]['detail'] * 0.25 + score[4]['detail'] * 0.25 + score[5]['detail'] * 0.25 +
-                        score[6]['detail'] * 0.25, 6),
-        "structure": round(score[2]['structure'], 6),
-        "logic": round(score[2]['logic'], 6)
+        'quality': round(total_quality, 6),  # 1个题算平均?
+        'key': round(total_key * 0.25, 6),  # 4个题算平均?
+        'detail': round(total_detail * 0.25, 6),  # 4个题算平均?
+        'structure': round(total_structure, 6),  # 1个题算平均?
+        'logic': round(total_logic, 6)  # 1个题算平均?
     }
     x['total'] = round(x["quality"] * 0.3 + x["key"] * 0.35 + x["detail"] * 0.15 + x["structure"] * 0.1 + x[
         "logic"] * 0.1, 6)
