@@ -11,6 +11,7 @@ from app_config import redis_client
 
 
 def compute_exam_score(score):
+    # todo 这里暂时改成能用
     """
     计算考试成绩
     :param score: 考试各题成绩数组
@@ -25,12 +26,12 @@ def compute_exam_score(score):
     print(score)
     x = {
         "quality": round(score[1]['quality'], 6),
-        "key": round(score[2]['key'] * 0.25 + score[3]['key'] * 0.25 + score[4]['key'] * 0.25 + score[5][
+        "key": round(score[3]['key'] * 0.25 + score[4]['key'] * 0.25 + score[5]['key'] * 0.25 + score[6][
             'key'] * 0.25, 6),
-        "detail": round(score[2]['detail'] * 0.25 + score[3]['detail'] * 0.25 + score[4]['detail'] * 0.25 +
-                        score[5]['detail'] * 0.25, 6),
-        "structure": round(score[6]['structure'], 6),
-        "logic": round(score[6]['logic'], 6)
+        "detail": round(score[3]['detail'] * 0.25 + score[4]['detail'] * 0.25 + score[5]['detail'] * 0.25 +
+                        score[6]['detail'] * 0.25, 6),
+        "structure": round(score[2]['structure'], 6),
+        "logic": round(score[2]['logic'], 6)
     }
     x['total'] = round(x["quality"] * 0.3 + x["key"] * 0.35 + x["detail"] * 0.15 + x["structure"] * 0.1 + x[
         "logic"] * 0.1, 6)
