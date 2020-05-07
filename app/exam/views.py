@@ -200,7 +200,7 @@ def upload_success_v2(question_num):
     task_id, err = MyCelery.put_task(q_type, current_test.id, question_num)
     if err:
         current_app.logger.error('[PutTaskException][upload_success]q_type:%s, test_id:%s,'
-                                 'exception:\n%s' % (q_type, current_test.id, traceback.format_exc()))
+                                 'exception:\n%s' % (q_type, current_test.id, err))
         return jsonify(errors.exception({'Exception': str(err)}))
     current_app.logger.info("[PutTaskSuccess][upload_success]dataID: %s" % str(current_test.id))
 
