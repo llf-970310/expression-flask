@@ -94,7 +94,7 @@ def upload_test_wav_success():
     _, err = MyCelery.put_task('pretest', test_id)
     if err:
         current_app.logger.error('[PutTaskException][upload_test_wav_success]test_id:%s,'
-                                 'exception:\n%s' % (test_id, traceback.format_exc()))
+                                 'exception:\n%s' % (test_id, err))
         return jsonify(errors.exception({'Exception': str(err)}))
     current_app.logger.info("upload_test_wav_success: return data! test id: %s, user name: %s" %
                             (test_id, current_user.name))
