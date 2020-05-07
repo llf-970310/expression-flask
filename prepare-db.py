@@ -12,13 +12,7 @@ import numpy as np
 
 
 if __name__ == '__main__':
-    admin = UserModel()
-    admin.email = 'admin2@site.com'
-    admin.password = app.md5_hash('1234')
-    admin.name = '管理员2'
-    admin.role = Roles.Admin
-    # admin.student_id = 'default'
-    admin.save()
+    print(QuestionModel.objects(id='5eb286adc38fabcba71f8ccf').first().text)
     # print(type(admin.role))
     # print(admin.role)
     # print(admin.role == Roles.Default)
