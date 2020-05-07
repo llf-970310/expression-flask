@@ -15,6 +15,7 @@ from app.models.exam import HistoryTestModel, CurrentTestModel
 from app.models.invitation import InvitationModel
 from app.models.user import UserModel
 from . import auth
+from app.exam import utils
 
 
 @auth.route('/user/info', methods=['GET'])
@@ -75,6 +76,7 @@ def untying():
     ))
 
 
+# TODO: This function does not belong to auth and should NOT be placed here
 @auth.route('/showscore', methods=['POST'])
 def showscore():
     if not current_user.is_authenticated:
@@ -116,6 +118,13 @@ def showscore():
     for current in current_scores_origin:
         questions = current['questions']
         if __question_all_finished(questions):  # 全部结束才录入history
+            # 所有题目已完成但没有分数信息，则计算分数
+            if not current['score_info']:
+                score = {}
+                for k, v in questions.items():
+                    score[int(k)] = v['score']
+                current['score_info'] = utils.compute_exam_score(score)
+                current.save()
             history_scores.append({
                 "test_start_time": convert_datetime_to_str(current["test_start_time"]),
                 "score_info": {

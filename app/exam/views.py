@@ -237,21 +237,22 @@ def get_result():
             current_app.logger.error("upload_file ERROR: No Tests!, test_id: %s" % last_test_id)
             return jsonify(errors.Exam_not_exist)
     questions = test['questions']
+
     score = {}
     has_handling = False
     for i in range(ExamConfig.total_question_num, 0, -1):
         if questions[str(i)]['status'] == 'finished':
             score[i] = questions[str(i)]['score']
-            current_app.logger.info("get_result: status is finished! index: %s, score: %s, test_id: %s, user name: %s"
-                                    % (str(i), str(score[i]), last_test_id, current_user.name))
+            # current_app.logger.info("get_result: status is finished! index: %s, score: %s, test_id: %s, user name: %s"
+            #                         % (str(i), str(score[i]), last_test_id, current_user.name))
         elif questions[str(i)]['status'] not in ['none', 'question_fetched', 'url_fetched', 'handling']:
             score[i] = {"quality": 0, "key": 0, "detail": 0, "structure": 0, "logic": 0}
-            current_app.logger.info("get_result: ZERO score! index: %s, score: %s, test_id: %s, user name: %s"
-                                    % (str(i), str(score[i]), last_test_id, current_user.name))
+            # current_app.logger.info("get_result: ZERO score! index: %s, score: %s, test_id: %s, user name: %s"
+            #                         % (str(i), str(score[i]), last_test_id, current_user.name))
         else:
             has_handling = has_handling | (questions[str(i)]['status'] == 'handling')
-            current_app.logger.info("get_result: status is handling! index: %s , test_id: %s, user name: %s"
-                                    % (str(i), last_test_id, current_user.name))
+            # current_app.logger.info("get_result: status is handling! index: %s , test_id: %s, user name: %s"
+            #                         % (str(i), last_test_id, current_user.name))
 
     # 判断该测试是否超时
     in_process = ((datetime.datetime.utcnow() - test["test_start_time"]).total_seconds() < ExamConfig.exam_total_time)
