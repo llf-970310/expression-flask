@@ -94,7 +94,7 @@ def upload_test_wav_success():
     _, err = MyCelery.put_task('pretest', test_id)
     if err:
         current_app.logger.error('[PutTaskException][upload_test_wav_success]test_id:%s,'
-                                 'exception:\n%s' % (test_id, traceback.format_exc()))
+                                 'exception:\n%s' % (test_id, err))
         return jsonify(errors.exception({'Exception': str(err)}))
     current_app.logger.info("upload_test_wav_success: return data! test id: %s, user name: %s" %
                             (test_id, current_user.name))
@@ -200,7 +200,7 @@ def upload_success_v2(question_num):
     task_id, err = MyCelery.put_task(q_type, current_test.id, question_num)
     if err:
         current_app.logger.error('[PutTaskException][upload_success]q_type:%s, test_id:%s,'
-                                 'exception:\n%s' % (q_type, current_test.id, traceback.format_exc()))
+                                 'exception:\n%s' % (q_type, current_test.id, err))
         return jsonify(errors.exception({'Exception': str(err)}))
     current_app.logger.info("[PutTaskSuccess][upload_success]dataID: %s" % str(current_test.id))
 
