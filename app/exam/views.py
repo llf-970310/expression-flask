@@ -226,7 +226,8 @@ def upload_success_v2(question_num):
     return jsonify(errors.success(resp))
 
 
-@exam.route('/get-result', methods=['POST'])
+# @exam.route('/get-result', methods=['POST'])
+@exam.route('/result', methods=['GET'])
 @login_required
 def get_result():
     # current_app.logger.debug("get_result: user_name: " + current_user.name)
@@ -286,8 +287,88 @@ def get_result():
         return jsonify(errors.WIP)
 
 
-@exam.route('/next-question', methods=['POST'])
+# init exam
+@exam.route('/new', methods=['POST'])
 @login_required
+def init_exam_v2():
+    # 判断是否有剩余考试次数
+    if Setting.LIMIT_EXAM_TIMES and current_user.remaining_exam_num <= 0:
+        return jsonify(errors.No_exam_times)
+    # 生成当前题目
+    current_app.logger.info('[InitExam][new-exam]id:%s,name:%s' % (current_user.id, current_user.name))
+    test_id = PaperUtils.init_paper(current_user)
+    if not test_id:
+        current_app.logger.error('[InitExamFailure][new-exam]id:%s,name:%s' %
+                                 (current_user.id, current_user.name))
+        return jsonify(errors.Init_exam_failed)
+    if Setting.LIMIT_EXAM_TIMES:
+        current_user.remaining_exam_num -= 1
+        current_user.save()
+    ExamSession.set(current_user.id, 'test_id', test_id)
+    ExamSession.set(current_user.id, 'testing', 'True')  # for find-left-exam
+    return jsonify(errors.success())
+
+
+@exam.route('/<question_num>/next-question', methods=['GET'])
+@login_required
+def next_question_v2(question_num):
+    """
+    获取下一题
+    :param question_num: 完成的题号(原nowQuestionNum),获取第1题时为0
+    :return: json格式包装的question，如：
+    {
+        "code": 0,
+        "data": {
+            "examLeftTime": 1752.312776,
+            "examTime": 1800,
+            "lastQuestion": false,
+            "questionContent": "表达能力是一种非常有用的技能",
+            "questionDbId": "5bcdea7df9438b6e56a32999",
+            "questionInfo": {
+                "detail": "声音质量测试。点击 “显示题目” 按钮后请先熟悉屏幕上的文字，然后按下 “开始回答” 按钮朗读该段文字。",
+                "tip": "为了保证测试准确性，请选择安静环境，并对准麦克风。"
+            },
+            "questionLimitTime": 60,
+            "questionNumber": 1,
+            "questionType": 1,
+            "readLimitTime": 5
+        },
+        "msg": "success"
+    }
+    """
+    # 验证参数
+    try:
+        next_question_num = int(question_num) + 1
+        if next_question_num <= 0:  # db中题号从1开始
+            raise Exception('Bad request')
+    except Exception as e:
+        current_app.logger.error('[ParamsError][next_question]uid:%s,name:%s,args:%s'
+                                 % (current_user.id, current_user.name, request.args))
+        return jsonify(errors.Params_error)
+    # 如果超出最大题号
+    if next_question_num > ExamConfig.total_question_num:
+        ExamSession.set(current_user.id, 'question_num', 0)
+        return jsonify(errors.Exam_finished)
+
+    # todo: nowQuestionNum: 限制只能获取当前题目
+    ExamSession.set(current_user.id, 'question_num', next_question_num)
+
+    test_id = ExamSession.get(current_user.id, "test_id",
+                              default=DefaultValue.test_id)  # for production
+    # 根据题号查找题目
+    context = PaperUtils.question_dealer(next_question_num, test_id, str(current_user.id))
+    if not context:
+        return jsonify(errors.Get_question_failed)
+    # 判断考试是否超时，若超时则返回错误
+    if context['examLeftTime'] <= 0:
+        return jsonify(errors.Test_time_out)
+    current_app.logger.debug("next_question: return data: %s, user name: %s"
+                             % (str(context), current_user.name))
+    return jsonify(errors.success(context))
+
+
+# @exam.route('/next-question', methods=['POST'])
+# @login_required
 def next_question():
     _time1 = datetime.datetime.utcnow()
     nowQuestionNum = request.form.get("nowQuestionNum")
@@ -344,9 +425,13 @@ def next_question():
     return jsonify(errors.success(context))
 
 
-@exam.route('/find-left-exam', methods=['POST'])
+# @exam.route('/find-left-exam', methods=['POST'])
+@exam.route('/left', methods=['GET'])
 @login_required
 def find_left_exam():
+    """
+    获取未完成考试,(断网续测),返回题号
+    """
     _time1 = datetime.datetime.utcnow()
     # 判断断电续做功能是否开启
     if ExamConfig.detect_left_exam:
@@ -365,33 +450,11 @@ def find_left_exam():
                     if status in ['none', 'question_fetched', 'url_fetched']:
                         current_app.logger.info("[LeftExamFound][find_left_exam]user name: %s, test_id: %s" %
                                                 (current_user.name, left_exam.id))
-                        return jsonify(errors.info("有未完成的考试", {"next_q_num": key}))
+                        return jsonify(errors.info("有未完成的考试", {"next_q_num": key}))  # info是什么鬼??
     current_app.logger.debug("[NoLeftExamFound][find_left_exam]user name: %s" % current_user.name)
     _time4 = datetime.datetime.utcnow()
     current_app.logger.info('[TimeDebug][find_left_exam total]%s' % (_time4 - _time1))
     return jsonify(errors.success({"info": "没有未完成的考试"}))
-    #     # 首先判断是否有未做完的考试
-    #     user_id = current_user.id.__str__()
-    #     current_app.logger.info("find_left_exam: user id: %s" % user_id)
-    #     left_exam = CurrentTestModel.objects(user_id=user_id).order_by('-test_start_time').first()
-    #     if not left_exam:
-    #         current_app.logger.info("find_left_exam: no left exam, user name: %s" % current_user.name)
-    #         return jsonify(errors.success({"info": "没有未完成的考试"}))
-    #     in_process = ((datetime.datetime.utcnow() - left_exam["test_start_time"]).total_seconds() <
-    #                   ExamConfig.exam_total_time)
-    #     if in_process:
-    #         # 查找到第一个未做的题目
-    #         for key, value in left_exam['questions'].items():
-    #             status = value['status']
-    #             if status in ['none', 'question_fetched', 'url_fetched']:
-    #                 current_app.logger.info("find_left_exam: HAS left exam, user name: %s, test_id: %s" %
-    #                                         (current_user.name, left_exam.id.__str__()))
-    #                 return jsonify(errors.info("有未完成的考试", {"next_q_num": key}))
-    #     current_app.logger.info("find_left_exam: no left exam, user name: %s" % current_user.name)
-    #     return jsonify(errors.success({"info": "没有未完成的考试"}))
-    #
-    # current_app.logger.debug("[NoLeftExamFound][find_left_exam]user name: %s" % current_user.name)
-    # return jsonify(errors.success({"info": "没有未完成的考试"}))
 
 
 # upload url TEST - 2020-04-23
