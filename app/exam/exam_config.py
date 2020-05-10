@@ -14,18 +14,19 @@ class PathConfig(object):
 
 
 class ExamConfig(object):
-    answer_time_around = 10
     question_num_each_type = {1: 1, 2: 0, 3: 1, 4: 0, 5: 2, 6: 2}  # q_type:question_numbers
+    total_question_num = sum(question_num_each_type.values())
+    exam_total_time = 0.5 * 60 * 60  # 每场考试最长时间（秒）
+
     question_allow_repeat = {1: True, 2: False, 3: True, 4: True, 5: True, 6: True}  # q_type:True/False
     question_limit_time = {0: 15, 1: 60, 2: 30, 3: 120, 4: 0, 5: 60, 6: 120}
     question_prepare_time = {0: 5, 1: 5, 2: 60, 3: 60, 4: 0, 5: 120, 6: 240}
-    total_question_num = sum(question_num_each_type.values())
-    total_question_type_num = len(question_num_each_type)
+    detect_left_exam = True  # 是否断点续作
+
+    # TODO: 下面参数在定时优化代码中使用,代码需要检查，可能需要重写
     key_percent = 0.7
     detail_percent = 0.3
     full_score = 100
-    exam_total_time = 0.5 * 60 * 60  # 每场考试最长时间（秒）
-    detect_left_exam = True  # 是否断点续作
 
 
 class QuestionConfig(object):
@@ -38,7 +39,7 @@ class QuestionConfig(object):
         5: {"detail": "点击 “显示题目” 后，你将看到一篇英文短文，一段时间准备后，请用<strong>中文</strong>复述文章。","tip":"你有2分钟的时间准备，并有1分钟时间复述"},
         6: {"detail": "点击 “显示题目” 后，你将看到一篇英文长文，一段时间准备后，请用<strong>中文</strong>复述文章。","tip":"你有4分钟的时间准备，并有2分钟时间复述"}
     }
-    test_text = {
+    pretest_text = {
         'detail': '这是一段测试收音效果的文字，请朗读这段话。',
         'tip': '为了保证测试准确性，请选择安静环境，并对准麦克风。',
         'content': '表达力测试将用15分钟的时间，数据化您的表达能力。'

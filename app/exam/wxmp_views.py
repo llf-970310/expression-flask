@@ -11,7 +11,7 @@ import time
 from flask import request, current_app, jsonify
 
 from app import errors
-from app.exam.utils import get_server_date_str
+from app.exam.utils.misc import get_server_date_str
 from app.models.exam import *
 from app.async_tasks import MyCelery
 from . import exam

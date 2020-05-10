@@ -2,20 +2,23 @@
 # coding: utf-8
 #
 # Created by dylanchu on 19-2-25
+
 import random
-import traceback
 import Levenshtein
+import time
 
 from flask import request, current_app, jsonify
 from flask_login import current_user, login_required
 
 from app import errors
-from app.exam.utils import *
 from app.models.exam import *
 from app.async_tasks import MyCelery
 from . import exam
 from .exam_config import PathConfig, ExamConfig, QuestionConfig, DefaultValue, Setting
-from .utils import QuestionUtils
+from .utils.session import ExamSession
+from .utils.paper import PaperUtils
+from .utils.paper import compute_exam_score
+from .utils.misc import get_server_date_str
 
 # todo: 保存put_task接口返回的ret.id到redis，于查询考试结果时查验，减少读库次数
 
@@ -37,7 +40,7 @@ from .utils import QuestionUtils
 def get_test_wav_info():
     user_id = str(current_user.id)
     wav_test = WavPretestModel()
-    wav_test['text'] = QuestionConfig.test_text['content']
+    wav_test['text'] = QuestionConfig.pretest_text['content']
     wav_test['user_id'] = user_id
     wav_test.save()
     current_app.logger.info("get_test_wav_info: return data! test id: %s, user name: %s" % (wav_test.id.__str__(),
@@ -47,8 +50,8 @@ def get_test_wav_info():
         "readLimitTime": ExamConfig.question_prepare_time[0],
         "questionContent": wav_test['text'],
         "questionInfo": {
-            "detail": QuestionConfig.test_text['detail'],
-            "tip": QuestionConfig.test_text['tip'],
+            "detail": QuestionConfig.pretest_text['detail'],
+            "tip": QuestionConfig.pretest_text['tip'],
         },
         "test_id": wav_test.id.__str__()
     }))
@@ -304,7 +307,7 @@ def next_question():
 
         _time2 = datetime.datetime.utcnow()
 
-        test_id = QuestionUtils.init_question(current_user)
+        test_id = PaperUtils.init_paper(current_user)
 
         _time3 = datetime.datetime.utcnow()
         current_app.logger.info('[TimeDebug][next_question init-exam]%s' % (_time3 - _time2))
@@ -325,7 +328,7 @@ def next_question():
     # 根据题号查找题目
     the_test_id = ExamSession.get(current_user.id, 'test_id')
     _time4 = datetime.datetime.utcnow()
-    context = QuestionUtils.question_dealer(next_question_num, the_test_id, str(current_user.id))
+    context = PaperUtils.question_dealer(next_question_num, the_test_id, str(current_user.id))
     _time5 = datetime.datetime.utcnow()
     current_app.logger.info('[TimeDebug][next_question question_dealer]%s' % (_time5 - _time4))
 
