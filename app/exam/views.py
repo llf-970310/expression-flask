@@ -203,7 +203,7 @@ def upload_success_v2(question_num):
                                  "%s, user_name: %s. exception:\n%s"
                                  % (question_num, current_user.name, e))
         return jsonify(errors.Get_question_failed)
-    q_type = question['q_type']  # EmbeddedDocument不是dict，没有get方法
+    q_type = question['q_type']  # EmbeddedDocument不是dict，没有get方法.  --  已手动支持...
 
     # todo: 任务队列应放更多信息，让评分节点直接取用，避免让评分节点查url
     task_id, err = MyCelery.put_task(q_type, current_test.id, question_num)

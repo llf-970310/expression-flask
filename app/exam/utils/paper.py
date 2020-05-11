@@ -162,7 +162,7 @@ class PaperUtils:
                    "questionInfo": QuestionConfig.question_type_tip[question.q_type],
                    "questionContent": question.q_text,
                    "examLeftTime": (test.test_expire_time - datetime.datetime.utcnow()).total_seconds(),
-                   "examTime": test.test_expire_time - test.test_start_time
+                   "examTime": (test.test_expire_time - test.test_start_time).seconds
                    }
 
         # update and save
