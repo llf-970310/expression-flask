@@ -6,7 +6,7 @@ from flask_login import current_user
 
 from app import errors
 from app.admin.admin_config import PaginationConfig
-from app.models.exam import *
+from app.models.question import QuestionModel
 from app.models.origin import *
 from . import admin, util
 from . import mock_data
@@ -47,7 +47,7 @@ def get_all_type_two_questions():
     temp_question_query_max = page * size
     question_query_max = all_questions_num if temp_question_query_max > all_questions_num \
         else temp_question_query_max
-    questions = QuestionModel.objects(q_type=2)[((page - 1) * size):question_query_max].order_by('q_id')
+    questions = QuestionModel.objects(q_type=2)[((page - 1) * size):question_query_max].order_by('index')
 
     data = []
     for question in questions:
@@ -107,16 +107,16 @@ def __get_page_and_size_from_request_args(args):
     return (page, size)
 
 
-@admin.route('/question/<id>', methods=['GET'])
+@admin.route('/question/<index>', methods=['GET'])
 @admin_login_required
-def get_question(id):
+def get_question(index):
     """获取问题详情
 
-    :param id: 问题ID
+    :param index: 问题ID
     :return:  该问题详情
     """
-    current_app.logger.info('q_id = ' + id)
-    result_question = QuestionModel.objects(q_id=id).first()
+    current_app.logger.info('index:' + index)
+    result_question = QuestionModel.objects(index=index).first()
 
     # 要获取的题目不存在
     if not result_question:
@@ -135,17 +135,17 @@ def get_question(id):
     return jsonify(errors.success(context))
 
 
-@admin.route('/question/<id>', methods=['DELETE'])
+@admin.route('/question/<index>', methods=['DELETE'])
 @admin_login_required
-def del_question(id):
+def del_question(index):
     """删除特定问题
 
-    :param id: 问题ID
+    :param index: 问题ID
     :return:  该问题详情
     """
     # 检验是否有权限申请邀请码
-    current_app.logger.info('q_id = ' + id)
-    to_delete_question = QuestionModel.objects(q_id=id).first()
+    current_app.logger.info('delete question, index:' + index)
+    to_delete_question = QuestionModel.objects(index=index).first()
 
     # 要获取的题目不存在
     if not to_delete_question:
@@ -229,8 +229,8 @@ def post_new_question():
             origin_question.delete()
 
     # 进入 questions 的 q_id
-    next_q_id = __get_next_available_question_id()
-    current_app.logger.info('next_q_id: ' + next_q_id.__str__())
+    next_q_index = __get_next_available_question_index()
+    current_app.logger.info('next_q_index: ' + next_q_index.__str__())
     # 插入 questions，初始化关键词权重 weights
     new_question = QuestionModel(
         q_type=2,
@@ -238,19 +238,19 @@ def post_new_question():
         text=question_data_raw_text,
         wordbase=question_wordbase,
         weights=__reset_question_weights(question_wordbase),
-        q_id=next_q_id
+        index=next_q_index
     )
     new_question.save()
     return jsonify(errors.success())
 
 
-def __get_next_available_question_id():
+def __get_next_available_question_index():
     """获取当前题目 question 中最大的题号
 
     :return: 当前最大题号
     """
-    max_question = QuestionModel.objects().order_by('-q_id').limit(1).first()
-    return max_question['q_id'] + 1
+    max_question = QuestionModel.objects().order_by('-index').limit(1).first()
+    return max_question['index'] + 1
 
 
 @admin.route('/question', methods=['PUT'])
@@ -265,14 +265,14 @@ def modify_question():
     if not current_user.is_admin():
         return jsonify(errors.Admin_login_required)
 
-    id = request.form.get('id')
+    index = request.form.get('id')  # todo: change to REST api and change name 'id' to 'index'
     question_data_raw_text = request.form.get('data[rawText]')
     question_wordbase = {
         "keywords": json.loads(request.form.get('data[keywords]')),
         "detailwords": json.loads(request.form.get('data[detailwords]')),
     }
 
-    question = QuestionModel.objects(q_id=id).first()
+    question = QuestionModel.objects(index=index).first()
     if not question:
         return jsonify(errors.Question_not_exist)
 

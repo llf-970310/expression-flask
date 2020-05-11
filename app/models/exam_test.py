@@ -4,6 +4,7 @@
 # Created by dylanchu on 19-3-7
 
 from app.models.exam import *
+from app.models.question import QuestionModel
 from app.models.user import UserModel
 
 import time
@@ -35,7 +36,7 @@ def history_test():
 
 
 def question_type4_test():
-    q = QuestionModel.objects(q_id=10001).first()
+    q = QuestionModel.objects(index=10001).first()
     print(q)
     print(q.questions)
 

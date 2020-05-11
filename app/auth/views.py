@@ -15,7 +15,7 @@ from app.models.exam import HistoryTestModel, CurrentTestModel
 from app.models.invitation import InvitationModel
 from app.models.user import UserModel
 from . import auth
-from app.exam import utils
+from app.exam.utils import paper
 
 
 @auth.route('/user/info', methods=['GET'])
@@ -123,7 +123,7 @@ def showscore():
                 score = {}
                 for k, v in questions.items():
                     score[int(k)] = v['score']
-                current['score_info'] = utils.compute_exam_score(score)
+                current['score_info'] = paper.compute_exam_score(score)
                 current.save()
             history_scores.append({
                 "test_start_time": convert_datetime_to_str(current["test_start_time"]),
@@ -364,7 +364,7 @@ def wechat_bind():
 def __get_check_user_from_db(current_user):
     """
     根据登录的用户获取当前数据库中用户
-    :param email_or_phone: 当前登录用户
+    :param current_user: 当前登录用户
     :return: 当前用户
     """
     email = current_user.email

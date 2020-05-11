@@ -10,7 +10,8 @@ from flask_login import current_user
 
 from app.auth.util import admin_login_required
 from app import errors
-from app.models.exam import QuestionModel, CurrentTestModel, CurrentQuestionEmbed
+from app.models.exam import CurrentTestModel, CurrentQuestionEmbed
+from app.models.question import QuestionModel
 from flask import request, current_app, jsonify, session
 from app.exam.exam_config import ExamConfig, QuestionConfig
 from . import admin
@@ -19,8 +20,8 @@ from . import admin
 @admin.route('/admin-get-question', methods=['POST'])
 @admin_login_required
 def admin_get_question():
-    question_id = int(request.form.get("questionId"))
-    questions = QuestionModel.objects(q_id=question_id)
+    question_index = int(request.form.get("questionId"))  # todo: change api and param name
+    questions = QuestionModel.objects(index=question_index)
     if len(questions) == 0:
         resp = {"needDisplay": True, "tip": "没有此题号"}
         return jsonify(errors.error(resp))
@@ -33,7 +34,7 @@ def admin_get_question():
     test = CurrentTestModel()
     test.user_id = str(current_user.id)
     test.test_start_time = datetime.datetime.utcnow()
-    q_current = CurrentQuestionEmbed(q_dbid=str(question.id), q_type=question.q_type, q_text=question.text,
+    q_current = CurrentQuestionEmbed(q_id=str(question.id), q_type=question.q_type, q_text=question.text,
                                      wav_upload_url='', wav_temp_url='')
     test.questions = {"1": q_current}
     test.save()

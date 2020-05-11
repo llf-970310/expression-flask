@@ -16,7 +16,6 @@ class PathConfig(object):
 class ExamConfig(object):
     question_num_each_type = {1: 1, 2: 0, 3: 1, 4: 0, 5: 2, 6: 2}  # q_type:question_numbers
     total_question_num = sum(question_num_each_type.values())
-    exam_total_time = 0.5 * 60 * 60  # 每场考试最长时间（秒）
 
     question_allow_repeat = {1: True, 2: False, 3: True, 4: True, 5: True, 6: True}  # q_type:True/False
     question_limit_time = {0: 15, 1: 60, 2: 30, 3: 120, 4: 0, 5: 60, 6: 120}
@@ -55,6 +54,7 @@ class DefaultValue(object):
     question_type = 1
     used_time = 0
     test_id = "000000000000000000000000"
+    session_expire = 3600  # 考试会话默认过期时长
 
 
 class Setting(object):

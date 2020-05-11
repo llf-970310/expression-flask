@@ -7,7 +7,7 @@ from app.admin.admin_config import ScoreConfig
 from app.auth.util import validate_email
 from app.exam.exam_config import ExamConfig
 from app.models.analysis import *
-from app.models.exam import QuestionModel
+from app.models.question import QuestionModel
 from app.models.user import UserModel
 from . import admin, util
 from .algorithm import OptimizeAlgorithm
@@ -30,20 +30,20 @@ def get_score_of_all_questions():
     return jsonify(errors.success({'result': result}))
 
 
-@admin.route('/score/question/<id>', methods=['GET'])
-def get_score_of_specific_questions(id):
+@admin.route('/score/question/<index>', methods=['GET'])
+def get_score_of_specific_questions(index):
     """获取某题目的成绩情况
 
-    :param id: 题号ID
+    :param index: 题号ID
     :return: 该问题的成绩情况
     """
-    current_app.logger.info('get_score_of_specific_questions   ' + id)
+    current_app.logger.info('get_score_of_specific_questions   ' + index)
 
-    cur_question = QuestionModel.objects(q_id=id).first()
+    cur_question = QuestionModel.objects(index=index).first()
     if not cur_question:
         return jsonify(errors.Score_criteria_not_exist)
 
-    all_answers = AnalysisModel.objects(question_num=id).order_by('date')
+    all_answers = AnalysisModel.objects(question_num=index).order_by('date')
     if len(all_answers) == 0:
         return jsonify(errors.Score_no_data)
 

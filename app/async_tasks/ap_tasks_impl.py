@@ -5,9 +5,9 @@ from __future__ import absolute_import
 import datetime
 
 from app.async_tasks.utils import mutex_with_redis
-from app.models.exam import CurrentStatisticsModel, CurrentTestModel, HistoryTestModel, QuestionModel
+from app.models.exam import CurrentStatisticsModel, CurrentTestModel, HistoryTestModel
+from app.models.question import QuestionModel
 from app.admin.analysis import Analysis
-from app.exam.exam_config import ExamConfig
 from app.exam.utils.paper import compute_exam_score
 
 
@@ -42,7 +42,7 @@ def move_current_to_history():
         test_start_time = document['test_start_time']
         now_time = datetime.datetime.utcnow()
         delta_seconds = (now_time - test_start_time).total_seconds()
-        if delta_seconds >= ExamConfig.exam_total_time and question_process_finished(document['questions']):
+        if delta_seconds >= document.test_expire_time and question_process_finished(document['questions']):
             print("remove %s" % str(document.id))
             history = HistoryTestModel()
             history['current_id'] = str(document.id)
@@ -65,7 +65,7 @@ def move_current_to_history():
                 print("compute score in celery task...")
                 questions = history['questions']
                 score = {}
-                for i in range(ExamConfig.total_question_num, 0, -1):
+                for i in range(len(document.questions), 0, -1):
                     if questions[str(i)]['status'] == 'finished':
                         score[i] = questions[str(i)]['score']
                     else:
@@ -95,7 +95,7 @@ def collect_history_to_analysis():
     print('collect_history_to_analysis')
     history_list = HistoryTestModel.objects()
 
-    for question in QuestionModel.objects(q_type=2).order_by('q_id'):
+    for question in QuestionModel.objects(q_type=2).order_by('index'):
         collect(question, history_list)
     pass
 
@@ -144,7 +144,7 @@ def collect(analysis_question, history_list):
 #             authentication_mechanism=MONGODB['AUTH_MECHANISM'])
 #     print(sys.path)
 #     print(analysis_util)
-#     questions = QuestionModel.objects(q_type=2).order_by('q_id')
+#     questions = QuestionModel.objects(q_type=2).order_by('index')
 #     print(len(questions))
 #     for question in questions:
 #         print(question["q_id"])

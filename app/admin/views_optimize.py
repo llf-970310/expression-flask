@@ -4,7 +4,7 @@ from .analysis import Analysis
 from app.admin.admin_config import OptimizeConfig
 from app.exam.exam_config import ExamConfig
 from app import errors
-from app.models.exam import QuestionModel
+from app.models.question import QuestionModel
 from app.models.analysis import AnalysisModel, OptimizeModel
 from flask import request, jsonify
 import datetime
@@ -14,10 +14,11 @@ from functools import reduce
 
 @admin.route('/get-score-data', methods=['GET'])
 def get_score_data():
+    # todo: 涉及到QuestionModel.index的引用太乱，需检查并改传入参数名为index，或者改参数使用_id
     question_num = request.args.get('questionNum')
     force = util.str_to_bool(request.args.get('force'))
     if force:
-        question = QuestionModel.objects.filter(q_id=question_num).first()
+        question = QuestionModel.objects.filter(index=question_num).first()
         analysis = Analysis()
         analysis.re_analysis(question)
     print("get_score_data: questionNum: " + str(question_num))
@@ -42,7 +43,7 @@ def get_score_data():
 def get_weight_data():
     question_num = request.args.get("questionNum")
     print("get_weight_data: questionNum: " + str(question_num))
-    question = QuestionModel.objects(q_id=question_num).first()
+    question = QuestionModel.objects(index=question_num).first()
     if not question:
         return jsonify(errors.Question_not_exist)
     data = __question2weight(question)
@@ -60,7 +61,7 @@ def update_weight():
     print("update_weight: questionNum: " + str(question_num))
     print(weight)
 
-    question = QuestionModel.objects(q_id=question_num).first()
+    question = QuestionModel.objects(index=question_num).first()
     if not question:
         return jsonify(errors.Question_not_exist)
     question['weights']['key'] = weight['keyWeight']
@@ -104,7 +105,7 @@ def start_auto_optimize():
     print(settings)
 
     # 重新计算某道题目所有人的击中向量
-    question = QuestionModel.objects(q_id=question_num).first()
+    question = QuestionModel.objects(index=question_num).first()
     if not question:
         return jsonify(errors.Question_not_exist)
     analysis = Analysis()

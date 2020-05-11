@@ -20,41 +20,11 @@ class WavPretestModel(db.DynamicDocument):
     meta = {'collection': 'wav_test'}
 
 
-class QuestionModel(db.DynamicDocument):
-    """
-    正常使用的题目 question
-    """
-    text = db.StringField(max_length=1024)
-    level = db.IntField(min_value=1, max_value=10)
-    q_type = db.IntField(min_value=1, max_value=6)  # type是留字，可能会有一些坑
-    # 1 朗读 2 复述 3 问答 4 选择 5 短文本英文阅读 6 长文本英文阅读
-    used_times = db.IntField(min_value=0, default=0)
-    up_count = db.IntField(min_value=0, default=0)
-    down_count = db.IntField(min_value=0, default=0)
-    wordbase = db.DictField(default={})
-    weights = db.DictField(default={})
-    questions = db.ListField(default=None)  # 选择题集合可以包含若干选择题
-    q_id = db.IntField(min_value=0)  # 题号，从0开始
-    in_optimize = db.BooleanField(default=False)  # 现在是否在优化中
-    last_optimize_time = db.DateTimeField(default=None)  # 最后优化时间
-    auto_optimized = db.BooleanField(default=False)  # 是否被自动优化过
-    feedback_ups = db.IntField(default=0)  # 短时重复切换状态时，请求可能不按顺序到达，可能短时间内<0
-    feedback_downs = db.IntField(default=0)
-    feedback_likes = db.IntField(default=0)
-
-    meta = {'collection': 'questions'}
-
-    def __str__(self):
-        return "{id:%s,text:%s,level:%s,q_type:%s,used_times:%s,wordbase:%s}" % (
-            self.id, self.text.__str__(), self.level.__str__(), self.q_type.__str__(), self.used_times.__str__(),
-            self.wordbase.__str__())
-
-
 class CurrentQuestionEmbed(db.EmbeddedDocument):
     """
     用户做题的题目 current.question[x]
     """
-    q_dbid = db.StringField(max_length=32, db_field='q_id')
+    q_id = db.StringField(max_length=32, db_field='q_id')
     q_type = db.IntField(min_value=1, max_value=3)
     q_text = db.StringField(max_length=512)
     file_location = db.StringField(max_length=32)
@@ -69,6 +39,12 @@ class CurrentQuestionEmbed(db.EmbeddedDocument):
     stack = db.StringField(max_length=1024)
     analysed = db.BooleanField()  # 这个回答是否被分析过
 
+    def get(self, key, default=None):
+        if hasattr(self, key):
+            return getattr(self, key)
+        else:
+            return default
+
 
 class CurrentTestModel(db.DynamicDocument):
     """
@@ -77,7 +53,9 @@ class CurrentTestModel(db.DynamicDocument):
     user_id = db.StringField(max_length=32, default=None)
     openid = db.StringField(max_length=64, default=None)  # wx_christmas2019活动使用
     test_start_time = db.DateTimeField()
+    test_expire_time = db.DateTimeField(default=datetime.datetime.utcnow())  # default只为兼容之前字段为空的情况
     paper_type = db.ListField()
+    paper_tpl_id = db.StringField(max_length=24, default=None)
     current_q_num = db.IntField(min_value=1, default=1)
     score_info = db.DictField(default={})
     questions = db.DictField(default={})

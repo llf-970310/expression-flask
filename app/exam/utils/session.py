@@ -5,14 +5,14 @@
 
 
 from app_config import redis_client
-from app.exam.exam_config import ExamConfig
+from app.exam.exam_config import DefaultValue
 
 
 class ExamSession:
     key_format = 'exam-session:%s:%s'
 
     @classmethod
-    def set(cls, user_id, name, value, ex=int(ExamConfig.exam_total_time), px=None, nx=False, xx=False):
+    def set(cls, user_id, name, value, ex=int(DefaultValue.session_expire), px=None, nx=False, xx=False):
         user_id = str(user_id)
         key = cls.key_format % (user_id, name)
         return redis_client.set(key, value, ex, px, nx, xx)

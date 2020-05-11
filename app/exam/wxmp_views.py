@@ -13,6 +13,7 @@ from flask import request, current_app, jsonify
 from app import errors
 from app.exam.utils.misc import get_server_date_str
 from app.models.exam import *
+from app.models.question import QuestionModel
 from app.async_tasks import MyCelery
 from . import exam
 from .exam_config import PathConfig
@@ -27,9 +28,9 @@ class WxConfig(object):
     appid = 'wxdd39ae16bc3a45e3'  # parclab
     secret = 'b7efb9c654b8050eb9af7a13e33dace5'
     wx_user_id = '5dfa0c005e3dd462f4755877'  # 使用同一id, wx_christmas2019@site.com
-    xuanzeti_q_id = 10001
-    q8_q_id = 10002
-    q9_q_id = 10003
+    xuanzeti_index = 10001
+    q8_index = 10002
+    q9_index = 10003
 
 
 def wx_gen_upload_url(openid, q_unm):
@@ -162,7 +163,7 @@ def wx_init_question(openid: str):
     current_test.test_start_time = datetime.datetime.utcnow()
 
     current_test.questions = {}
-    xuanzeti = QuestionModel.objects(q_id=WxConfig.xuanzeti_q_id).first()
+    xuanzeti = QuestionModel.objects(index=WxConfig.xuanzeti_index).first()
     i = 1
     for t in xuanzeti.questions:
         tmp = {
@@ -173,11 +174,11 @@ def wx_init_question(openid: str):
         }
         current_test.questions.update({str(i): tmp})
         i += 1
-    q1 = QuestionModel.objects(q_id=WxConfig.q8_q_id).first()
-    q2 = QuestionModel.objects(q_id=WxConfig.q9_q_id).first()
+    q1 = QuestionModel.objects(index=WxConfig.q8_index).first()
+    q2 = QuestionModel.objects(index=WxConfig.q9_index).first()
     for q in (q1, q2):
         _upload_url = wx_gen_upload_url(openid, i)
-        q_current = CurrentQuestionEmbed(q_dbid=str(q.id), q_type=q.q_type, q_text=q.text,
+        q_current = CurrentQuestionEmbed(q_id=str(q.id), q_type=q.q_type, q_text=q.text,
                                          wav_upload_url=_upload_url,
                                          file_location='BOS',
                                          status='url_fetched')
