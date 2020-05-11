@@ -297,13 +297,23 @@ def get_result():
         return jsonify(errors.WIP)
 
 
-# init exam
-@exam.route('/new', methods=['POST'])
+@exam.route('/paper-templates', methods=['GET'])
 @login_required
-def init_exam_v2():
-    paper_tpl_id = '5eb84af7aaaae82807e5312a'  # 含英语题目的模板
-    # TODO: api改为 /api/exam/new/<paper_tpl_id>
+def get_paper_templates():
+    tpl_lst = PaperUtils.get_templates()
+    return jsonify(errors.success({'paperTemplates': tpl_lst}))
 
+
+# init exam
+@exam.route('/new/<paper_tpl_id>', methods=['POST'])
+@login_required
+def init_exam_v2(paper_tpl_id):
+    """
+    创建试卷
+    TODO: 使用redis锁避免短时重复创建(如网络原因导致请求重复到达)
+    :param paper_tpl_id: 模板在数据库的 _id
+    :return: json格式状态
+    """
     # 判断是否有剩余考试次数
     if Setting.LIMIT_EXAM_TIMES and current_user.remaining_exam_num <= 0:
         return jsonify(errors.No_exam_times)
