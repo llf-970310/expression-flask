@@ -39,6 +39,7 @@ class CurrentQuestionEmbed(db.EmbeddedDocument):
     stack = db.StringField(max_length=1024)
     analysed = db.BooleanField()  # 这个回答是否被分析过
 
+    # 默认没有get函数，手动添加支持
     def get(self, key, default=None):
         if hasattr(self, key):
             return getattr(self, key)

@@ -34,6 +34,9 @@ class PaperTemplate(db.Document):
 
 
 # def init_db():
+#     """
+#     将扰乱生产数据，请勿运行，除非你明确知道你在干什么
+#     """
 #     paper_tpl = PaperTemplate()
 #     paper_tpl.time_limit = 1800
 #     paper_tpl.name = '含英语题目的表达能力测试'
@@ -75,13 +78,13 @@ class PaperTemplate(db.Document):
 #         {'q_type': 3, 'dbid': 1}
 #     ]
 #     paper_tpl.save()
-
-
-if __name__ == '__main__':
-    from mongoengine import connect
-    from app_config import MongoConfig
-
-    connect(MongoConfig.db, host=MongoConfig.host, port=MongoConfig.port,
-            username=MongoConfig.user, password=MongoConfig.password, authentication_source=MongoConfig.db,
-            authentication_mechanism=MongoConfig.auth)
-
+#
+#
+# if __name__ == '__main__':
+#     from mongoengine import connect
+#     from app_config import MongoConfig
+#
+#     connect(MongoConfig.db, host=MongoConfig.host, port=MongoConfig.port,
+#             username=MongoConfig.user, password=MongoConfig.password, authentication_source=MongoConfig.db,
+#             authentication_mechanism=MongoConfig.auth)
+#
