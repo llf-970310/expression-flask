@@ -166,6 +166,7 @@ class PaperUtils:
                    }
 
         # update and save
+        # 这两个状态是否必要？？
         question.status = 'question_fetched'
         test.current_q_num = question_num
         test.save()

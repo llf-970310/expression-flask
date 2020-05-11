@@ -39,8 +39,8 @@ class CurrentQuestionEmbed(db.EmbeddedDocument):
     file_location = db.StringField(max_length=32)
     wav_upload_url = db.StringField(max_length=256)
     wav_temp_url = db.StringField(max_length=256)
-    status = db.StringField(max_length=32,
-                            default="none")  # "none|url_fetched|handling|finished",finished 由docker设置
+    # status: "none|question_fetched|url_fetched|handling|finished",finished 由docker设置
+    status = db.StringField(max_length=32, default="none")
     analysis_start_time = db.DateTimeField()
     feature = db.DictField(default={})
     score = db.DictField(default={})  # score field may has a set of scores
