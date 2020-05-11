@@ -5,7 +5,8 @@ from __future__ import absolute_import
 import datetime
 
 from app.async_tasks.utils import mutex_with_redis
-from app.models.exam import CurrentStatisticsModel, CurrentTestModel, HistoryTestModel
+from app.models.exam import CurrentTestModel, HistoryTestModel
+from app.models.current_stat import CurrentStatisticsModel
 from app.models.question import QuestionModel
 from app.admin.analysis import Analysis
 from app.exam.utils.paper import compute_exam_score

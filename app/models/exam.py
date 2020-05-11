@@ -3,8 +3,17 @@ import datetime
 from app import db
 
 
-# 参考资料：http://docs.mongoengine.org/guide/index.html , http://docs.mongoengine.org/apireference.html
-# 中文资料：https://segmentfault.com/a/1190000008025156#articleHeader8
+"""
+
+参考资料：http://docs.mongoengine.org/guide/index.html , http://docs.mongoengine.org/apireference.html
+中文资料：https://segmentfault.com/a/1190000008025156#articleHeader8
+
+注意：
+    1. 选取字段名称一定要慎重再慎重！！应该由良好的自解释性，不要引起歧义！！
+    2. 合理拆分文件，不要一股脑把所有东西全写在一起！！（当然也不要胡乱拆分！）
+    3. 最好保持类的属性名和数据库字段名一致，不用db_field指定，以便于理解使用
+
+"""
 
 
 class WavPretestModel(db.DynamicDocument):
@@ -24,7 +33,7 @@ class CurrentQuestionEmbed(db.EmbeddedDocument):
     """
     用户做题的题目 current.question[x]
     """
-    q_id = db.StringField(max_length=32, db_field='q_id')
+    q_id = db.StringField(max_length=32)
     q_type = db.IntField(min_value=1, max_value=3)
     q_text = db.StringField(max_length=512)
     file_location = db.StringField(max_length=32)
@@ -69,6 +78,7 @@ class CurrentTestModel(db.DynamicDocument):
 class HistoryTestModel(db.DynamicDocument):
     """
     history
+    TODO: 大部分内容和CurrentTestMode相同，是否可直接继承CurrentTestModel??
     """
     current_id = db.StringField(max_length=32, default=None)
     user_id = db.StringField(max_length=32, default=None)
@@ -81,11 +91,3 @@ class HistoryTestModel(db.DynamicDocument):
     all_analysed = db.BooleanField(default=False)  # 这个考试中的所有回答是否都被分析过
 
     meta = {'collection': 'history'}
-
-
-class CurrentStatisticsModel(db.Document):
-    meta = {'collection': 'current_stat'}
-    stat_time = db.DateTimeField(default=lambda: datetime.datetime.utcnow())
-    total_cnt = db.IntField(default=0)
-    user_test_cnt = db.IntField(default=0)
-    batch_test_cnt = db.IntField(default=0)
