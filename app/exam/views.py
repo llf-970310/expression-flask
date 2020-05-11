@@ -218,7 +218,7 @@ def upload_success_v2(question_num):
     current_test.update(**d)
 
     # 最后一题上传完成，去除正在测试状态，设置last_test_id
-    if int(question_num) >= ExamConfig.total_question_num:
+    if int(question_num) >= len(current_test.questions):
         try:
             ExamSession.delete(current_user.id, 'testing')
             ExamSession.rename(current_user.id, 'test_id', 'last_test_id')
@@ -252,9 +252,9 @@ def get_result():
             return jsonify(errors.Exam_not_exist)
     questions = test['questions']
 
-    score = {}
+    score = {}  # {1:{'quality': 80}, 2:{'key':100,'detail':xx}, ...}
     has_handling = False
-    for i in range(ExamConfig.total_question_num, 0, -1):
+    for i in range(len(questions), 0, -1):
         if questions[str(i)]['status'] == 'finished':
             score[i] = questions[str(i)]['score']
             # current_app.logger.info("get_result: status is finished! index: %s, score: %s, test_id: %s, user name: %s"
@@ -278,7 +278,7 @@ def get_result():
         if not test['score_info']:
             current_app.logger.info("get_result: first compute score... test_id: %s, user name: %s" %
                                     (last_test_id, current_user.name))
-            test['score_info'] = compute_exam_score(score)
+            test['score_info'] = compute_exam_score(score, test.paper_type)
             test.save()
             result = {"status": "Success", "totalScore": test['score_info']['total'], "data": test['score_info']}
         else:
@@ -358,18 +358,24 @@ def next_question_v2(question_num):
         current_app.logger.error('[ParamsError][next_question]uid:%s,name:%s,args:%s'
                                  % (current_user.id, current_user.name, request.args))
         return jsonify(errors.Params_error)
-    # 如果超出最大题号
-    if next_question_num > ExamConfig.total_question_num:
-        ExamSession.set(current_user.id, 'question_num', 0)
-        return jsonify(errors.Exam_finished)
 
     # todo: nowQuestionNum: 限制只能获取当前题目
     ExamSession.set(current_user.id, 'question_num', next_question_num)
 
     test_id = ExamSession.get(current_user.id, "test_id",
                               default=DefaultValue.test_id)  # for production
+    # get test
+    test = CurrentTestModel.objects(id=test_id).first()
+    if test is None:
+        current_app.logger.error("[QuestionNotExist][next_question]user:%s,test_id:%s" %
+                                 (current_user.id, test_id))
+        return jsonify(errors.Test_not_exist)
+    # 如果超出最大题号
+    if next_question_num > len(test.questions):
+        ExamSession.set(current_user.id, 'question_num', 0)
+        return jsonify(errors.Exam_finished)
     # 根据题号查找题目
-    context = PaperUtils.question_dealer(next_question_num, test_id, str(current_user.id))
+    context = PaperUtils.question_dealer(str(current_user.id), test, next_question_num)
     if not context:
         return jsonify(errors.Get_question_failed)
     # 判断考试是否超时，若超时则返回错误

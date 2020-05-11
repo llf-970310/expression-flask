@@ -8,12 +8,13 @@ from app import db
 """
 ...
 questions: [
-    {type: int, dbid: ObjectId or 0},
-    {type: int, dbid: ObjectId or 0}
+    {q_type: int, dbid: ObjectId or 0},
+    {q_type: int, dbid: ObjectId or 0}
 ]
 """
 
-# TODO: 创建考试时使用paper template，并且直接算出并加上expire时间，不在需要根据超时时间计算
+# dbid 可直接指定数据库中题目id（24位长度），或按规则出题：
+#   0: 最少使用次数
 
 
 class PaperTemplate(db.Document):

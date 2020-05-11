@@ -14,10 +14,6 @@ class PathConfig(object):
 
 
 class ExamConfig(object):
-    question_num_each_type = {1: 1, 2: 0, 3: 1, 4: 0, 5: 2, 6: 2}  # q_type:question_numbers
-    total_question_num = sum(question_num_each_type.values())
-
-    question_allow_repeat = {1: True, 2: False, 3: True, 4: True, 5: True, 6: True}  # q_type:True/False
     question_limit_time = {0: 15, 1: 60, 2: 30, 3: 120, 4: 0, 5: 60, 6: 120}
     question_prepare_time = {0: 5, 1: 5, 2: 60, 3: 60, 4: 0, 5: 120, 6: 240}
     detect_left_exam = True  # 是否断点续作
@@ -55,6 +51,7 @@ class DefaultValue(object):
     used_time = 0
     test_id = "000000000000000000000000"
     session_expire = 3600  # 考试会话默认过期时长
+    max_random_try = 20  # 测试初始化随机选题时的最大尝试次数
 
 
 class Setting(object):

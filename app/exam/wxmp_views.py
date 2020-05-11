@@ -7,12 +7,13 @@
 import random
 import traceback
 import time
+import datetime
 
 from flask import request, current_app, jsonify
 
 from app import errors
 from app.exam.utils.misc import get_server_date_str
-from app.models.exam import *
+from app.models.exam import CurrentTestModel, CurrentQuestionEmbed
 from app.models.question import QuestionModel
 from app.async_tasks import MyCelery
 from . import exam

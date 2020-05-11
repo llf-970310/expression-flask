@@ -52,7 +52,9 @@ def move_current_to_history():
             if openid:
                 history['openid'] = openid
             history['test_start_time'] = document['test_start_time']
+            history['test_expire_time'] = document['test_expire_time']
             history['paper_type'] = document['paper_type']
+            history['paper_tpl_id'] = document['paper_tpl_id']
             history['current_q_num'] = document['current_q_num']
             history['score_info'] = document['score_info']
             history['questions'] = {}
@@ -73,7 +75,7 @@ def move_current_to_history():
                         score[i] = {"quality": 0, "key": 0, "detail": 0, "structure": 0, "logic": 0}
                 print("compute score...")
                 print(score)
-                history['score_info'] = compute_exam_score(score)
+                history['score_info'] = compute_exam_score(score, history.paper_type)
                 history.save()
                 print(history['score_info'])
             history.save()

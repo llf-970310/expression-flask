@@ -123,7 +123,7 @@ def showscore():
                 score = {}
                 for k, v in questions.items():
                     score[int(k)] = v['score']
-                current['score_info'] = paper.compute_exam_score(score)
+                current['score_info'] = paper.compute_exam_score(score, current.paper_type)
                 current.save()
             history_scores.append({
                 "test_start_time": convert_datetime_to_str(current["test_start_time"]),
