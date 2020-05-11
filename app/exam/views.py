@@ -213,6 +213,10 @@ def upload_success_v2(question_num):
         return jsonify(errors.exception({'Exception': str(err)}))
     current_app.logger.info("[PutTaskSuccess][upload_success]dataID: %s" % str(current_test.id))
 
+    # 设置状态为handling
+    d = {'set__questions__%s__status' % question_num: 'handling'}
+    current_test.update(**d)
+
     # 最后一题上传完成，去除正在测试状态，设置last_test_id
     if int(question_num) >= ExamConfig.total_question_num:
         try:
