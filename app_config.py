@@ -3,7 +3,6 @@
 #
 # Created by dylanchu on 19-2-15
 
-import hashlib
 from redis import StrictRedis, ConnectionPool
 
 # redis_client = Redis(host='redis-server.expression.hosts', port=6379, db=0, password='ise_expression')
@@ -50,13 +49,6 @@ class BaseConfig(object):
     }
 
     # 自定义
-    @staticmethod
-    def MD5_HASH(password) -> str:
-        _MD5_SALT = 'a random string'
-        _MD5_TOOL = hashlib.md5()
-        _MD5_TOOL.update((password + _MD5_SALT).encode())
-        return _MD5_TOOL.hexdigest()
-
     IGNORE_LOGIN_PASSWORD = False
 
 

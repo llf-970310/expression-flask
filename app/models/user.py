@@ -8,6 +8,9 @@ from app import db
 from flask_login import UserMixin
 import datetime
 from enum import Enum
+from hashlib import md5
+
+_MD5_SALT = 'a random string'  # 盐一旦使用后不可更改，否则历史数据会无效
 
 
 @login_manager.user_loader
@@ -25,7 +28,7 @@ class UserModel(UserMixin, db.Document):
     # password = db.StringField(max_length=128, required=True)  # todo: enable
     email = db.EmailField(max_length=128)
     phone = db.StringField(max_length=16)
-    password = db.StringField(max_length=128)
+    __password = db.StringField(max_length=255, db_field='password')
     name = db.StringField(max_length=32, required=True)
     __role = db.StringField(max_length=32, default=Roles.Default.value)
     register_time = db.DateTimeField(default=lambda: datetime.datetime.utcnow())
@@ -67,3 +70,31 @@ class UserModel(UserMixin, db.Document):
 
     def is_admin(self):
         return self.__role == Roles.Admin.value
+
+    def check_password(self, password: str):
+        """验证密码（前后空格将被忽略）
+
+        Args:
+            password: 明文密码
+
+        Returns:
+            验证结果，True|False (bool)
+        """
+        password = password.strip()
+        hash_obj = md5()
+        hash_obj.update((password + _MD5_SALT).encode())
+        return self.__password == hash_obj.hexdigest()
+
+    def set_password(self, password: str):
+        """设置hash后的密码但不保存，不要忘记手动保存！（前后空格将被忽略）
+
+        Args:
+            password: 明文密码
+
+        Returns:
+            None
+        """
+        password = password.strip()
+        hash_obj = md5()
+        hash_obj.update((password + _MD5_SALT).encode())
+        self.__password = hash_obj.hexdigest()

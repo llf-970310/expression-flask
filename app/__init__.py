@@ -53,8 +53,6 @@ def create_app():
     scheduler._logger = app.logger
     # ---------------------------------------apscheduler init end
 
-    app.md5_hash = app.config['MD5_HASH']
-
     from .auth import auth as auth_blueprint
     app.register_blueprint(auth_blueprint, url_prefix='/api/auth')
     from .exam import exam as exam_blueprint

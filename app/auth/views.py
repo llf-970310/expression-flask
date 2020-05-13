@@ -21,13 +21,12 @@ from app.exam.utils import paper
 @auth.route('/user/info', methods=['GET'])
 @login_required
 def get_user_info():
-    current_app.logger.info('get user info request: %s' % request.form.__str__())
-    print(current_user)
+    current_app.logger.debug('[GetUserInfo][get_user_info]%s' % current_user)
     return jsonify(errors.success({
         'role': str(current_user.role.value),
         'name': current_user.name,
         'email': current_user.email,
-        'password': current_user.password,
+        'password': '********',
         'register_time': convert_datetime_to_str(current_user.register_time),
         'last_login_time': convert_datetime_to_str(current_user.last_login_time),
         'questions_history': current_user.questions_history,
@@ -35,7 +34,6 @@ def get_user_info():
         'vip_start_time': convert_datetime_to_str(current_user.vip_start_time),
         'vip_end_time': convert_datetime_to_str(current_user.vip_end_time),
         'remaining_exam_num': current_user.remaining_exam_num
-
     }))
 
 
@@ -49,14 +47,14 @@ def update():
     if not password:
         check_user.name = name
     else:
-        check_user.password = current_app.md5_hash(password)
+        check_user.set_password(password)
         check_user.name = name
     check_user.save()
     return jsonify(errors.success({
         'msg': '修改成功',
         'uuid': str(check_user.id),
         'name': str(check_user.name),
-        'password': str(check_user.password)
+        'password': '********'
     }))
 
 
@@ -179,12 +177,12 @@ def register():
     existing_invitation = InvitationModel.objects(code=code).first()
     if existing_invitation is None or existing_invitation.available_times <= 0:
         return jsonify(errors.Illegal_invitation_code)
-    print("email: " + email + " phone: " + phone)
-    print("passsword: " + password)
+    # 创建新用户，不要打印志记用户的明文密码！！！
+    current_app.logger.info('[NewUser][register]email:%s, phone:%s' % (email, phone))
     new_user = UserModel()
     new_user.email = email.lower() if email != '' else None
     new_user.phone = phone if phone != '' else None
-    new_user.password = current_app.md5_hash(password)
+    new_user.set_password(password)
     new_user.name = name
     new_user.last_login_time = datetime.datetime.utcnow()
     new_user.register_time = datetime.datetime.utcnow()
@@ -193,7 +191,7 @@ def register():
     new_user.remaining_exam_num = existing_invitation.remaining_exam_num
     # 这里需要添加一个邀请码信息
     new_user.invitation_code = existing_invitation.code
-    current_app.logger.info('user info: %s' % new_user.__str__())
+    current_app.logger.info('[UserInfo][register]%s' % new_user.__str__())
     # todo 从这开始需要同步
     new_user.save()
     current_app.logger.info('user(id = %s) has been saved' % new_user.id)
@@ -408,6 +406,6 @@ def __authorize(username, password):
         check_user = UserModel.objects(phone=username).first()
     if not check_user:
         return errors.Authorize_failed, None
-    if (not current_app.config['IGNORE_LOGIN_PASSWORD']) and (check_user.password != current_app.md5_hash(password)):
+    if (not current_app.config['IGNORE_LOGIN_PASSWORD']) and (not check_user.check_password(password)):
         return errors.Authorize_failed, None
     return None, check_user
