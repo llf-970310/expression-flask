@@ -52,7 +52,7 @@ def get_all_type_two_questions():
     data = []
     for question in questions:
         data.append({
-            "questionId": question['q_id'],
+            "questionId": question['index'],
             "rawText": question['text'],
             "keywords": util.array2str(question['wordbase']['keywords'], 2),
             "detailwords": util.array2str(question['wordbase']['detailwords'], 3),
