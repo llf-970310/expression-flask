@@ -14,22 +14,6 @@ def generate_random_code(length=4):
     return s
 
 
-def convert_date_to_str(date, separator='-') -> str:
-    """
-    Desc:   获得当前日期格式化字符串，可指定分隔符，如: 20181009(默认), 2018-10-31(输入为-), 2018===10===31(输入为===)
-    """
-    return date.strftime("%%Y%s%%m%s%%d" % (separator, separator))
-
-
-def convert_datetime_to_str(utc_time, date_separator='-') -> str:
-    """
-    Desc:   获得当前日期格式化字符串，可指定分隔符，如: 20181009(默认), 2018-10-31(输入为-), 2018===10===31(输入为===)
-    """
-    if not utc_time:
-        return ''
-    return utc_time.strftime("%%Y%s%%m%s%%d %%H:%%M:%%S" % (date_separator, date_separator))
-
-
 def str_to_bool(str):
     return True if str.lower() == 'true' else False
 

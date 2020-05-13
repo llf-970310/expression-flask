@@ -11,6 +11,7 @@ from app.models.question import QuestionModel
 from app.models.user import UserModel
 from . import admin, util
 from .algorithm import OptimizeAlgorithm
+from app.utils.date_and_time import datetime_to_str
 
 
 @admin.route('/score/question', methods=['GET'])
@@ -198,7 +199,7 @@ class DateMapper(AbstractMapper):
         """
         res = {}
         for answer in answers:
-            cur_date = util.convert_date_to_str(answer['test_start_time'])
+            cur_date = datetime_to_str(answer['test_start_time'], only_date=True)
             if cur_date in res:
                 res[cur_date].append({'key': answer['score_key'], 'detail': answer['score_detail']})
             else:

@@ -15,6 +15,7 @@ from app import errors
 from . import admin
 import datetime
 from app.utils.date_and_time import datetime_fromisoformat  # for py3.6
+from app.utils.date_and_time import datetime_to_str
 
 
 @admin.route('/accounts/invite', methods=['POST'])  # url will be .../admin/accounts/test
@@ -137,12 +138,12 @@ def get_invitations():
             'code': invitation['code'],
             'creator': invitation['creator'],
             # 邀请码创建时间
-            'create_time': convert_datetime_to_str(invitation['create_time']),
+            'create_time': datetime_to_str(invitation['create_time']),
             # 邀请码剩余可用次数
             'available_times': invitation['available_times'],
             # 邀请码有效时间
-            'vip_start_time': convert_datetime_to_str(invitation['vip_start_time']),
-            'vip_end_time': convert_datetime_to_str(invitation['vip_end_time']),
+            'vip_start_time': datetime_to_str(invitation['vip_start_time']),
+            'vip_end_time': datetime_to_str(invitation['vip_end_time']),
             # 此邀请码支持的测试次数
             'remaining_exam_num': invitation['remaining_exam_num'],
             'remaining_exercise_num': invitation.remaining_exercise_num,
