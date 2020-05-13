@@ -6,6 +6,23 @@
 from datetime import timezone, timedelta, datetime
 
 
+def datetime_to_str(dt, date_separator='-') -> str:
+    """将datetime对象转换为形如 '2020-01-01 12:00:00'的字符串
+
+    如果指定date_separator则按指定分隔符格式化日期部分，如 '2020.01.01 12:00:00'
+
+    Args:
+        dt: datetime对象
+        date_separator: 日期间隔符
+
+    Returns:
+        datetime字符串
+    """
+    if not dt:
+        return ''
+    return dt.strftime("%%Y%s%%m%s%%d %%H:%%M:%%S" % (date_separator, date_separator))
+
+
 def datetime_fromisoformat(date_string):  # i.e. fromisoformat new in python3.7
     """Construct a datetime from the output of datetime.isoformat()."""
     if not isinstance(date_string, str):
@@ -46,9 +63,9 @@ def _parse_hh_mm_ss_ff(tstr):
     for comp in range(0, 3):
         if (len_str - pos) < 2:
             raise ValueError('Incomplete time component')
-        time_comps[comp] = int(tstr[pos:pos+2])
+        time_comps[comp] = int(tstr[pos:pos + 2])
         pos += 2
-        next_char = tstr[pos:pos+1]
+        next_char = tstr[pos:pos + 1]
         if not next_char or comp >= 2:
             break
         if next_char != ':':
@@ -75,7 +92,7 @@ def _parse_isoformat_time(tstr):
         raise ValueError('Isoformat time too short')
     # This is equivalent to re.search('[+-]', tstr), but faster
     tz_pos = (tstr.find('-') + 1 or tstr.find('+') + 1)
-    timestr = tstr[:tz_pos-1] if tz_pos > 0 else tstr
+    timestr = tstr[:tz_pos - 1] if tz_pos > 0 else tstr
     time_comps = _parse_hh_mm_ss_ff(timestr)
     tzi = None
     if tz_pos > 0:

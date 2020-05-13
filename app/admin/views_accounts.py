@@ -14,7 +14,7 @@ from app.models.invitation import InvitationModel
 from app import errors
 from . import admin
 import datetime
-from app.utils.datetime import datetime_fromisoformat  # for py3.6
+from app.utils.date_and_time import datetime_fromisoformat  # for py3.6
 
 
 @admin.route('/accounts/invite', methods=['POST'])  # url will be .../admin/accounts/test

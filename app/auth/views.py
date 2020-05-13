@@ -8,136 +8,11 @@ from flask import current_app, jsonify, request, session
 from flask_login import login_user, logout_user, current_user, login_required
 
 from app import errors
-from app.admin.admin_config import ScoreConfig
-from app.admin.util import convert_datetime_to_str
 from app.auth.util import validate_email, wx_get_user_info
-from app.models.exam import HistoryTestModel, CurrentTestModel
 from app.models.invitation import InvitationModel
 from app.models.user import UserModel
 from . import auth
-from app.exam.utils import paper
-
-
-@auth.route('/user/info', methods=['GET'])
-@login_required
-def get_user_info():
-    current_app.logger.debug('[GetUserInfo][get_user_info]%s' % current_user)
-    return jsonify(errors.success({
-        'role': str(current_user.role.value),
-        'name': current_user.name,
-        'email': current_user.email,
-        'password': '********',
-        'register_time': convert_datetime_to_str(current_user.register_time),
-        'last_login_time': convert_datetime_to_str(current_user.last_login_time),
-        'questions_history': current_user.questions_history,
-        'wx_id': current_user.wx_id,
-        'vip_start_time': convert_datetime_to_str(current_user.vip_start_time),
-        'vip_end_time': convert_datetime_to_str(current_user.vip_end_time),
-        'remaining_exam_num': current_user.remaining_exam_num
-    }))
-
-
-@auth.route('/update', methods=['POST'])
-def update():
-    if not current_user.is_authenticated:
-        return jsonify(errors.Login_required)
-    password = request.form.get('password').strip()
-    name = request.form.get('name').strip()
-    check_user = __get_check_user_from_db(current_user)
-    if not password:
-        check_user.name = name
-    else:
-        check_user.set_password(password)
-        check_user.name = name
-    check_user.save()
-    return jsonify(errors.success({
-        'msg': '修改成功',
-        'uuid': str(check_user.id),
-        'name': str(check_user.name),
-        'password': '********'
-    }))
-
-
-@auth.route('/untying', methods=['POST'])
-def untying():
-    if not current_user.is_authenticated:
-        return jsonify(errors.Login_required)
-    check_user = __get_check_user_from_db(current_user)
-    if not check_user.wx_id:
-        return jsonify(errors.Wechat_not_bind)
-    check_user.wx_id = ''
-    check_user.save()
-    return jsonify(errors.success(
-        {
-            'msg': '解绑成功'
-        }
-    ))
-
-
-# TODO: This function does not belong to auth and should NOT be placed here
-@auth.route('/showscore', methods=['POST'])
-def showscore():
-    if not current_user.is_authenticated:
-        return jsonify(errors.Login_required)
-    check_user = __get_check_user_from_db(current_user)
-    history_scores_origin = HistoryTestModel.objects(user_id=str(check_user['id'])).order_by("test_start_time")
-    current_scores_origin = CurrentTestModel.objects(user_id=str(check_user['id'])).order_by("test_start_time")
-    history_scores = []
-    for history in history_scores_origin:
-        if history["score_info"]:
-            history_scores.append({
-                "test_start_time": convert_datetime_to_str(history["test_start_time"]),
-                # "paper_type": history["paper_type"],
-                "score_info": {
-                    "音质": format(history["score_info"]["音质"], ScoreConfig.DEFAULT_NUM_FORMAT),
-                    "结构": format(history["score_info"]["结构"], ScoreConfig.DEFAULT_NUM_FORMAT),
-                    "逻辑": format(history["score_info"]["逻辑"], ScoreConfig.DEFAULT_NUM_FORMAT),
-                    "细节": format(history["score_info"]["细节"], ScoreConfig.DEFAULT_NUM_FORMAT),
-                    "主旨": format(history["score_info"]["主旨"], ScoreConfig.DEFAULT_NUM_FORMAT),
-                    "total": format(history["score_info"]["total"], ScoreConfig.DEFAULT_NUM_FORMAT),
-                },
-                # "all_analysed": history["all_analysed"],
-            })
-        else:
-            history_scores.append({
-                "test_start_time": convert_datetime_to_str(history["test_start_time"]),
-                # "paper_type": history["paper_type"],
-                "score_info": {
-                    "音质": format(0, ScoreConfig.DEFAULT_NUM_FORMAT),
-                    "结构": format(0, ScoreConfig.DEFAULT_NUM_FORMAT),
-                    "逻辑": format(0, ScoreConfig.DEFAULT_NUM_FORMAT),
-                    "细节": format(0, ScoreConfig.DEFAULT_NUM_FORMAT),
-                    "主旨": format(0, ScoreConfig.DEFAULT_NUM_FORMAT),
-                    "total": format(0, ScoreConfig.DEFAULT_NUM_FORMAT),
-                },
-                # "all_analysed": history["all_analysed"],
-            })
-
-    for current in current_scores_origin:
-        questions = current['questions']
-        if __question_all_finished(questions):  # 全部结束才录入history
-            # 所有题目已完成但没有分数信息，则计算分数
-            if not current['score_info']:
-                score = {}
-                for k, v in questions.items():
-                    score[int(k)] = v['score']
-                current['score_info'] = paper.compute_exam_score(score, current.paper_type)
-                current.save()
-            history_scores.append({
-                "test_start_time": convert_datetime_to_str(current["test_start_time"]),
-                "score_info": {
-                    "音质": format(current["score_info"]["音质"], ScoreConfig.DEFAULT_NUM_FORMAT),
-                    "结构": format(current["score_info"]["结构"], ScoreConfig.DEFAULT_NUM_FORMAT),
-                    "逻辑": format(current["score_info"]["逻辑"], ScoreConfig.DEFAULT_NUM_FORMAT),
-                    "细节": format(current["score_info"]["细节"], ScoreConfig.DEFAULT_NUM_FORMAT),
-                    "主旨": format(current["score_info"]["主旨"], ScoreConfig.DEFAULT_NUM_FORMAT),
-                    "total": format(current["score_info"]["total"], ScoreConfig.DEFAULT_NUM_FORMAT),
-                },
-            })
-
-    if len(history_scores) == 0:
-        return jsonify(errors.No_history)
-    return jsonify(errors.success({"history": history_scores}))
+# from app.account.views import get_info as get_account_info
 
 
 @auth.route('/register', methods=['POST'])
@@ -252,6 +127,7 @@ def login():
         current_app.logger.info('[TimeDebug][login_user]%s' % (_time5 - _time4))
     _time6 = datetime.datetime.utcnow()
     current_app.logger.info('[TimeDebug][login total]%s' % (_time6 - _time1))
+    # return get_account_info()
     return jsonify(errors.success({
         'msg': '登录成功',
         'uuid': str(check_user.id),
@@ -357,28 +233,6 @@ def wechat_bind():
         'uuid': str(check_user.id),
         'name': str(check_user.name),
     }))
-
-
-def __get_check_user_from_db(current_user):
-    """
-    根据登录的用户获取当前数据库中用户
-    :param current_user: 当前登录用户
-    :return: 当前用户
-    """
-    email = current_user.email
-    if email is None:
-        phone = current_user.phone
-        check_user = UserModel.objects(phone=phone).first()
-    else:
-        check_user = UserModel.objects(email=email).first()
-    return check_user
-
-
-def __question_all_finished(question_dict):
-    for value in question_dict.values():
-        if value['status'] != 'finished':
-            return False
-    return True
 
 
 def __authorize(username, password):

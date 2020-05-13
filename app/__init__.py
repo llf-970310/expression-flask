@@ -59,8 +59,8 @@ def create_app():
     app.register_blueprint(exam_blueprint, url_prefix='/api/exam')
     from .admin import admin as admin_blueprint
     app.register_blueprint(admin_blueprint, url_prefix='/api/admin')
-    from .accounts import accounts as accounts_blueprint
-    app.register_blueprint(accounts_blueprint, url_prefix='/api/accounts')
+    from .account import account as accounts_blueprint
+    app.register_blueprint(accounts_blueprint, url_prefix='/api/account')
     from .questions import questions as questions_blueprint
     app.register_blueprint(questions_blueprint, url_prefix='/api/questions')
     from .async_tasks import ap_view as ap_view_blueprint

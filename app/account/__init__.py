@@ -5,7 +5,7 @@
 
 from flask import Blueprint
 
-accounts = Blueprint('accounts', __name__)
+account = Blueprint('account', __name__)
 
 from .views import *
 from .utils import *
