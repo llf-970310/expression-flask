@@ -54,7 +54,7 @@ def get_test_wav_info():
             "detail": QuestionConfig.pretest_text['detail'],
             "tip": QuestionConfig.pretest_text['tip'],
         },
-        "test_id": wav_test.id.__str__()
+        "testId": wav_test.id.__str__()
     }))
 
 
