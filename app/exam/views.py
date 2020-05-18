@@ -16,8 +16,8 @@ from app.async_tasks import MyCelery
 from . import exam
 from .exam_config import PathConfig, ExamConfig, QuestionConfig, DefaultValue, Setting
 from .utils.session import ExamSession
-from .utils.paper import PaperUtils
-from .utils.paper import compute_exam_score
+from app.paper import PaperUtils
+from app.paper import compute_exam_score
 from .utils.misc import get_server_date_str
 
 # TODO: 保存put_task接口返回的ret.id到redis，于查询考试结果时查验，减少读库次数

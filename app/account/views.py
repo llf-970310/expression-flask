@@ -10,12 +10,11 @@ from flask_login import current_user, login_required
 
 from app import errors
 from . import account
-from app.utils.date_and_time import datetime_to_str
 
 from app.models.exam import HistoryTestModel, CurrentTestModel
 from app.admin.admin_config import ScoreConfig
 from app.utils.date_and_time import datetime_to_str
-from app.exam.utils import paper
+from app.paper import compute_exam_score
 
 
 @account.route('/display', methods=['GET'])
@@ -125,7 +124,7 @@ def get_history_scores():
                 score = {}
                 for k, v in questions.items():
                     score[int(k)] = v['score']
-                current['score_info'] = paper.compute_exam_score(score, current.paper_type)
+                current['score_info'] = compute_exam_score(score, current.paper_type)
                 current.save()
             history_scores.append({
                 "test_start_time": datetime_to_str(current["test_start_time"]),
