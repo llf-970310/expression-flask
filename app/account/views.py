@@ -18,17 +18,6 @@ from app.paper import compute_exam_score
 from app.models.invitation import InvitationModel
 
 
-@account.route('/display', methods=['GET'])
-def account_display():
-    exams = current_user.exam_history
-    return jsonify(errors.success())
-
-
-@account.route('/modify', methods=['POST'])
-def accounts_modify():
-    return jsonify(errors.success())
-
-
 @account.route('/update', methods=['POST'])
 @login_required
 def update():
