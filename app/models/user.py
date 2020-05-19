@@ -98,3 +98,12 @@ class UserModel(UserMixin, db.Document):
         hash_obj = md5()
         hash_obj.update((password + _MD5_SALT).encode())
         self.__password = hash_obj.hexdigest()
+
+    def can_do_exam(self) -> bool:
+        """验证是否有评测权限
+
+        Returns:
+            True/False (Boolean)
+        """
+        now = datetime.datetime.utcnow()
+        return self.remaining_exam_num > 0 and self.vip_end_time >= now

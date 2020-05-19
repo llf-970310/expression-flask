@@ -9,7 +9,7 @@ from app.models.exam import CurrentTestModel, HistoryTestModel
 from app.models.current_stat import CurrentStatisticsModel
 from app.models.question import QuestionModel
 from app.admin.analysis import Analysis
-from app.exam.utils.paper import compute_exam_score
+from app.paper import compute_exam_score
 
 
 @mutex_with_redis(3600 * 6)
@@ -40,6 +40,8 @@ def move_current_to_history():
     stat.user_test_cnt = CurrentTestModel.objects().count()
     stat.save()
     for document in CurrentTestModel.objects:
+        if document.paper_tpl_id not in ['5eb84af7aaaae82807e5312a', '5eb84af7aaaae82807e5312b']:  # TODO 解决硬编码
+            continue
         test_start_time = document['test_start_time']
         now_time = datetime.datetime.utcnow()
         delta_seconds = (now_time - test_start_time).total_seconds()

@@ -10,23 +10,12 @@ from flask_login import current_user, login_required
 
 from app import errors
 from . import account
-from app.utils.date_and_time import datetime_to_str
 
 from app.models.exam import HistoryTestModel, CurrentTestModel
 from app.admin.admin_config import ScoreConfig
 from app.utils.date_and_time import datetime_to_str
-from app.exam.utils import paper
-
-
-@account.route('/display', methods=['GET'])
-def account_display():
-    exams = current_user.exam_history
-    return jsonify(errors.success())
-
-
-@account.route('/modify', methods=['POST'])
-def accounts_modify():
-    return jsonify(errors.success())
+from app.paper import compute_exam_score
+from app.models.invitation import InvitationModel
 
 
 @account.route('/update', methods=['POST'])
@@ -46,6 +35,34 @@ def update():
         'name': str(current_user.name),
         'password': '********'
     }))
+
+
+@account.route('/update-privilege/<code>', methods=['POST'])
+@login_required
+def update_privilege(code):
+    # todo 从这开始需要同步
+    existing_invitation = InvitationModel.objects(code=code).first()
+    if existing_invitation is None or existing_invitation.available_times <= 0:
+        return jsonify(errors.Illegal_invitation_code)
+    # 修改这个邀请码
+    existing_invitation.activate_users.append(current_user.email if current_user.email else current_user.phone)
+    if existing_invitation.available_times <= 0:
+        return jsonify(errors.Invitation_code_invalid)
+    existing_invitation.available_times -= 1
+    current_app.logger.debug('invitation info: %s' % existing_invitation.__str__())
+    existing_invitation.save()
+    # todo 同步结束
+    current_app.logger.info('[UpdatePrivilege][update_privilege]email:%s, phone:%s' %
+                            (current_user.email, current_user.phone))
+    current_user.vip_start_time = existing_invitation.vip_start_time
+    current_user.vip_end_time = existing_invitation.vip_end_time
+    current_user.remaining_exam_num = existing_invitation.remaining_exam_num
+    # 这里需要添加一个邀请码信息
+    current_user.invitation_code = existing_invitation.code
+    current_app.logger.info('[UserInfo][update_privilege]%s' % current_user.__str__())
+    current_user.save()
+    current_app.logger.debug('user(id = %s) has been saved' % current_user.id)
+    return jsonify(errors.success())
 
 
 @account.route('/unbind-wx', methods=['POST'])
@@ -125,7 +142,7 @@ def get_history_scores():
                 score = {}
                 for k, v in questions.items():
                     score[int(k)] = v['score']
-                current['score_info'] = paper.compute_exam_score(score, current.paper_type)
+                current['score_info'] = compute_exam_score(score, current.paper_type)
                 current.save()
             history_scores.append({
                 "test_start_time": datetime_to_str(current["test_start_time"]),
