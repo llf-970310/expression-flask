@@ -132,6 +132,7 @@ def login():
         'msg': '登录成功',
         'uuid': str(check_user.id),
         'name': str(check_user.name),
+        'role': str(check_user.role.value)
     }))
 
 
