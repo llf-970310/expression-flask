@@ -31,7 +31,7 @@ class MyCelery(object):
                 ret = analysis_wav_pretest.apply_async(args=(str(test_id),), queue=queues.pretest, priority=20)
             elif q_type in [3, '3']:
                 ret = analysis_main_3.apply_async(args=(str(test_id), str(q_num)), queue=queues.type3, priority=10)
-            elif q_type in [1, 2, 5, 6, '1', '2', '5', '6']:
+            elif q_type in [1, 2, 5, 6, '1', '2', '5', '6', 7, '7']:
                 ret = analysis_main_12.apply_async(args=(str(test_id), str(q_num)), queue=queues.type12, priority=2)
             else:
                 raise Exception('Unknown q_type')
