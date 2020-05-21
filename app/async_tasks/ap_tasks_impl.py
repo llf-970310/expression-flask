@@ -21,6 +21,12 @@ def func_example():
 @mutex_with_redis(600)
 def user_based_cf():
     print('[Example][APSTask][user_based_cf]', datetime.datetime.now())
+    from app.paper.utils.collaborative_filter import CollaborativeFilter
+    cf = CollaborativeFilter()
+    cf.create_reverse_table()
+    cf.create_weight_matrix()
+    cf.calc_similarity_matrix()
+    # cf.save_similar_users()
 
 
 @mutex_with_redis(600)
