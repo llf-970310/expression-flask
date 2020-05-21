@@ -315,8 +315,10 @@ def init_exam_v2(paper_tpl_id):
     :return: json格式状态
     """
     # 判断是否有剩余考试次数
-    if Setting.LIMIT_EXAM_TIMES and not current_user.can_do_exam():
-        return jsonify(errors.No_exam_times)
+    if Setting.LIMIT_EXAM_TIMES:
+        can, err = current_user.can_do_exam()
+        if not can:
+            return jsonify(err)
     # 生成当前题目
     current_app.logger.info('[InitExam][new-exam]id:%s,name:%s' % (current_user.id, current_user.name))
     test_id = PaperUtils.init_paper(current_user, paper_tpl_id)
