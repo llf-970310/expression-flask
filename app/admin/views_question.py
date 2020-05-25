@@ -9,7 +9,6 @@ from app.admin.admin_config import PaginationConfig
 from app.models.question import QuestionModel
 from app.models.origin import *
 from . import admin, util
-from . import mock_data
 from .question_generator import generator
 from app.auth.util import admin_login_required
 
@@ -23,11 +22,6 @@ def generate_wordbase_by_text():
 
     :return: 分析后的关键词
     """
-    if not current_user.is_authenticated:
-        return jsonify(errors.Login_required)
-    if not current_user.is_admin():
-        return jsonify(errors.Admin_login_required)
-
     text = request.form.get('text')
     return jsonify(errors.success(wordbase_generator.generate_wordbase(text)))
 
@@ -64,17 +58,6 @@ def get_all_type_two_questions():
             "usedTimes": question.used_times,
         })
     return jsonify(errors.success({"count": all_questions_num, "questions": data}))
-
-
-@admin.route('/questions', methods=['GET'])
-@admin_login_required
-def get_all_questions():
-    """获取所有题目 TODO
-
-    :return: 所有题目，可直接展示
-    """
-    (page, size) = __get_page_and_size_from_request_args(request.args)
-    return jsonify(errors.success(mock_data.questions))
 
 
 def __get_page_and_size_from_request_args(args):
@@ -184,11 +167,6 @@ def delete_specific_question_from_pool():
     """
     删除题库中题目
     """
-    if not current_user.is_authenticated:
-        return jsonify(errors.Login_required)
-    if not current_user.is_admin():
-        return jsonify(errors.Admin_login_required)
-
     id = request.form.get('idInPool')
 
     origin_question = OriginTypeTwoQuestionModel.objects(q_id=id).first()
@@ -260,10 +238,6 @@ def modify_question():
 
     :return:
     """
-    if not current_user.is_authenticated:
-        return jsonify(errors.Login_required)
-    if not current_user.is_admin():
-        return jsonify(errors.Admin_login_required)
 
     index = request.form.get('id')  # todo: change to REST api and change name 'id' to 'index'
     question_data_raw_text = request.form.get('data[rawText]')

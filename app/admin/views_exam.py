@@ -16,6 +16,8 @@ from flask import request, current_app, jsonify, session
 from app.exam.exam_config import ExamConfig, QuestionConfig
 from . import admin
 
+# 这个文件貌似是给管理员刷题自测用的,现在前端没有使用
+
 
 @admin.route('/admin-get-question', methods=['POST'])
 @admin_login_required

@@ -21,6 +21,28 @@ from app.utils.date_and_time import datetime_to_str
 @admin.route('/accounts/invite', methods=['POST'])  # url will be .../admin/accounts/test
 @admin_login_required
 def accounts_invite():
+    """批量创建邀请码
+
+    Form-data Args:
+        vipStartTime: 评测权限开始时间
+        vipEndTime: 评测权限结束时间
+        remainingExamNum: 邀请码包含的评测考试权限
+        remainingExerciseNum: 邀请码包含的评测练习权限（暂未使用）
+        availableTimes: 邀请码可用人数
+        codeNum: 创建邀请码个数
+
+    form 校验规则:
+        1. vipStartTime必须在vipEndTime之前
+        2. vipEndTime必须在现在之后
+        3. remainingExamNum和remainingExerciseNum至少有一个>0（可用考试、练习次数）
+        4. availableTimes要大于0（邀请码可用人数）
+        5. codeNum要大于0（邀请码个数）
+        6. 各项不为空
+
+    Returns:
+        jsonify(errors.success({'msg': '生成邀请码成功', 'invitationCode': [...]}))
+
+    """
     current_app.logger.info('create invitation request: %s' % request.form.__str__())
     # 检验是否有权限申请邀请码
     form = request.form
@@ -34,15 +56,7 @@ def accounts_invite():
     except Exception as e:
         current_app.logger.error('Params_error:POST admin/accounts/invite: %s' % e)
         return jsonify(errors.Params_error)
-    """
-        form 校验规则
-        1. vipStartTime必须在vipEndTime之前
-        2. vipEndTime必须在现在之后
-        3. remainingExamNum和remainingExerciseNum至少有一个>0（可用考试、练习次数）
-        4. availableTimes要大于0（邀请码可用人数）
-        5. codeNum要大于0（邀请码个数）
-        6. 各项不为空
-    """
+    # form 校验
     if not vip_start_time and not vip_end_time and not available_times:
         return jsonify(errors.Params_error)
     if vip_start_time >= vip_end_time:  # rule 1
@@ -79,22 +93,27 @@ def accounts_invite():
 @admin.route('/accounts/invite', methods=['GET'])
 @admin_login_required
 def get_invitations():
-    """ 传入参数 request.args 格式:
-    "currentPage": int,  默认 1
-    "pageSize": int,     默认 10
-    "conditions": {      可选
-        "code": str,
-        "createTimeFrom": "2019-11-20 00:00:00",
-        "createTimeTo": "2019-11-22 00:00:00",
-        "availableTimes": int
-    }
-    返回：
+    """批量查询邀请码
+
+    Request.args URL Args:
+        "currentPage": int,  默认 1
+        "pageSize": int,     默认 10
+        "conditions": {      可选
+            "code": str,
+            "createTimeFrom": "2019-11-20 00:00:00",
+            "createTimeTo": "2019-11-22 00:00:00",
+            "availableTimes": int
+        }
+
+    Returns:
         {
           "code": xx,
           "msg": xx,
           "data": {
             "totalCount": int,
-            "invitationCodes": []
+            "invitationCodes": [
+                {}, {}, {}
+            ]
           }
         }
     """
