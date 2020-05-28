@@ -321,7 +321,10 @@ def init_exam_v2(paper_tpl_id):
             return jsonify(err)
     # 生成当前题目
     current_app.logger.info('[InitExam][new-exam]id:%s,name:%s' % (current_user.id, current_user.name))
+    _time1 = datetime.datetime.utcnow()
     test_id = PaperUtils.init_paper(current_user, paper_tpl_id)
+    _time2 = datetime.datetime.utcnow()
+    current_app.logger.info('[TimeDebug][init_exam_v2 init_paper]%s' % (_time2 - _time1))
     if not test_id:
         current_app.logger.error('[InitExamFailure][new-exam]id:%s,name:%s' %
                                  (current_user.id, current_user.name))
