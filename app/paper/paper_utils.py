@@ -117,7 +117,7 @@ class PaperUtils:
             q = temp_all_q_lst[i]
             q_current = CurrentQuestionEmbed(q_id=str(q.id), q_type=q.q_type, q_text=q.text, wav_upload_url='')
             questions_chosen.update({str(i + 1): q_current})
-            q.update(inc__used_times=1)  # update
+            # q.update(inc__used_times=1)  # 更新使用次数  # TODO: 缓存?
         current_test.questions = questions_chosen
         current_test.paper_type = paper_type
         current_test.save()
