@@ -5,6 +5,8 @@
 
 from app.exam.exam_config import ExamConfig, QuestionConfig, DefaultValue
 from flask import current_app
+
+from app.models.cached.questions import get_cached_questions
 from app.models.exam import *
 from app.models.question import QuestionModel
 from app.models.user import UserModel
@@ -63,7 +65,8 @@ class PaperUtils:
 
                 tactic = use_backup.get(q_type)
                 if q_id == 0:  # 按最少使用次数选取指定类型的题目
-                    questions = QuestionModel.objects(__raw__=d).order_by('used_times')  # 按使用次数倒序获得questions
+                    # questions = QuestionModel.objects(__raw__=d).order_by('used_times')  # 按使用次数倒序获得questions
+                    questions = get_cached_questions(q_type)  # TODO: 完善缓存处理机制
                     for q in questions:
                         flag_add = False
                         qid_str = str(q.id)
@@ -110,7 +113,7 @@ class PaperUtils:
                         else:  # 根本没有指定类型的题目
                             return False
         questions_chosen = {}
-        for i in range(len(temp_all_q_lst)):
+        for i in range(len(temp_all_q_lst)):  # TODO: 加缓存，异步刷入数据库
             q = temp_all_q_lst[i]
             q_current = CurrentQuestionEmbed(q_id=str(q.id), q_type=q.q_type, q_text=q.text, wav_upload_url='')
             questions_chosen.update({str(i + 1): q_current})
