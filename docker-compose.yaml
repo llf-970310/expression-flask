@@ -2,7 +2,7 @@ version: '2.1'
 services:
   exp-web:
     image: exp-flask
-    build: .
+    build: ./build-scripts
     container_name: exp-web
     ports:
       - 5001:5001
