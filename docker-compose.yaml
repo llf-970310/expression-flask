@@ -3,6 +3,7 @@ services:
   exp-web:
     image: exp-flask
     build: .
+    container_name: exp-web
     ports:
       - 5001:5001
     volumes:
@@ -23,6 +24,7 @@ services:
 
   flower:
     image: exp-flask
+    container_name: flower
     ports:
       - 50082:5555
     volumes:
