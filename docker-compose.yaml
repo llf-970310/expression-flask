@@ -1,0 +1,34 @@
+version: '2.1'
+services:
+  exp-web:
+    image: exp-flask
+    build: .
+    ports:
+      - 5001:5001
+    volumes:
+      - .:/expression-flask
+    extra_hosts:
+      - "redis-server.expression.hosts:192.168.0.4"
+      - "mongo-server.expression.hosts:192.168.0.4"
+      - "flask-server.expression.hosts:192.168.0.4"
+    sysctls:
+      - net.ipv4.tcp_keepalive_time=1800
+      - net.ipv4.tcp_keepalive_probes=3
+      - net.ipv4.tcp_keepalive_intvl=15
+      - net.ipv4.tcp_max_tw_buckets=25000
+      - net.ipv4.tcp_tw_reuse=1
+      - net.ipv4.tcp_fin_timeout=10
+      - net.ipv4.tcp_syncookies=0
+      - net.core.somaxconn=65535
+
+  flower:
+    image: exp-flask
+    ports:
+      - 50082:5555
+    volumes:
+      - .:/expression-flask
+    extra_hosts:
+      - "redis-server.expression.hosts:192.168.0.4"
+      - "mongo-server.expression.hosts:192.168.0.4"
+      - "flask-server.expression.hosts:192.168.0.4"
+    entrypoint: celery flower -A app.async_tasks.celery_config.app --address=0.0.0.0 --port=5555
