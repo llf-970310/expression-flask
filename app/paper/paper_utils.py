@@ -40,6 +40,11 @@ class PaperUtils:
         current_test.test_start_time = _start_time
         current_test.test_expire_time = _start_time + datetime.timedelta(seconds=paper_tpl.duration)
 
+        # 一次性取出全部试题（按使用次数倒序）
+        # 选题条件：题号<=10000(大于10000的题目用作其他用途)
+        d = {'index': {'$lte': 10000}}
+        questions = QuestionModel.objects(__raw__=d).order_by('used_times')
+
         # 生成 paper_type 和 questions
         paper_type = []
         temp_all_q_lst = []
@@ -60,14 +65,13 @@ class PaperUtils:
                 q_backup_1 = None  # 记录已做过但未选中的指定类型题目,优先备选
                 q_backup_2 = None  # 记录已选中的指定类型题目,最差的备选
                 count_before = len(q_chosen)
-                # 选题条件:指定q_type且题号<=10000(大于10000的题目用作其他用途)
-                d = {'q_type': q_type, 'index': {'$lte': 10000}}
 
                 tactic = use_backup.get(q_type)
                 if q_id == 0:  # 按最少使用次数选取指定类型的题目
-                    questions = QuestionModel.objects(__raw__=d).order_by('used_times')  # 按使用次数倒序获得questions
                     # questions = get_cached_questions(q_type)  # TODO: 完善缓存处理机制
                     for q in questions:
+                        if q.q_type != q_type:
+                            continue
                         flag_add = False
                         qid_str = str(q.id)
                         if qid_str in q_chosen:
