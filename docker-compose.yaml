@@ -1,6 +1,6 @@
 version: '2.1'
 services:
-  flask:
+  web:
     image: exp-flask
     build: ./build-scripts
     container_name: exp-web
