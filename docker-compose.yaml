@@ -44,4 +44,8 @@ services:
       - ./build-scripts/nginx/conf.d:/etc/nginx/conf.d
       # 证书不要放在代码仓库中
       - /root/expression/nginx/cert:/etc/nginx/cert
+      # 挂载日志路径
       - ./log/nginx:/var/log/nginx
+      # 挂入静态文件
+      - /root/expression/expression-vue/dist:/var/www/expression-vue/dist
+      - /root/expression/expression-wx-static:/var/www/expression-wx-static
