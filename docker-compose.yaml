@@ -44,3 +44,4 @@ services:
       - ./build-scripts/nginx/conf.d:/etc/nginx/conf.d
       # 证书不要放在代码仓库中
       - /root/expression/nginx/cert:/etc/nginx/cert
+      - ./log/nginx:/var/log/nginx
