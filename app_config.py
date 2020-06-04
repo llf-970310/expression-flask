@@ -71,3 +71,4 @@ class DevelopmentConfig(BaseConfig):
     IGNORE_LOGIN_PASSWORD = False
     WX_APPID = 'wxd7bad9aab33bb581'
     WX_SECRET = 'f45a6fe1aa873577a18098726befd278'
+    NEED_INVITATION = False  # 注册是否需要邀请码
