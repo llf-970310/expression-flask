@@ -133,7 +133,7 @@ def login():
         # check_user.last_login_time = datetime.datetime.utcnow()
         # check_user.save(validate=False)
         # 压力测试，暂时注释掉
-        # check_user.update(last_login_time=datetime.datetime.utcnow())
+        check_user.update(last_login_time=datetime.datetime.utcnow())
         _time4 = datetime.datetime.utcnow()
         login_user(check_user)
         _time5 = datetime.datetime.utcnow()
