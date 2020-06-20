@@ -8,7 +8,7 @@ from flask import current_app, jsonify, request, session
 from flask_login import login_user, logout_user, current_user, login_required
 
 from app import errors
-from app.auth.util import validate_email, wx_get_user_info
+from app.auth.util import validate_email, wx_get_user_info, validate_phone
 from app.models.invitation import InvitationModel
 from app.models.user import UserModel
 from . import auth
@@ -47,6 +47,8 @@ def register():
             return jsonify(errors.User_already_exist)
     else:
         phone = username
+        if not validate_phone(phone):
+            return jsonify(errors.Params_error)
         existing_user = UserModel.objects(phone=phone).first()
         if existing_user is not None:
             return jsonify(errors.User_already_exist)
@@ -270,6 +272,8 @@ def __authorize(username, password):
         check_user = UserModel.objects(email=username).first()
     else:
         # 手机号登录
+        if not validate_phone(username):
+            return errors.Params_error, None
         check_user = UserModel.objects(phone=username).first()
     if not check_user:
         return errors.Authorize_failed, None

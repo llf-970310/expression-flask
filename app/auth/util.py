@@ -13,8 +13,14 @@ from app import errors
 
 def validate_email(email):
     import re
-    p = re.compile(r"[^@]+@[^@]+\.[^@]+")
+    p = re.compile(r"^[A-Za-z0-9]+([_\.][A-Za-z0-9]+)*@([A-Za-z0-9\-]+\.)+[A-Za-z]{2,6}$")
     return p.match(email)
+
+
+def validate_phone(phone):
+    import re
+    p = re.compile(r"^(13[0-9]|14[5|7]|15[0|1|2|3|4|5|6|7|8|9]|18[0|1|2|3|5|6|7|8|9])\d{8}$")
+    return p.match(phone)
 
 
 def admin_login_required(func):
