@@ -11,6 +11,8 @@ def datetime_to_str(dt, date_separator='-', only_date=False) -> str:
 
     如果指定date_separator则按指定分隔符格式化日期部分，如 '2020.01.01 12:00:00'
 
+    dt 为 UTC 时间，在该函数中应转换为东八区时间
+
     Args:
         dt: datetime对象
         date_separator: 日期间隔符
@@ -19,6 +21,7 @@ def datetime_to_str(dt, date_separator='-', only_date=False) -> str:
     Returns:
         datetime字符串
     """
+    dt = dt + timedelta(hours=8)
     if not dt:
         return ''
     if only_date:
