@@ -276,7 +276,7 @@ def __authorize(username, password):
             return errors.Params_error, None
         check_user = UserModel.objects(phone=username).first()
     if not check_user:
-        return errors.Authorize_failed, None
+        return errors.User_not_exist, None
     if (not current_app.config['IGNORE_LOGIN_PASSWORD']) and (not check_user.check_password(password)):
         return errors.Authorize_failed, None
     return None, check_user

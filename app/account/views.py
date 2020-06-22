@@ -21,10 +21,12 @@ from app.models.invitation import InvitationModel
 @account.route('/update', methods=['POST'])
 @login_required
 def update():
-    password = request.form.get('password').strip()
+    password = request.form.get('password')
     name = request.form.get('name').strip()
     if not password:
         current_user.name = name
+    elif password.strip() == "":
+        return jsonify(errors.Params_error)
     else:
         current_user.set_password(password)
         current_user.name = name
