@@ -23,6 +23,8 @@ from app.models.invitation import InvitationModel
 def update():
     password = request.form.get('password')
     name = request.form.get('name').strip()
+    if len(name) > 20:
+        return jsonify(errors.Params_error)
     if not password:
         current_user.name = name
     elif password.strip() == "":
@@ -165,6 +167,6 @@ def get_history_scores():
 
 def __question_all_finished(question_dict):
     for value in question_dict.values():
-        if value['status'] != 'finished':
+        if value['status'] != 'finished' and value['status'] != 'error':
             return False
     return True
