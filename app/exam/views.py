@@ -13,6 +13,7 @@ from flask_login import current_user, login_required
 from app import errors
 from app.models.exam import *
 from app.async_tasks import MyCelery
+from app.models.paper_template import PaperTemplate
 from . import exam
 from .exam_config import PathConfig, ExamConfig, QuestionConfig, DefaultValue, Setting
 from .utils.session import ExamSession
@@ -302,6 +303,14 @@ def get_result():
 def get_paper_templates():
     tpl_lst = PaperUtils.get_templates()
     return jsonify(errors.success({'paperTemplates': tpl_lst}))
+
+
+@exam.route('/paper-templates/<paper_tpl_id>/total', methods=['GET'])
+@login_required
+def get_question_num_of_tpl(paper_tpl_id):
+    template = PaperTemplate.objects(id=paper_tpl_id).first()
+    total = len(template.questions)
+    return jsonify(errors.success({'total': total}))
 
 
 # init exam
