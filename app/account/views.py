@@ -89,7 +89,7 @@ def get_info():
     return jsonify(errors.success({
         'role': str(current_user.role.value),
         'name': current_user.name,
-        'email': current_user.email,
+        'email': current_user.email if current_user.email is not None else current_user.phone,
         'password': '********',
         'register_time': datetime_to_str(current_user.register_time),
         'last_login_time': datetime_to_str(current_user.last_login_time),
