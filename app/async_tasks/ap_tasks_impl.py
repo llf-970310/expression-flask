@@ -48,15 +48,15 @@ def move_current_to_history():
     for document in CurrentTestModel.objects:
         if document.paper_tpl_id not in ['5eb84af7aaaae82807e5312a', '5eb84af7aaaae82807e5312b']:  # TODO 解决硬编码
             continue
-        test_start_time = document['test_start_time']
+        # test_start_time = document['test_start_time']
         now_time = datetime.datetime.utcnow()
-        delta_seconds = (now_time - test_start_time).total_seconds()
-        if delta_seconds >= document.test_expire_time and question_process_finished(document['questions']):
+        # delta_seconds = (now_time - test_start_time).total_seconds()
+        if now_time >= document.test_expire_time and question_process_finished(document['questions']):
             print("remove %s" % str(document.id))
             history = HistoryTestModel()
             history['current_id'] = str(document.id)
             history['user_id'] = document['user_id']
-            openid = document.get('openid')
+            openid = document['openid']
             if openid:
                 history['openid'] = openid
             history['test_start_time'] = document['test_start_time']
@@ -65,11 +65,11 @@ def move_current_to_history():
             history['paper_tpl_id'] = document['paper_tpl_id']
             history['current_q_num'] = document['current_q_num']
             history['score_info'] = document['score_info']
-            history['questions'] = {}
-            for i, q in document['questions'].items():
-                _type = q.get('type')
-                if _type in [1, 2, 3, '1', '2', '3']:
-                    history.update({i: q})
+            history['questions'] = document['questions']
+            # for i, q in document['questions'].items():
+            #     _type = q.q_type
+            #     if _type in [1, 2, 3, '1', '2', '3']:
+            #         history['questions'][i] = q
             history['all_analysed'] = False
             # 防止history中的总分还有未计算的
             if not history['score_info']:
@@ -92,11 +92,9 @@ def move_current_to_history():
 
 def question_process_finished(question_dict):
     for value in question_dict.values():
-        _type = value.get('type')
-        if _type in [1, 2, 3, '1', '2', '3']:
-            if value.get('status') == 'finished':
-                return True
-    return False
+        if value['status'] != 'finished' and value['status'] != 'error':
+            return False
+    return True
 
 
 @mutex_with_redis(600)
