@@ -102,17 +102,25 @@ def get_info():
 
 
 # TODO: 接口可以在这里，但评分逻辑应该单独抽取出来
+@account.route('/history-scores/<tpl_id>', methods=['GET'])
 @account.route('/history-scores', methods=['GET'])
 @login_required
-def get_history_scores():
-    history_scores_origin = HistoryTestModel.objects(user_id=str(current_user.id)).order_by("test_start_time")
-    current_scores_origin = CurrentTestModel.objects(user_id=str(current_user.id)).order_by("test_start_time")
+def get_history_scores(tpl_id="0"):
+    # 查看所有历史成绩
+    if tpl_id == "0":
+        history_scores_origin = HistoryTestModel.objects(user_id=str(current_user.id)).order_by("test_start_time")
+        current_scores_origin = CurrentTestModel.objects(user_id=str(current_user.id)).order_by("test_start_time")
+    # 查看指定模板的历史成绩
+    else:
+        history_scores_origin = HistoryTestModel.objects(user_id=str(current_user.id), paper_tpl_id=tpl_id).order_by("test_start_time")
+        current_scores_origin = CurrentTestModel.objects(user_id=str(current_user.id), paper_tpl_id=tpl_id).order_by("test_start_time")
     history_scores = []
     for history in history_scores_origin:
         if history["score_info"]:
             history_scores.append({
                 "test_start_time": datetime_to_str(history["test_start_time"]),
                 # "paper_type": history["paper_type"],
+                "paper_tpl_id": history["paper_tpl_id"],
                 "score_info": {
                     "音质": format(history["score_info"]["音质"], ScoreConfig.DEFAULT_NUM_FORMAT),
                     "结构": format(history["score_info"]["结构"], ScoreConfig.DEFAULT_NUM_FORMAT),
@@ -127,6 +135,7 @@ def get_history_scores():
             history_scores.append({
                 "test_start_time": datetime_to_str(history["test_start_time"]),
                 # "paper_type": history["paper_type"],
+                "paper_tpl_id": history["paper_tpl_id"],
                 "score_info": {
                     "音质": format(0, ScoreConfig.DEFAULT_NUM_FORMAT),
                     "结构": format(0, ScoreConfig.DEFAULT_NUM_FORMAT),
@@ -158,6 +167,7 @@ def get_history_scores():
                     "主旨": format(current["score_info"]["主旨"], ScoreConfig.DEFAULT_NUM_FORMAT),
                     "total": format(current["score_info"]["total"], ScoreConfig.DEFAULT_NUM_FORMAT),
                 },
+                "paper_tpl_id": current["paper_tpl_id"],
             })
 
     if len(history_scores) == 0:
