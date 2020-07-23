@@ -14,8 +14,9 @@ from app import errors
 from app.models.exam import *
 from app.async_tasks import MyCelery
 from app.models.paper_template import PaperTemplate
+from app.paper.sum_score import generate_report
 from . import exam
-from .exam_config import PathConfig, ExamConfig, QuestionConfig, DefaultValue, Setting
+from .exam_config import PathConfig, ExamConfig, QuestionConfig, DefaultValue, Setting, ReportConfig
 from .utils.session import ExamSession
 from app.paper import PaperUtils
 from app.paper import compute_exam_score
@@ -254,14 +255,18 @@ def get_result():
     questions = test['questions']
 
     score = {}  # {1:{'quality': 80}, 2:{'key':100,'detail':xx}, ...}
+    feature = {}
     has_handling = False
+    # 遍历 test 对应的 questions，将需要的 score 和 feature 抽取出来，用于后续分析
     for i in range(len(questions), 0, -1):
         if questions[str(i)]['status'] == 'finished':
             score[i] = questions[str(i)]['score']
+            feature[i] = feature_filter(questions[str(i)]['feature'], questions[str(i)]['q_type'])
             # current_app.logger.info("get_result: status is finished! index: %s, score: %s, test_id: %s, user name: %s"
             #                         % (str(i), str(score[i]), last_test_id, current_user.name))
         elif questions[str(i)]['status'] not in ['none', 'question_fetched', 'url_fetched', 'handling']:
             score[i] = {"quality": 0, "key": 0, "detail": 0, "structure": 0, "logic": 0}
+            feature[i] = {}
             # current_app.logger.info("get_result: ZERO score! index: %s, score: %s, test_id: %s, user name: %s"
             #                         % (str(i), str(score[i]), last_test_id, current_user.name))
         else:
@@ -286,6 +291,9 @@ def get_result():
             current_app.logger.info("get_result: use computed score! test_id: %s, user name: %s" %
                                     (last_test_id, current_user.name))
             result = {"status": "Success", "totalScore": test['score_info']['total'], "data": test['score_info']}
+
+        report = generate_report(feature, score, test.paper_type)
+        result['report'] = report
         ExamSession.set(current_user.id, 'tryTimes', 0)
         current_app.logger.info("get_result: return data! test_id: %s, user name: %s, result: %s" %
                                 (last_test_id, current_user.name, str(result)))
@@ -296,6 +304,32 @@ def get_result():
         current_app.logger.info("get_result: handling!!! try times: %s, test_id: %s, user name: %s" %
                                 (str(try_times), last_test_id, current_user.name))
         return jsonify(errors.WIP)
+
+
+# 提取生成报告时会用到的 feature
+# 2、5、6、7 等转述题不需要提取 feature，根据分数生成报告
+def feature_filter(feature_dict, q_type):
+    ret = {}
+    if q_type == 1:
+        ret['clr_ratio'] = feature_dict['clr_ratio']
+        ret['ftl_ratio'] = feature_dict['ftl_ratio']
+        ret['interval_num'] = feature_dict['interval_num']
+        ret['speed'] = feature_dict['speed']
+    elif q_type == 3:
+        ret['structure_hit'], ret['structure_not_hit'] = [], []
+        ret['logic_hit'], ret['logic_not_hit'] = [], []
+        for item in ReportConfig.structure_list:
+            if feature_dict[item + '_num'] > 0:
+                ret['structure_hit'].append(item)
+            else:
+                ret['structure_not_hit'].append(item)
+        for item in ReportConfig.logic_list:
+            if feature_dict[item + '_num'] > 0:
+                ret['logic_hit'].append(item)
+            else:
+                ret['logic_not_hit'].append(item)
+
+    return ret
 
 
 @exam.route('/paper-templates', methods=['GET'])
