@@ -81,10 +81,17 @@ def generate_report(features: dict, scores: dict, paper_type: list):
     report = {}
     processed_data = data_processing(features, paper_type, scores)
 
-    report.update(generate_quality_report(processed_data))
-    report.update(generate_key_and_detail_report(processed_data))
-    report.update(generate_structure_report(processed_data))
-    report.update(generate_logic_report(processed_data))
+    # report.update(generate_quality_report(processed_data))
+    # report.update(generate_key_and_detail_report(processed_data))
+    # report.update(generate_structure_report(processed_data))
+    # report.update(generate_logic_report(processed_data))
+
+    report["音质"] = generate_quality_report(processed_data)
+    key_and_detail = generate_key_and_detail_report(processed_data)
+    report["主旨"] = key_and_detail["key"]
+    report["细节"] = key_and_detail["detail"]
+    report["结构"] = generate_structure_report(processed_data)
+    report["逻辑"] = generate_logic_report(processed_data)
 
     return report
 
@@ -125,7 +132,7 @@ def data_processing(features, paper_type, scores):
     return avg_total
 
 
-def generate_quality_report(processed_data):
+def generate_quality_report(processed_data) -> dict:
     report = {}
 
     # 清晰度
@@ -192,7 +199,7 @@ def generate_quality_report(processed_data):
     return report
 
 
-def generate_key_and_detail_report(processed_data):
+def generate_key_and_detail_report(processed_data) -> dict:
     report = {}
 
     key = processed_data['key']
@@ -230,7 +237,7 @@ def generate_key_and_detail_report(processed_data):
         key_text = "你在表达时缺少主旨意识。在复述时，没有提纲挈领地概括内容，会让人不明白表达所传递的要点。在阅读和交流中，" \
                    "提升获取要点和总结概括的能力，有助于高效的传递信息。一段文字的主旨是最重要的指向信息，有助于清晰的表达意思，" \
                    "也有助于对方的接收。只要建立主旨意识，在段前或段尾加上概括性句子，能够有效提升你的表达效率。"
-    report["主旨"] = key_text
+    report["key"] = key_text
 
     detail = processed_data['detail']
     if detail > 85:
@@ -238,67 +245,63 @@ def generate_key_and_detail_report(processed_data):
     elif 70 < detail <= 85:
         detail_text = "你在表达中有意识的给出了相对完整的细节，很好的运用了各种修辞，能够调动起听众的感官，有针对性的表达了细节，这也帮助你表达了自己的观点。注意过多的细节描述，会影响主旨的清晰传达。"
     elif 60 < detail <= 70:
-        detail_text = "你在表达中，有意识通过具象化的细节，来传达支撑你的观点。适当的调取细节信息，可以调动起听众的兴趣，让你的讲述更生动。\n" \
+        detail_text = "你在表达中，有意识通过具象化的细节，来传达支撑你的观点。适当的调取细节信息，可以调动起听众的兴趣，让你的讲述更生动。" \
                       "在细节的表达中，可给出更完整和严谨的细节内容，去调动听众的各项感官，为表达增加更多的支撑和亮点，帮助听众更有效的接纳你的信息重点，" \
                       "但也要注意过多的细节表述，会影响主旨的清晰传达，要保证针对性和均衡性。"
     elif 50 < detail <= 60:
-        detail_text = "你在表达中，有细节表达意识，能运用修辞，可以调动起听众的一些兴趣，对观点的表达有了支撑。\n" \
+        detail_text = "你在表达中，有细节表达意识，能运用修辞，可以调动起听众的一些兴趣，对观点的表达有了支撑。" \
                       "可以试着给出更多精准和典型的细节，运用更多的修辞去调动听众的感官，传达你的重要信息。"
     elif 30 < detail <= 50:
-        detail_text = "你在表达中，会有意识要给出细节，但还不够。运用了一部分修辞，适当使用具象化的细节信息，能够调动起听众的兴趣，有效支撑观点。\n" \
+        detail_text = "你在表达中，会有意识要给出细节，但还不够。运用了一部分修辞，适当使用具象化的细节信息，能够调动起听众的兴趣，有效支撑观点。" \
                       "在细节的表达中给出适当的例子和类比，能够更好的支撑或强调你要表达者的观点，增强说服力，并且能更好的调动听众的兴趣，使你的观点能够有更多的有效信息让听众接收到。"
     else:
         detail_text = "你在表达中对细节的表达意识比较薄弱，能够给出细节但不够完整和严谨，在细节的表达中适当添加过渡衔接词句和要点扩展信息，" \
                       "对观点的表达有着增强说服力的作用，也能够给听众创造良好的感受，并能帮助听众更好、更清晰的接收到你的观点。"
-    report["细节"] = detail_text
+    report["detail"] = detail_text
 
     return report
 
 
-def generate_structure_report(processed_data):
-    report = {}
-    structure_text = ""
+def generate_structure_report(processed_data) -> list:
+    structure_text = []
 
     structure_hit = processed_data['structure_hit']
     structure_not_hit = processed_data['structure_not_hit']
 
     if len(structure_hit) == 2:
-        structure_text = "在交流及表达观点中，你能够利用多种逻辑结构，条理清晰的表达。\n"
+        structure_text.append("在交流及表达观点中，你能够利用多种逻辑结构，条理清晰的表达。")
     elif len(structure_hit) == 3:
-        structure_text = "在工作与学习中，你能较顺利的进行有一定专门性的交流与沟通，语言简明，重点突出，条理清晰。" \
-                         "同时，你还能分析复杂话题的思路线索和层次关系，能归纳说话的核心内容，抓住关键词句。\n"
+        structure_text.append("在工作与学习中，你能较顺利的进行有一定专门性的交流与沟通，语言简明，重点突出，条理清晰。"
+                              "同时，你还能分析复杂话题的思路线索和层次关系，能归纳说话的核心内容，抓住关键词句。")
 
     for hit in structure_hit:
-        structure_text += ReportConfig.hit_dict[hit] + "\n"
+        structure_text.append(ReportConfig.hit_dict[hit])
     for not_hit in structure_not_hit:
-        structure_text += ReportConfig.not_hit_dict[not_hit] + "\n"
+        structure_text.append(ReportConfig.not_hit_dict[not_hit])
 
-    report["结构"] = structure_text
-    return report
+    return structure_text
 
 
-def generate_logic_report(processed_data):
-    report = {}
-    logic_text = ""
+def generate_logic_report(processed_data) -> list:
+    logic_text = []
 
     logic_hit = processed_data['logic_hit']
     logic_not_hit = processed_data['logic_not_hit']
 
     if len(logic_hit) == 1:
-        logic_text = "在进行表达和论述时，你的语言较明了， 描述较连贯流畅，条理尚清楚。\n"
+        logic_text.append("在进行表达和论述时，你的语言较明了， 描述较连贯流畅，条理尚清楚。")
     elif len(logic_hit) == 2:
-        logic_text = "在进行表达和论述时，你能就日常生活和工作，学习中的特定问题，与人进行交流沟通，话题击中，意思明了。\n"
+        logic_text.append("在进行表达和论述时，你能就日常生活和工作，学习中的特定问题，与人进行交流沟通，话题击中，意思明了。")
     elif len(logic_hit) == 3:
-        logic_text = "在进行表达和论述时，你能有效的参与多方交流，文明、得体的展开陈述，能将信息与论点有逻辑的排序，进行沟通和协调。" \
-                     "能运用丰富的词语，灵活的表达方式以及严谨的逻辑，叙述复杂的事件，阐明立场，提出适当的处理办法。" \
-                     "能有效的参与多方交流，文明、得体的展开陈述，进行沟通和协调。能将信息与论点有逻辑的排序。\n"
+        logic_text.append("在进行表达和论述时，你能有效的参与多方交流，文明、得体的展开陈述，能将信息与论点有逻辑的排序，进行沟通和协调。"
+                          "能运用丰富的词语，灵活的表达方式以及严谨的逻辑，叙述复杂的事件，阐明立场，提出适当的处理办法。"
+                          "能有效的参与多方交流，文明、得体的展开陈述，进行沟通和协调。能将信息与论点有逻辑的排序。")
 
-    logic_text += "当我们在表达观点或进行论述时，通常会使用两种逻辑推理方式，一种是演绎推理，一种是归纳推理。演绎是一种线性的推理方式，" \
-                  "每一个观点，均由上一个观点推倒得出。归纳推理，是将一组具有共同点的事实，思想活观点归类分组，并概括其共同性。\n"
-    logic_text += "在论述观点时，合理的利用逻辑推理，能让你更清晰准确的展现的你的观点，同时，也让对方充分理解你的观点。" \
-                  "为了更好的展现逻辑，在表达时，可以适当使用因果，转折，并列，递进等连词，来帮助你更精准的组织语言，以更有逻辑，" \
-                  "更易懂的方式排布内容。比如说，在演绎逻辑里，所有的论点，都导向最终的结论。这个时候，恰当的使用了因果逻辑，" \
-                  "用“因此”来导出最终观点，就能更突出在此逻辑关系中的结论。\n"
+    logic_text.append("当我们在表达观点或进行论述时，通常会使用两种逻辑推理方式，一种是演绎推理，一种是归纳推理。演绎是一种线性的推理方式，"
+                      "每一个观点，均由上一个观点推倒得出。归纳推理，是将一组具有共同点的事实，思想活观点归类分组，并概括其共同性。")
+    logic_text.append("在论述观点时，合理的利用逻辑推理，能让你更清晰准确的展现的你的观点，同时，也让对方充分理解你的观点。"
+                      "为了更好的展现逻辑，在表达时，可以适当使用因果，转折，并列，递进等连词，来帮助你更精准的组织语言，以更有逻辑，"
+                      "更易懂的方式排布内容。比如说，在演绎逻辑里，所有的论点，都导向最终的结论。这个时候，恰当的使用了因果逻辑，"
+                      "用“因此”来导出最终观点，就能更突出在此逻辑关系中的结论。")
 
-    report["逻辑"] = logic_text
-    return report
+    return logic_text
