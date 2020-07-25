@@ -9,6 +9,8 @@ from flask import request, current_app, jsonify
 from flask_login import current_user, login_required
 
 from app import errors
+from app.exam.manager.exam import get_exam_by_id, get_score_and_feature
+from app.exam.manager.report import generate_report
 from . import account
 
 from app.models.exam import HistoryTestModel, CurrentTestModel
@@ -114,38 +116,25 @@ def get_history_scores(tpl_id="0"):
     else:
         history_scores_origin = HistoryTestModel.objects(user_id=str(current_user.id), paper_tpl_id=tpl_id).order_by("test_start_time")
         current_scores_origin = CurrentTestModel.objects(user_id=str(current_user.id), paper_tpl_id=tpl_id).order_by("test_start_time")
+
     history_scores = []
     for history in history_scores_origin:
+        history_score_item = {
+            "test_start_time": datetime_to_str(history["test_start_time"]),
+            "paper_tpl_id": history["paper_tpl_id"],
+            "test_id": history["current_id"]
+        }
+
+        score_format = {}
         if history["score_info"]:
-            history_scores.append({
-                "test_start_time": datetime_to_str(history["test_start_time"]),
-                # "paper_type": history["paper_type"],
-                "paper_tpl_id": history["paper_tpl_id"],
-                "score_info": {
-                    "音质": format(history["score_info"]["音质"], ScoreConfig.DEFAULT_NUM_FORMAT),
-                    "结构": format(history["score_info"]["结构"], ScoreConfig.DEFAULT_NUM_FORMAT),
-                    "逻辑": format(history["score_info"]["逻辑"], ScoreConfig.DEFAULT_NUM_FORMAT),
-                    "细节": format(history["score_info"]["细节"], ScoreConfig.DEFAULT_NUM_FORMAT),
-                    "主旨": format(history["score_info"]["主旨"], ScoreConfig.DEFAULT_NUM_FORMAT),
-                    "total": format(history["score_info"]["total"], ScoreConfig.DEFAULT_NUM_FORMAT),
-                },
-                # "all_analysed": history["all_analysed"],
-            })
+            for k, v in history["score_info"].items():
+                score_format[k] = format(v, ScoreConfig.DEFAULT_NUM_FORMAT)
         else:
-            history_scores.append({
-                "test_start_time": datetime_to_str(history["test_start_time"]),
-                # "paper_type": history["paper_type"],
-                "paper_tpl_id": history["paper_tpl_id"],
-                "score_info": {
-                    "音质": format(0, ScoreConfig.DEFAULT_NUM_FORMAT),
-                    "结构": format(0, ScoreConfig.DEFAULT_NUM_FORMAT),
-                    "逻辑": format(0, ScoreConfig.DEFAULT_NUM_FORMAT),
-                    "细节": format(0, ScoreConfig.DEFAULT_NUM_FORMAT),
-                    "主旨": format(0, ScoreConfig.DEFAULT_NUM_FORMAT),
-                    "total": format(0, ScoreConfig.DEFAULT_NUM_FORMAT),
-                },
-                # "all_analysed": history["all_analysed"],
-            })
+            for k in ["音质", "结构", "逻辑", "细节", "主旨", "total"]:
+                score_format[k] = format(0, ScoreConfig.DEFAULT_NUM_FORMAT)
+
+        history_score_item["score_info"] = score_format
+        history_scores.append(history_score_item)
 
     for current in current_scores_origin:
         questions = current['questions']
@@ -157,22 +146,38 @@ def get_history_scores(tpl_id="0"):
                     score[int(k)] = v['score']
                 current['score_info'] = compute_exam_score(score, current.paper_type)
                 current.save()
+
+            score_format = {}
+            for k, v in current["score_info"].items():
+                score_format[k] = format(v, ScoreConfig.DEFAULT_NUM_FORMAT)
+
             history_scores.append({
                 "test_start_time": datetime_to_str(current["test_start_time"]),
-                "score_info": {
-                    "音质": format(current["score_info"]["音质"], ScoreConfig.DEFAULT_NUM_FORMAT),
-                    "结构": format(current["score_info"]["结构"], ScoreConfig.DEFAULT_NUM_FORMAT),
-                    "逻辑": format(current["score_info"]["逻辑"], ScoreConfig.DEFAULT_NUM_FORMAT),
-                    "细节": format(current["score_info"]["细节"], ScoreConfig.DEFAULT_NUM_FORMAT),
-                    "主旨": format(current["score_info"]["主旨"], ScoreConfig.DEFAULT_NUM_FORMAT),
-                    "total": format(current["score_info"]["total"], ScoreConfig.DEFAULT_NUM_FORMAT),
-                },
+                "test_id": str(current["id"]),
+                "score_info": score_format,
                 "paper_tpl_id": current["paper_tpl_id"],
             })
 
     if len(history_scores) == 0:
         return jsonify(errors.No_history)
     return jsonify(errors.success({"history": history_scores}))
+
+
+@account.route('/history-report/<test_id>', methods=['GET'])
+@login_required
+def get_history_report(test_id):
+    test = get_exam_by_id(test_id)
+    if test is None:
+        return jsonify(errors.Exam_not_exist)
+
+    questions = test['questions']
+    handling, score, feature = get_score_and_feature(questions)
+    if handling:
+        return jsonify(errors.WIP)
+    else:
+        report = generate_report(feature, score, test.paper_type)
+        result = {"report": report}
+        return jsonify(errors.success(result))
 
 
 def __question_all_finished(question_dict):

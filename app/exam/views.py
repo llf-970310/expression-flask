@@ -11,10 +11,11 @@ from flask import request, current_app, jsonify
 from flask_login import current_user, login_required
 
 from app import errors
+from app.exam.manager.exam import get_exam_by_id, get_score_and_feature
+from app.exam.manager.report import generate_report
 from app.models.exam import *
 from app.async_tasks import MyCelery
 from app.models.paper_template import PaperTemplate
-from app.paper.sum_score import generate_report
 from . import exam
 from .exam_config import PathConfig, ExamConfig, QuestionConfig, DefaultValue, Setting, ReportConfig
 from .utils.session import ExamSession
@@ -246,33 +247,13 @@ def get_result():
     last_test_id = ExamSession.get(current_user.id, "last_test_id", DefaultValue.test_id)
     if not last_test_id:
         return jsonify(errors.Check_history_results)
-    test = CurrentTestModel.objects(id=last_test_id).first()
-    if test is None:
-        test = HistoryTestModel.objects(current_id=last_test_id).first()
-        if test is None:
-            current_app.logger.error("upload_file ERROR: No Tests!, test_id: %s" % last_test_id)
-            return jsonify(errors.Exam_not_exist)
-    questions = test['questions']
 
-    score = {}  # {1:{'quality': 80}, 2:{'key':100,'detail':xx}, ...}
-    feature = {}
-    has_handling = False
-    # 遍历 test 对应的 questions，将需要的 score 和 feature 抽取出来，用于后续分析
-    for i in range(len(questions), 0, -1):
-        if questions[str(i)]['status'] == 'finished':
-            score[i] = questions[str(i)]['score']
-            feature[i] = feature_filter(questions[str(i)]['feature'], questions[str(i)]['q_type'])
-            # current_app.logger.info("get_result: status is finished! index: %s, score: %s, test_id: %s, user name: %s"
-            #                         % (str(i), str(score[i]), last_test_id, current_user.name))
-        elif questions[str(i)]['status'] not in ['none', 'question_fetched', 'url_fetched', 'handling']:
-            score[i] = {"quality": 0, "key": 0, "detail": 0, "structure": 0, "logic": 0}
-            feature[i] = {}
-            # current_app.logger.info("get_result: ZERO score! index: %s, score: %s, test_id: %s, user name: %s"
-            #                         % (str(i), str(score[i]), last_test_id, current_user.name))
-        else:
-            has_handling = has_handling | (questions[str(i)]['status'] == 'handling')
-            # current_app.logger.info("get_result: status is handling! index: %s , test_id: %s, user name: %s"
-            #                         % (str(i), last_test_id, current_user.name))
+    test = get_exam_by_id(last_test_id)
+    if test is None:
+        return jsonify(errors.Exam_not_exist)
+
+    questions = test['questions']
+    has_handling, score, feature = get_score_and_feature(questions)
 
     # 判断该测试是否超时
     in_process = datetime.datetime.utcnow() < test.test_expire_time
@@ -304,32 +285,6 @@ def get_result():
         current_app.logger.info("get_result: handling!!! try times: %s, test_id: %s, user name: %s" %
                                 (str(try_times), last_test_id, current_user.name))
         return jsonify(errors.WIP)
-
-
-# 提取生成报告时会用到的 feature
-# 2、5、6、7 等转述题不需要提取 feature，根据分数生成报告
-def feature_filter(feature_dict, q_type):
-    ret = {}
-    if q_type == 1:
-        ret['clr_ratio'] = feature_dict['clr_ratio']
-        ret['ftl_ratio'] = feature_dict['ftl_ratio']
-        ret['interval_num'] = feature_dict['interval_num']
-        ret['speed'] = feature_dict['speed']
-    elif q_type == 3:
-        ret['structure_hit'], ret['structure_not_hit'] = [], []
-        ret['logic_hit'], ret['logic_not_hit'] = [], []
-        for item in ReportConfig.structure_list:
-            if feature_dict[item + '_num'] > 0:
-                ret['structure_hit'].append(item)
-            else:
-                ret['structure_not_hit'].append(item)
-        for item in ReportConfig.logic_list:
-            if feature_dict[item + '_num'] > 0:
-                ret['logic_hit'].append(item)
-            else:
-                ret['logic_not_hit'].append(item)
-
-    return ret
 
 
 @exam.route('/paper-templates', methods=['GET'])
