@@ -35,6 +35,10 @@ def data_processing(features, paper_type, scores):
     for i, q_type in enumerate(paper_type):
         q_score = scores[i + 1]
         q_feature = features[i + 1]
+
+        if len(q_feature) == 0:
+            continue
+
         if q_type in [2, 5, 6, 7]:
             for dim in ['key', 'detail']:
                 sum_total[dim] += q_score.get(dim, 0)
