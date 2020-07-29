@@ -24,11 +24,11 @@ def get_score_and_feature(question_list):
         if question_list[str(i)]['status'] == 'finished':
             score[i] = question_list[str(i)]['score']
             feature[i] = feature_filter(question_list[str(i)]['feature'], question_list[str(i)]['q_type'])
-        elif question_list[str(i)]['status'] not in ['none', 'question_fetched', 'url_fetched', 'handling']:
+        else:
             score[i] = {"quality": 0, "key": 0, "detail": 0, "structure": 0, "logic": 0}
             feature[i] = {}
-        else:
-            handling = handling | (question_list[str(i)]['status'] == 'handling')
+            if question_list[str(i)]['status'] == 'handling':
+                handling = True
 
     return handling, score, feature
 
