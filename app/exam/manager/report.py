@@ -36,7 +36,7 @@ def data_processing(features, paper_type, scores):
         q_score = scores[i + 1]
         q_feature = features[i + 1]
 
-        if len(q_feature) == 0:
+        if q_type in [3] and len(q_feature) == 0:
             continue
 
         if q_type in [2, 5, 6, 7]:
