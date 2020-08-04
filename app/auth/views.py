@@ -75,7 +75,7 @@ def register():
         new_user.invitation_code = existing_invitation.code
     else:
         new_user.vip_start_time = datetime.datetime(2020, 6, 1, 10, 0, 0)
-        new_user.vip_end_time = datetime.datetime(2020, 8, 1, 10, 0, 0)
+        new_user.vip_end_time = datetime.datetime(2020, 8, 15, 10, 0, 0)
         new_user.remaining_exam_num = 100
         new_user.invitation_code = ""
 
