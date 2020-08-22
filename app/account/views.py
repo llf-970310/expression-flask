@@ -176,7 +176,8 @@ def get_history_report(test_id):
         return jsonify(errors.WIP)
     else:
         report = generate_report(feature, score, test.paper_type)
-        result = {"report": report}
+        # 为了与 get_result 接口保持统一，这里用了 data 做字段，实际是分数信息
+        result = {"report": report, "data": test['score_info']}
         return jsonify(errors.success(result))
 
 
