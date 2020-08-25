@@ -13,6 +13,9 @@ services:
       - "redis-server.expression.hosts:192.168.0.4"
       - "mongo-server.expression.hosts:192.168.0.4"
       - "flask-server.expression.hosts:192.168.0.4"
+    dns:
+      - 114.114.114.114
+      - 114.114.115.115
     sysctls:
       - net.ipv4.tcp_keepalive_time=1800
       - net.ipv4.tcp_keepalive_probes=3

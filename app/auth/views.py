@@ -8,7 +8,7 @@ from flask import current_app, jsonify, request, session
 from flask_login import login_user, logout_user, current_user, login_required
 
 from app import errors
-from app.auth.util import validate_email, wx_get_user_info, validate_phone
+from app.auth.util import validate_email, wx_get_user_info, validate_phone, wxlp_get_sessionkey_openid
 from app.models.invitation import InvitationModel
 from app.models.user import UserModel
 from . import auth
@@ -167,6 +167,7 @@ def wechat_callback():
     return ''
 
 
+# web 端微信扫码登录
 @auth.route('/wechat/login', methods=['POST'])
 def wechat_login():
     if current_user.is_authenticated:
@@ -245,6 +246,49 @@ def wechat_bind():
     current_user.save()
     return jsonify(errors.success({
         'msg': '绑定成功，登录成功',
+        'uuid': str(check_user.id),
+        'name': str(check_user.name),
+    }))
+
+
+# 微信小程序登录
+@auth.route('/wxapp/login', methods=['POST'])
+def wxapp_login():
+    if current_user.is_authenticated:
+        return jsonify(errors.Already_logged_in)
+    code = request.form.get('code')
+    nickName = request.form.get('nick_name')
+    if not code:
+        return jsonify(errors.Params_error)
+
+    # code -> openid
+    err_code, _, openid = wxlp_get_sessionkey_openid(
+        code,
+        appid=current_app.config['WX_APP_APPID'],
+        secret=current_app.config['WX_APP_SECRET']
+    )
+    if err_code:
+        return jsonify(errors.error({'code': int(err_code), 'msg': '获取openid出错'}))
+
+    # todo: 后续 openid 改存 unionid
+    check_user = UserModel.objects(wx_id=openid).first()
+
+    # user not exist -> new
+    if not check_user:
+        new_user = UserModel()
+        new_user.name = nickName
+        new_user.wx_id = openid
+        new_user.last_login_time = datetime.datetime.utcnow()
+        new_user.register_time = datetime.datetime.utcnow()
+        new_user.save()
+        check_user = new_user
+
+    login_user(check_user)
+    check_user.last_login_time = datetime.datetime.utcnow()
+    check_user.save()
+    current_app.logger.info('wxapp login: %s, id: %s' % (check_user.name, check_user.id))
+    return jsonify(errors.success({
+        'msg': '登录成功',
         'uuid': str(check_user.id),
         'name': str(check_user.name),
     }))

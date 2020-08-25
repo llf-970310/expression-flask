@@ -69,6 +69,10 @@ class DevelopmentConfig(BaseConfig):
         'connect': False  # False: connect when first connect instead of instantiated
     }
     IGNORE_LOGIN_PASSWORD = False
+    NEED_INVITATION = False  # 注册是否需要邀请码
+    # 这个好像是微信公众平台的
     WX_APPID = 'wxd7bad9aab33bb581'
     WX_SECRET = 'f45a6fe1aa873577a18098726befd278'
-    NEED_INVITATION = False  # 注册是否需要邀请码
+    # 这个是微信小程序的
+    WX_APP_APPID = 'wxf44541a8622d9466'
+    WX_APP_SECRET = '485afd39d2bc29269030e40c3212855a'
