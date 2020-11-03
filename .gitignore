@@ -5,3 +5,4 @@ log/*
 *.log
 .vscode
 temp_dylanchu/
+.DS_Store

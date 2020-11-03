@@ -2,11 +2,19 @@
 # coding: utf-8
 #
 # Created by dylanchu on 20-3-06
+from celery import Celery
 
-from .celery_config import analysis_main_12, analysis_main_3, analysis_wav_pretest, queues
+from app.async_tasks import celery_config
 from celery.result import AsyncResult
 from flask import current_app
 from app_config import redis_client
+
+pw = 'ise_expression'
+celery_broker = 'amqp://admin:%s@redis-server.expression.hosts:5672/' % pw
+celery_backend = 'redis://:%s@redis-server.expression.hosts:6379/7' % pw
+
+app = Celery('tasks', broker=celery_broker, backend=celery_backend)
+app.config_from_object(celery_config)
 
 
 class MyCelery(object):
@@ -28,11 +36,13 @@ class MyCelery(object):
                 if not lock:
                     raise Exception('Failed to get redis lock')
             if q_type == 'pretest':
-                ret = analysis_wav_pretest.apply_async(args=(str(test_id),), queue=queues.pretest, priority=20)
+                # 此处名称应与 worker 端的 task_name 保持一致
+                # 不建议在此指定 queue，在 config 中使用 CELERY_ROUTES 配置
+                ret = app.send_task('analysis_pretest', args=(str(test_id),), priority=20)
             elif q_type in [3, '3']:
-                ret = analysis_main_3.apply_async(args=(str(test_id), str(q_num)), queue=queues.type3, priority=10)
+                ret = app.send_task('analysis_3', args=(str(test_id), str(q_num)), priority=10)
             elif q_type in [1, 2, 5, 6, '1', '2', '5', '6', 7, '7']:
-                ret = analysis_main_12.apply_async(args=(str(test_id), str(q_num)), queue=queues.type12, priority=2)
+                ret = app.send_task('analysis_12', args=(str(test_id), str(q_num)), priority=2)
             else:
                 raise Exception('Unknown q_type')
             current_app.logger.info("AsyncResult id: %s" % ret.id)
@@ -44,19 +54,3 @@ class MyCelery(object):
     def is_task_finished(task_id: str):
         task = AsyncResult(task_id)
         return task.ready()
-
-    @staticmethod
-    def get_queue_length(queue) -> int:
-        """
-        获取指定队列中积压的任务数
-        :param queue: 队列名，使用celery_config中的queues成员指定，如queues.pretest
-        :return: 队列长度
-        """
-        return redis_client.llen(queue)
-
-    @classmethod
-    def get_all_queue_length(cls) -> int:
-        n = 0
-        for q in queues:
-            n += cls.get_queue_length(q)
-        return n

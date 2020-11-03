@@ -38,7 +38,7 @@ services:
       - "redis-server.expression.hosts:192.168.0.4"
       - "mongo-server.expression.hosts:192.168.0.4"
       - "flask-server.expression.hosts:192.168.0.4"
-    entrypoint: celery flower -A app.async_tasks.celery_config.app --address=0.0.0.0 --port=5555
+    entrypoint: celery flower -A app.async_tasks.celery_ops.app --address=0.0.0.0 --port=5555
 
   nginx:
     image: nginx:stable
