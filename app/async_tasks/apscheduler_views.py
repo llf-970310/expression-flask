@@ -2,6 +2,7 @@
 # coding: utf-8
 #
 # Created by dylanchu on 20-3-07
+import datetime
 
 from apscheduler.jobstores.base import ConflictingIdError
 from flask import current_app
@@ -61,6 +62,15 @@ def pause_job(job_id):
 @admin_login_required
 def resume_job(job_id):
     return api.resume_job(job_id)
+
+
+@ap_view.route('/jobs/<job_id>/run', methods=['POST'])
+@admin_login_required
+def run_job(job_id):
+    current_app.apscheduler.get_job(id=job_id).modify(
+        next_run_time=datetime.datetime.now() + datetime.timedelta(seconds=3))
+    job = current_app.apscheduler.get_job(job_id)
+    return jsonify(job)
 
 # in flask_apscheduler.scheduler._load_api:
 #     """
