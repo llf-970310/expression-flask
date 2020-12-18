@@ -35,7 +35,7 @@ def move_current_to_history():
     1. 删除 current 表中 user_id 为空 或为 'batchtest' 的记录
     2. 将 current 表中超时且未在处理中的部分搬运到history
     """
-    print('move_current_to_history')
+    print('[move_current_to_history] start')
     stat = CurrentStatisticsModel()
     stat.total_cnt = CurrentTestModel.objects().count()
     bt_tests = CurrentTestModel.objects(__raw__={
@@ -46,7 +46,8 @@ def move_current_to_history():
     stat.user_test_cnt = CurrentTestModel.objects().count()
     stat.save()
     for document in CurrentTestModel.objects:
-        if document.paper_tpl_id not in ['5eb84af7aaaae82807e5312a', '5eb84af7aaaae82807e5312b']:  # TODO 解决硬编码
+        if document.paper_tpl_id not in ['5eb84af7aaaae82807e5312a', '5eb84af7aaaae82807e5312b',
+                                         '5ec67fb360e1ec808ee2ad47']:  # TODO 解决硬编码
             continue
         # test_start_time = document['test_start_time']
         now_time = datetime.datetime.utcnow()
@@ -88,6 +89,7 @@ def move_current_to_history():
                 print(history['score_info'])
             history.save()
             document.delete()
+    print('[move_current_to_history] end')
 
 
 def question_process_finished(question_dict):
@@ -101,12 +103,14 @@ def question_process_finished(question_dict):
 def collect_history_to_analysis():
     """将 current 表中新出现的已评分分析的题目搬运到 analysis
     """
-    print('collect_history_to_analysis')
-    history_list = HistoryTestModel.objects()
+    print('[collect_history_to_analysis] start')
 
+    history_list = HistoryTestModel.objects()
     for question in QuestionModel.objects(q_type=2).order_by('index'):
         collect(question, history_list)
     pass
+
+    print('[collect_history_to_analysis] end')
 
 
 def collect(analysis_question, history_list):
@@ -117,7 +121,7 @@ def collect(analysis_question, history_list):
     """
     # 然后，将history中未被分析的部分分析一遍
     print('-----------------------')
-    print('start to analyse question ', analysis_question['q_id'])
+    print('start to analyse question ', analysis_question['index'])
     print(len(history_list))
     for test in history_list:
         questions = test['questions']
@@ -125,7 +129,7 @@ def collect(analysis_question, history_list):
         for question in questions.values():
             if question['q_id'] == analysis_question['id'].__str__() and question['status'] == 'finished' and \
                     not question['analysed']:
-                analysis = Analysis.compute_score_and_save(test, analysis_question['q_id'], analysis_question,
+                analysis = Analysis.compute_score_and_save(test, analysis_question['index'], analysis_question,
                                                            test['test_start_time'])
                 if analysis is None:
                     continue
